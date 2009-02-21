@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe OverviewController, "when delivering index" do
+describe ProjectController, "when delivering index" do
   before do
   end
 

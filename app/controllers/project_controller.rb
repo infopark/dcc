@@ -1,4 +1,4 @@
-class OverviewController < ApplicationController
+class ProjectController < ApplicationController
   def index
     @projects = Project.find(:all)
   end
