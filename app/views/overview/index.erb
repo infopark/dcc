@@ -1,1 +1,20 @@
 Hallo Welt.
+<table class='projects'>
+<% @projects.each do |project| %>
+  <tr>
+    <td class='name'><%= project.name %></td>
+    <td>
+      <table class='branches'>
+      <% @projects.branches.each do |branch| %>
+        <tr>
+          <td class='name'><%= branch.name %></td>
+        </tr>
+      <% end %>
+      </table>
+    </td>
+  </tr>
+<% end %>
+</table>
+<% form_for :project, :url => {:action => :create} do |f| %>
+  Name: <%= f.text_field :name %> URL: <%= f.text_field :url %> <%= submit_tag 'Anlegen' %>
+<% end %>

@@ -1,5 +1,5 @@
 class OverviewController < ApplicationController
   def index
-    Project.find(:all)
+    @projects = Project.find(:all)
   end
 end

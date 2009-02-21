@@ -9,6 +9,12 @@ describe OverviewController, "when delivering index" do
     get 'index'
   end
 
+  it "should assign the fetched projects for the view" do
+    Project.stub!(:find).and_return "the projects"
+    get 'index'
+    assigns[:projects].should == "the projects"
+  end
+
   it "should render overview" do
     get 'index'
     response.should render_template('index')
