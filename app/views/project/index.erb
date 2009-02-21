@@ -5,7 +5,7 @@ Hallo Welt.
     <td class='name'><%= project.name %></td>
     <td>
       <table class='branches'>
-      <% @projects.branches.each do |branch| %>
+      <% project.branches.each do |branch| %>
         <tr>
           <td class='name'><%= branch.name %></td>
         </tr>
