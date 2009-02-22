@@ -4,6 +4,7 @@ class CreateBranches < ActiveRecord::Migration
       t.column :name, :string, :null => false
       t.column :project_id, :integer, :null => false
     end
+    add_index :branches, [:name, :project_id], :unique => true
   end
 
   def self.down

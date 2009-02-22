@@ -4,6 +4,7 @@ class CreateProjects < ActiveRecord::Migration
       t.column :name, :string, :null => false
       t.column :url, :string, :null => false
     end
+    add_index :projects, :name, :unique => true
   end
 
   def self.down
