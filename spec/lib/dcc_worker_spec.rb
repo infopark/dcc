@@ -59,29 +59,42 @@ describe DCCWorker, "when running as leader" do
   end
 
   describe "when reading the buckets" do
-    it "should return updated buckets" do
-      buckets = @leader.read_buckets
-      buckets.should include(["upd_url", "upd_branch", "456", 1, "upd1"])
-      buckets.should include(["upd_url", "upd_branch", "456", 1, "upd2"])
-      buckets.should include(["upd_url", "upd_branch", "456", 1, "upd3"])
-    end
+    describe do
+      before do
+        Bucket.should_receive(:new).at_most(100).and_return do |m|
+          bucket = mock(m[:name], :name => m[:name])
+          bucket.stub!(:save)
+          bucket
+        end
+      end
 
-    it "should return requested buckets" do
-      buckets = @leader.read_buckets
-      buckets.should include(["req_url", "req_branch", "123", 6, "req1"])
-      buckets.should include(["req_url", "req_branch", "123", 6, "req2"])
-      buckets.should include(["req_url", "req_branch", "123", 6, "req3"])
-    end
+      it "should return updated buckets" do
+        bucket_names = @leader.read_buckets.map {|b| b.name}
+        bucket_names.should include("upd1")
+        bucket_names.should include("upd2")
+        bucket_names.should include("upd3")
+      end
 
-    it "should not return unchanched buckets" do
-      @leader.read_buckets.map {|b| b[0]}.should_not include("unc_url")
-    end
+      it "should return requested buckets" do
+        bucket_names = @leader.read_buckets.map {|b| b.name}
+        bucket_names.should include("req1")
+        bucket_names.should include("req2")
+        bucket_names.should include("req3")
+      end
 
-    it "should update the projects state" do
-      @leader.should_receive(:update_project).with(@requested_project)
-      @leader.should_receive(:update_project).with(@updated_project)
-      @leader.should_not_receive(:update_project).with(@unchanged_project)
-      @leader.read_buckets
+      it "should not return unchanched buckets" do
+        bucket_names = @leader.read_buckets.map {|b| b.name}
+        bucket_names.should_not include("unc1")
+        bucket_names.should_not include("unc2")
+        bucket_names.should_not include("unc3")
+      end
+
+      it "should update the projects state" do
+        @leader.should_receive(:update_project).with(@requested_project)
+        @leader.should_receive(:update_project).with(@updated_project)
+        @leader.should_not_receive(:update_project).with(@unchanged_project)
+        @leader.read_buckets
+      end
     end
 
     it "create the buckets in the db" do

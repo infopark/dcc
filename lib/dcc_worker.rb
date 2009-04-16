@@ -38,9 +38,10 @@ sleep 0.5
       if project.build_requested? || project.current_commit != project.last_commit
         build_number = project.next_build_number
         project.tasks.each do |task|
-          buckets << [project.url, project.branch, project.current_commit, build_number, task]
-          Bucket.new(:project_id => project.project_id, :commit => project.current_commit,
-              :build_number => build_number, :name => task, :status => 0).save
+          b = Bucket.new(:project_id => project.project_id, :commit => project.current_commit,
+              :build_number => build_number, :name => task, :status => 0)
+          b.save
+          buckets << b
         end
         update_project project
       end
