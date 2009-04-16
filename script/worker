@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'yaml'
+require 'active_record'
+require 'lib/dcc_worker'
+
+# FIXME: Konfig aus Datei lesen
+# FIXME: Hier oder im Worker??? Hier, da Worker ja lib ist.
+# -> memcached-Server(s)
+# -> DB-Verbindung
+
+ActiveRecord::Base.establish_connection(YAML::load(File.read('config/database.yml'))['development'])
+
+DCCWorker.new(['127.0.0.1:11211']).run

@@ -2,3 +2,19 @@ one:
   id: 1
   name: "project name"
   url: "project url"
+  branch: "project branch"
+
+two:
+  id: 2
+  name: "project name 2"
+  url: "project url"
+  branch: "project branch"
+  last_commit: "project's last commit"
+  build_requested: true
+
+three:
+  id: 3
+  name: "project name 3"
+  url: "project url"
+  branch: "project branch"
+  build_requested: false

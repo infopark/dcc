@@ -1,8 +1,0 @@
-one_master:
-  id: 11
-  name: 'master'
-  project_id: 1
-one_dev:
-  id: 12
-  name: 'dev'
-  project_id: 1

@@ -8,7 +8,7 @@ class CreateProjects < ActiveRecord::Migration
     add_index :projects, :name, :unique => true
 
     create_table :buckets do |t|
-      t.string :name, :null => false
+      t.string :name, :commit, :null => false
       t.integer :build_number, :status, :null => false
       t.text :log
       t.belongs_to :project

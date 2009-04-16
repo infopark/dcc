@@ -4,28 +4,6 @@ Hallo Welt.
   <tr>
     <td class='name'><%= project.name %></td>
     <td>
-      <table class='branches'>
-      <% project.branches.each do |branch| -%>
-        <tr>
-          <td class='name'><%= branch.name %></td>
-          <td>
-          <% form_for :branch, :url => {:action => :delete_branch, :id => branch.id} do |f| -%>
-            <%= submit_tag 'Löschen' %>
-          <% end -%>
-          </td>
-        </tr>
-      <% end -%>
-        <tr>
-          <td>
-          <% form_for :branch, :url => {:action => :create_branch} do |f| -%>
-            <%= f.hidden_field(:project_id, :value => project.id) %>
-            Name: <%= f.text_field :name %> <%= submit_tag 'Anlegen' %>
-          <% end -%>
-          </td>
-        </tr>
-      </table>
-    </td>
-    <td>
     <% form_for :project, :url => {:action => :delete, :id => project.id} do |f| -%>
       <%= submit_tag 'Löschen' %>
     <% end -%>
@@ -34,5 +12,8 @@ Hallo Welt.
 <% end -%>
 </table>
 <% form_for :project, :url => {:action => :create} do |f| -%>
-  Name: <%= f.text_field :name %> URL: <%= f.text_field :url %> <%= submit_tag 'Anlegen' %>
+  Name: <%= f.text_field :name %>
+  URL: <%= f.text_field :url %>
+  Branch: <%= f.text_field :branch %>
+  <%= submit_tag 'Anlegen' %>
 <% end -%>
