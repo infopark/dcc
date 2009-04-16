@@ -50,7 +50,7 @@ class Git
   def current_commit
     # FIXME: Tests
     update
-    git("log", %W(--pretty=format:%H -n 1 #{@branch}))
+    git("log", %W(--pretty=format:%H -n 1 #{@branch}))[0]
   end
 
   def git(operation, arguments = [], options = {}, &block)
