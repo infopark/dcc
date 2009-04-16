@@ -33,7 +33,7 @@ describe DCCWorker, "when running as leader" do
   def project_mock(name, build_requested, current_commit, next_build_number)
     m = mock(name, :build_requested? => build_requested, :last_commit => "123",
         :current_commit => current_commit, :url => "#{name}_url", :branch => "#{name}_branch",
-        :tasks => %W(#{name}1 #{name}2 #{name}3), :project_id => "#{name}_id")
+        :tasks => %W(#{name}1 #{name}2 #{name}3), :id => "#{name}_id", :buckets => [])
     m.should_receive(:next_build_number).at_most(:once).and_return(next_build_number)
     m.stub!(:last_commit=)
     m.stub!(:build_requested=)
@@ -61,10 +61,11 @@ describe DCCWorker, "when running as leader" do
   describe "when reading the buckets" do
     describe do
       before do
-        Bucket.should_receive(:new).at_most(100).and_return do |m|
-          bucket = mock(m[:name], :name => m[:name])
-          bucket.stub!(:save)
-          bucket
+        @requested_project.buckets.should_receive(:create).at_most(100).and_return do |m|
+          mock(m[:name], :name => m[:name])
+        end
+        @updated_project.buckets.should_receive(:create).at_most(100).and_return do |m|
+          mock(m[:name], :name => m[:name])
         end
       end
 
@@ -98,13 +99,11 @@ describe DCCWorker, "when running as leader" do
     end
 
     it "create the buckets in the db" do
-      [["req", "123", 6, [1, 2, 3]], ["upd", "456", 1, [1, 2, 3]]].each do |name, commit, n, tasks|
-        tasks.each do |task|
-          b = mock('bucket')
-          Bucket.should_receive(:new).with(:project_id => "#{name}_id", :commit => commit,
-              :build_number => n, :name => "#{name}#{task}", :status => 0).and_return b
-          b.should_receive(:save)
-        end
+      [1, 2, 3].each do |task|
+        @requested_project.buckets.should_receive(:create).with(:commit => "123",
+            :build_number => 6, :name => "req#{task}", :status => 0)
+        @updated_project.buckets.should_receive(:create).with(:commit => "456",
+            :build_number => 1, :name => "upd#{task}", :status => 0)
       end
       @leader.read_buckets
     end
