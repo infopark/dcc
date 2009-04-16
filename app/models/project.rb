@@ -7,7 +7,7 @@ require 'lib/git'
 #    -> build_requested in der DB auf false setzen
 #    -> buckets in der DB erzeugen
 class Project < ActiveRecord::Base
-  has_many :branches
+  has_many :buckets
   validate :must_have_name, :must_have_url, :must_have_branch
 
   extend Forwardable
@@ -31,5 +31,11 @@ class Project < ActiveRecord::Base
 
   def tasks
     File.read("#{git.path}/dcc.tasks").split("\n")
+  end
+
+  def next_build_number
+    bucket = buckets.find(:first, :conditions => "'commit' = '#{current_commit}'",
+        :order => "build_number DESC")
+    bucket ? bucket.build_number + 1 : 1
   end
 end
