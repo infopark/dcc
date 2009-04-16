@@ -5,6 +5,7 @@ class CreateProjects < ActiveRecord::Migration
       t.string :last_commit
       t.boolean :build_requested
     end
+    add_index :projects, :name, :unique => true
 
     create_table :buckets do |t|
       t.string :name, :null => false
@@ -12,6 +13,7 @@ class CreateProjects < ActiveRecord::Migration
       t.text :log
       t.belongs_to :project
     end
+    add_index :buckets, :name, :unique => true
   end
 
   def self.down
