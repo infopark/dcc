@@ -13,7 +13,9 @@ class CreateProjects < ActiveRecord::Migration
       t.text :log
       t.belongs_to :project
     end
-    add_index :buckets, :name, :unique => true
+    add_index :buckets, [:name, :project_id, :commit], :unique => true
+    add_index :buckets, :build_number
+    add_index :buckets, :project_id
   end
 
   def self.down
