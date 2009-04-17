@@ -1,2 +1,5 @@
-spec
-test
+specs:
+    - spec
+tests:
+    - test
+    - gibtsnicht
