@@ -1,5 +1,7 @@
 specs:
+    - db:migrate
     - spec
 tests:
+    - db:migrate
     - test
     - gibtsnicht
