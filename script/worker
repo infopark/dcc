@@ -6,10 +6,11 @@ require 'active_record'
 require 'lib/dcc_worker'
 
 # FIXME: Konfig aus Datei lesen
-# FIXME: Hier oder im Worker??? Hier, da Worker ja lib ist.
 # -> memcached-Server(s)
 # -> DB-Verbindung
+# -> Log-Level
+# -> Gruppen-Bezeichnung
 
 ActiveRecord::Base.establish_connection(YAML::load(File.read('config/database.yml'))['development'])
 
-DCCWorker.new(['127.0.0.1:11211']).run
+DCCWorker.new('dcc', ['master-of-disaster.infopark:11211'], :log_level => Logger::DEBUG).run

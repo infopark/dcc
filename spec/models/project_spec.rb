@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Project do
-  fixtures :projects
+  fixtures :projects, :buckets
 
   before(:each) do
     @project = Project.find(1)
@@ -28,6 +28,11 @@ describe Project do
     @project.build_requested.should be_nil
     Project.find(2).build_requested.should be_true
     Project.find(3).build_requested.should be_false
+  end
+
+  it "may have buckets" do
+    @project.buckets.should be_empty
+    Project.find(3).buckets.should_not be_empty
   end
 end
 
@@ -102,8 +107,23 @@ describe Project do
 
     describe "when providing tasks" do
       it "should read the bucket config and return the configured tasks" do
-        File.should_receive(:read).with("git_path/dcc.tasks").and_return("one\ntwo\nthree")
-        @project.tasks.should == ["one", "two", "three"]
+        File.should_receive(:read).with("git_path/dcc.tasks").and_return(%Q|
+              ---
+              "one":
+                - "1a"
+                - "1b"
+                - "1c"
+              "two":
+                - "2"
+              "three":
+                - "3a"
+                - "3b"
+            |)
+        @project.tasks.should == {
+              "one" => ["1a", "1b", "1c"],
+              "two" => ["2"],
+              "three" => ["3a", "3b"]
+            }
       end
     end
 

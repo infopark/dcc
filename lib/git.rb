@@ -26,7 +26,7 @@ class Git
   def clone
     # FIXME: Tests
     FileUtils.rm_rf(path) if File.exists?(path)
-    git("clone", [@url, path], :execute_locally => false)
+    git("clone", [@url, path], :do_not_chdir => true)
     git("checkout", git("name-rev", ["--name-only", @branch]).include?(@branch) ? [@branch] :
         %W(-t -b #{@branch} origin/#{@branch}))
     git("submodule", ["update", "--init"])
@@ -53,28 +53,18 @@ class Git
     git("log", %W(--pretty=format:%H -n 1 #{@branch}))[0]
   end
 
-  def git(operation, arguments = [], options = {}, &block)
+  def git(operation, arguments = [], options = {})
     # FIXME: Tests
     command = ["git"]
     command << operation
     command += arguments.compact
-    command
     error_log = File.join(path, "..", "#{@name}_git.err")
     FileUtils.rm_f(error_log)
     FileUtils.mkdir_p(File.dirname(error_log))
     FileUtils.touch(error_log)
-    if options[:execute_locally] != false
-      Dir.chdir(path) do
-        execute_with_error_log(command, error_log, options, &block)
-      end
-    else
-      execute_with_error_log(command, error_log, options, &block)
-    end
-  end
-
-  def execute_with_error_log(command, error_log, options = {}, &block)
-    # FIXME: Tests
-    execute(command, :stderr => error_log) do |io|
+    options[:stderr] = error_log
+    options[:dir] = path unless options[:do_not_chdir]
+    execute(command, options) do |io|
       io.readlines.collect {|line| line.chomp}
     end
   end

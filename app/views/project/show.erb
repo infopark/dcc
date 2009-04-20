@@ -1,0 +1,16 @@
+<h1>Project <%= @project.name %></h1>
+<table class='buckets'>
+<% @project.buckets.each do |bucket| -%>
+  <tr>
+    <td class='name'><%= link_to bucket.name, :action => "show_bucket", :id => bucket %></td>
+    <td><%= case bucket.status
+        when 0
+          'pending'
+        when 1
+          'done'
+        when 2
+          'failed'
+        end %></td>
+  </tr>
+<% end -%>
+</table>

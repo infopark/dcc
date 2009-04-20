@@ -1,4 +1,4 @@
-class CreateProjects < ActiveRecord::Migration
+class CreateProjectsBucketsAndLogs < ActiveRecord::Migration
   def self.up
     create_table :projects do |t|
       t.string :name, :url, :branch, :null => false
@@ -13,12 +13,20 @@ class CreateProjects < ActiveRecord::Migration
       t.text :log
       t.belongs_to :project
     end
-    add_index :buckets, [:name, :project_id, :commit], :unique => true
+    add_index :buckets, [:project_id, :commit]
+    add_index :buckets, [:name, :project_id, :commit, :build_number], :unique => true
     add_index :buckets, :build_number
     add_index :buckets, :project_id
+
+    create_table :logs do |t|
+      t.text :log
+      t.belongs_to :bucket
+    end
+    add_index :logs, :bucket_id
   end
 
   def self.down
+    drop_table :logs
     drop_table :buckets
     drop_table :projects
   end

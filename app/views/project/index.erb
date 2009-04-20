@@ -1,10 +1,14 @@
-Hallo Welt.
 <table class='projects'>
 <% @projects.each do |project| -%>
   <tr>
-    <td class='name'><%= project.name %></td>
+    <td class='name'><%= link_to project.name, :action => "show", :id => project %></td>
     <td>
-    <% form_for :project, :url => {:action => :delete, :id => project.id} do |f| -%>
+    <% form_for :project, :url => {:action => :build, :id => project} do |f| -%>
+      <%= submit_tag 'Bauen' %>
+    <% end -%>
+    </td>
+    <td>
+    <% form_for :project, :url => {:action => :delete, :id => project} do |f| -%>
       <%= submit_tag 'Löschen' %>
     <% end -%>
     </td>

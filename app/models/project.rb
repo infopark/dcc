@@ -1,13 +1,8 @@
 require 'forwardable'
 require 'lib/git'
 
-# FIXME: In Project noch zu implementieren
-#    -> commit_no passend erzeugen (nil, 2, 3, 4...) -> nach vorhandenen buckets schauen
-#    -> last_commit in der DB auf current_commit setzen
-#    -> build_requested in der DB auf false setzen
-#    -> buckets in der DB erzeugen
 class Project < ActiveRecord::Base
-  has_many :buckets
+  has_many :buckets, :dependent => :destroy
   validate :must_have_name, :must_have_url, :must_have_branch
 
   extend Forwardable
@@ -30,11 +25,11 @@ class Project < ActiveRecord::Base
   end
 
   def tasks
-    File.read("#{git.path}/dcc.tasks").split("\n")
+    YAML::load(File.read("#{git.path}/dcc.tasks"))
   end
 
   def next_build_number
-    bucket = buckets.find(:first, :conditions => "'commit' = '#{current_commit}'",
+    bucket = buckets.find(:first, :conditions => %Q("commit" = '#{current_commit}'),
         :order => "build_number DESC")
     bucket ? bucket.build_number + 1 : 1
   end

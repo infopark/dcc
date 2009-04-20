@@ -1,0 +1,11 @@
+<h1>Project <%= @bucket.project.name %>, Task <%= @bucket.name %></h1>
+<pre><%= @bucket.log %></pre>
+<hr/>
+<table class='logs'>
+<% @bucket.logs.each do |log| -%>
+  <tr>
+    <td><pre><%= log.log %></pre></td>
+  </tr>
+<% end -%>
+</table>
+
