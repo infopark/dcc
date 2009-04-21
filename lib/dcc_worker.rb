@@ -18,8 +18,8 @@ class DCCWorker
 
   def run
     log.debug "running"
-    process_bucket do |bucket|
-      perform_task bucket
+    process_bucket do |bucket_id|
+      perform_task Bucket.find(bucket_id)
     end
   end
 
@@ -95,8 +95,9 @@ class DCCWorker
             " because #{project.build_requested?} ||" +
             " #{project.current_commit} != #{project.last_commit}"
         project.tasks.each_key do |task|
-          buckets << project.buckets.create(:commit => project.current_commit,
+          bucket = project.buckets.create(:commit => project.current_commit,
               :build_number => build_number, :name => task, :status => 0)
+          buckets << bucket.id
         end
         update_project project
       end

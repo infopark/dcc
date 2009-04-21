@@ -46,12 +46,14 @@ describe DCCWorker, "when running as follower" do
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
     leader = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
     @worker.stub!(:leader).and_return leader
-    leader.stub!(:bucket_request).and_return ["bucket 1", 10], ["bucket 2", 10], ["bucket 3", 10],
-        [nil, 10]
+    leader.stub!(:bucket_request).and_return ["b_id1", 10], ["b_id2", 10], ["b_id3", 10], [nil, 10]
     @worker.memcache_client.stub!(:add)
     @worker.memcache_client.stub!(:get).and_return(leader.uri)
     @worker.stub!(:loop?).and_return true, true, false
     @worker.send(:log).level = Logger::FATAL
+    Bucket.stub!(:find).with("b_id1").and_return("bucket 1")
+    Bucket.stub!(:find).with("b_id2").and_return("bucket 2")
+    Bucket.stub!(:find).with("b_id3").and_return("bucket 3")
   end
 
   it "should perform all tasks given from leader" do
@@ -185,33 +187,38 @@ describe DCCWorker, "when running as leader" do
   describe "when reading the buckets" do
     describe "" do
       before do
+        # Mit stub! gehen return_blocks nicht (stand rspec 1.1.11),
+        # daher verwende ich hier should_receive mit at_most(100).
         @requested_project.buckets.should_receive(:create).at_most(100).and_return do |m|
-          mock(m[:name], :name => m[:name])
+          mock(m[:name], :id => "#{m[:name]}_id")
         end
         @updated_project.buckets.should_receive(:create).at_most(100).and_return do |m|
-          mock(m[:name], :name => m[:name])
+          mock(m[:name], :id => "#{m[:name]}_id")
+        end
+        @unchanged_project.buckets.should_receive(:create).at_most(100).and_return do |m|
+          mock(m[:name], :id => "#{m[:name]}_id")
         end
       end
 
       it "should return updated buckets" do
-        bucket_names = @leader.read_buckets.map {|b| b.name}
-        bucket_names.should include("upd1")
-        bucket_names.should include("upd2")
-        bucket_names.should include("upd3")
+        buckets = @leader.read_buckets
+        buckets.should include("upd1_id")
+        buckets.should include("upd2_id")
+        buckets.should include("upd3_id")
       end
 
       it "should return requested buckets" do
-        bucket_names = @leader.read_buckets.map {|b| b.name}
-        bucket_names.should include("req1")
-        bucket_names.should include("req2")
-        bucket_names.should include("req3")
+        buckets = @leader.read_buckets
+        buckets.should include("req1_id")
+        buckets.should include("req2_id")
+        buckets.should include("req3_id")
       end
 
       it "should not return unchanched buckets" do
-        bucket_names = @leader.read_buckets.map {|b| b.name}
-        bucket_names.should_not include("unc1")
-        bucket_names.should_not include("unc2")
-        bucket_names.should_not include("unc3")
+        buckets = @leader.read_buckets
+        buckets.should_not include("unc1_id")
+        buckets.should_not include("unc2_id")
+        buckets.should_not include("unc3_id")
       end
 
       it "should update the projects state" do
@@ -225,9 +232,9 @@ describe DCCWorker, "when running as leader" do
     it "creates the buckets in the db" do
       [1, 2, 3].each do |task|
         @requested_project.buckets.should_receive(:create).with(:commit => "123",
-            :build_number => 6, :name => "req#{task}", :status => 0)
+            :build_number => 6, :name => "req#{task}", :status => 0).and_return(mock('', :id => 1))
         @updated_project.buckets.should_receive(:create).with(:commit => "456",
-            :build_number => 1, :name => "upd#{task}", :status => 0)
+            :build_number => 1, :name => "upd#{task}", :status => 0).and_return(mock('', :id => 1))
       end
       @leader.read_buckets
     end
