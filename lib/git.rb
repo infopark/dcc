@@ -58,7 +58,7 @@ class Git
     command = ["git"]
     command << operation
     command += arguments.compact
-    error_log = File.join(path, "..", "#{@name}_git.err")
+    error_log = File.expand_path(File.join(path, "..", "#{@name}_git.err"))
     FileUtils.rm_f(error_log)
     FileUtils.mkdir_p(File.dirname(error_log))
     FileUtils.touch(error_log)
