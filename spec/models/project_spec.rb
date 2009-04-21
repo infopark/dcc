@@ -129,7 +129,7 @@ describe Project do
 
     it "should compute the next build number by adding one to the highest for the current commit" do
       @project.stub!(:buckets).and_return(buckets = mock('buckets'))
-      buckets.stub!(:find).with(:first, :conditions => "'commit' = 'the current commit'",
+      buckets.stub!(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
           :order => "build_number DESC").and_return(mock('bucket', :build_number => 5))
 
       @project.next_build_number.should == 6
@@ -137,7 +137,7 @@ describe Project do
 
     it "should compute the next build number with 1 for the first build of a commit" do
       @project.stub!(:buckets).and_return(buckets = mock('buckets'))
-      buckets.stub!(:find).with(:first, :conditions => "'commit' = 'the current commit'",
+      buckets.stub!(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
           :order => "build_number DESC").and_return nil
 
       @project.next_build_number.should == 1

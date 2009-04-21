@@ -43,8 +43,8 @@ end
 
 describe DCCWorker, "when running as follower" do
   before do
-    @worker = DCCWorker.new(nil, :log_level => Logger::ERROR)
-    leader = DCCWorker.new(nil, :log_level => Logger::ERROR)
+    @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
+    leader = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
     @worker.stub!(:leader).and_return leader
     leader.stub!(:bucket_request).and_return ["bucket 1", 10], ["bucket 2", 10], ["bucket 3", 10],
         [nil, 10]
@@ -171,7 +171,7 @@ describe DCCWorker, "when running as leader" do
     @updated_project = project_mock("upd", false, "456", 1)
     Project.stub!(:find).with(:all).and_return(
         [@requested_project, @unchanged_project, @updated_project])
-    @leader = DCCWorker.new(nil, :log_level => Logger::ERROR)
+    @leader = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 
   describe "when initializing the buckets" do

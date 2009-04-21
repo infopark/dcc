@@ -11,6 +11,6 @@ require 'lib/dcc_worker'
 # -> Log-Level
 # -> Gruppen-Bezeichnung
 
-ActiveRecord::Base.establish_connection(YAML::load(File.read('config/database.yml'))['development'])
+ActiveRecord::Base.establish_connection(YAML::load(File.read('config/database.yml'))['production'])
 
 DCCWorker.new('dcc', ['master-of-disaster.infopark:11211'], :log_level => Logger::DEBUG).run

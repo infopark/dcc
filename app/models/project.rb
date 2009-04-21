@@ -29,7 +29,7 @@ class Project < ActiveRecord::Base
   end
 
   def next_build_number
-    bucket = buckets.find(:first, :conditions => %Q("commit" = '#{current_commit}'),
+    bucket = buckets.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
         :order => "build_number DESC")
     bucket ? bucket.build_number + 1 : 1
   end
