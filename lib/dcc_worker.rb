@@ -45,7 +45,10 @@ class DCCWorker
 
   def perform_rake_task(path, task, logs)
     rake = Rake.new(path)
+    old_connection = ActiveRecord::Base.connection
+    old_connection.disconnect!
     pid = fork do
+      ActiveRecord::Base.establish_connection(old_connection.spec.config)
       begin
         rake.rake(task)
       rescue
@@ -53,6 +56,7 @@ class DCCWorker
       end
       exit 0
     end
+    ActiveRecord::Base.establish_connection(old_connection.spec.config)
     log_length = 0
     while !Process.waitpid(pid, Process::WNOHANG)
       log_length += read_log_into_db(rake.log_file, log_length, logs)
