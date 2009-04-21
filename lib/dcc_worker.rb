@@ -17,13 +17,14 @@ class DCCWorker
   end
 
   def run
+    log.debug "running"
     process_bucket do |bucket|
       perform_task bucket
     end
   end
 
   def perform_task(bucket)
-    log.debug "#{@uri} performing task #{bucket}"
+    log.debug "performing task #{bucket}"
     logs = bucket.logs
     project = bucket.project
     git = project.git
