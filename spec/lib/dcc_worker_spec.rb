@@ -183,7 +183,7 @@ describe DCCWorker, "when running as leader" do
   end
 
   describe "when reading the buckets" do
-    describe do
+    describe "" do
       before do
         @requested_project.buckets.should_receive(:create).at_most(100).and_return do |m|
           mock(m[:name], :name => m[:name])
@@ -222,7 +222,7 @@ describe DCCWorker, "when running as leader" do
       end
     end
 
-    it "create the buckets in the db" do
+    it "creates the buckets in the db" do
       [1, 2, 3].each do |task|
         @requested_project.buckets.should_receive(:create).with(:commit => "123",
             :build_number => 6, :name => "req#{task}", :status => 0)
