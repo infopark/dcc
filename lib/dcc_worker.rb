@@ -4,6 +4,7 @@ require 'app/models/project'
 require 'app/models/bucket'
 require 'app/models/log'
 require 'lib/rake'
+require 'lib/mailer'
 
 class DCCWorker
   include Politics::StaticQueueWorker
@@ -38,6 +39,11 @@ class DCCWorker
       whole_log << log.log
     end
     bucket.log = whole_log
+# FIXME
+# Tests!
+    unless succeeded
+      Mailer.deliver_failure_message(bucket)
+    end
     bucket.status = succeeded ? 1 : 2
     bucket.save
     logs.clear
