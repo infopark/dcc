@@ -4,17 +4,20 @@ require 'rubygems'
 require 'yaml'
 require 'active_record'
 require 'action_mailer'
-require 'lib/dcc_worker'
+require 'fileutils'
 
-# FIXME: Konfig aus Datei lesen
-# -> memcached-Server(s)
-# -> DB-Verbindung
-# -> Log-Level
-# -> Gruppen-Bezeichnung
+FileUtils.chdir("#{File.dirname($0[0..0] == '/' ? $0 : "#{FileUtils.pwd}/#{$0}")}/..") do
+  require 'lib/dcc_worker'
+  # FIXME: Konfig aus Datei lesen
+  # -> memcached-Server(s)
+  # -> DB-Verbindung
+  # -> Log-Level
+  # -> Gruppen-Bezeichnung
 
-ActiveRecord::Base.establish_connection(YAML::load(File.read('config/database.yml'))['production'])
+  ActiveRecord::Base.establish_connection(YAML::load(File.read('config/database.yml'))['production'])
 
-ActionMailer::Base.delivery_method = :sendmail
+  ActionMailer::Base.delivery_method = :sendmail
 
-DCCWorker.new('dcc', ['master-of-disaster.infopark:11211'], :log_level => Logger::DEBUG,
-    :domain => 'infopark').run
+  DCCWorker.new('dcc', ['master-of-disaster.infopark:11211'], :log_level => Logger::DEBUG,
+      :domain => 'infopark').run
+end
