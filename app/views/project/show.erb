@@ -1,6 +1,7 @@
 <h1>Project <%= @project.name %></h1>
 <table class='buckets'>
-<% @project.buckets.sort_by {|b| b.id}.each do |bucket| -%>
+<% buckets = @project.buckets.sort_by {|b| b.id}.reverse
+buckets[0..2].each do |bucket| -%>
   <tr>
     <td class='name'><%= link_to bucket.name, :action => "show_bucket", :id => bucket %></td>
     <td><%= case bucket.status
@@ -11,6 +12,17 @@
         when 2
           'failed'
         end %></td>
+  </tr>
+<% end -%>
+<% unless buckets.size < 4 -%>
+  <tr>
+    <td>
+      <select>
+      <% buckets[3..-1].each do |bucket| -%>
+        <option><%= bucket.name %></option>
+      <% end -%>
+      </select>
+    </td>
   </tr>
 <% end -%>
 </table>

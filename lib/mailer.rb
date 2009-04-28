@@ -10,7 +10,7 @@ class Mailer < ActionMailer::Base
     recipients 'tilo@infopark.de'
     subject "#{bucket.project.name}-Build fehlgeschlagen"
     body %Q|
-Projekt: #{bucket.project_name}
+Projekt: #{bucket.project.name}
 Build: #{bucket.commit}.#{bucket.build_number}
 Task: #{bucket.name}
 
