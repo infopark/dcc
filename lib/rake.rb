@@ -13,7 +13,7 @@ class Rake
   end
 
   def rake(task, options = {})
-    options = {:dir => @path, :stderr => log_file, :stderr => log_file}.merge(options)
+    options = {:dir => @path, :stdout => log_file, :stderr => log_file}.merge(options)
     FileUtils.rm_f(log_file)
     FileUtils.mkdir_p(File.dirname(log_file))
     FileUtils.touch(log_file)
