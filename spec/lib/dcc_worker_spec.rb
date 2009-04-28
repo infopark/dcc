@@ -66,10 +66,12 @@ describe DCCWorker, "when running as follower" do
   describe "when performing task" do
     before do
       @git = mock('git', :path => 'git path', :update => nil)
-      project = mock('project', :tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git)
+      project = mock('project', :name => "project's name",
+          :tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git)
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
       @bucket = mock('bucket', :project => project, :name => "t2", :log= => nil, :save => nil,
-          :logs => @logs, :status= => nil)
+          :logs => @logs, :status= => nil, :commit => 'the commit', :build_number => 666,
+          :log => "nothing to say here")
     end
 
     after do
