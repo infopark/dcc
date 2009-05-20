@@ -2,6 +2,5 @@ email:
   - tilo@infopark.de
 tasks:
   specs:
-    - failure
     - db:migrate
     - spec

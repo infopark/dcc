@@ -51,6 +51,7 @@ describe DCCWorker, "when running as follower" do
     @worker.memcache_client.stub!(:get).and_return(leader.uri)
     @worker.stub!(:loop?).and_return true, true, false
     @worker.send(:log).level = Logger::FATAL
+    Bucket.stub!(:find)
     Bucket.stub!(:find).with("b_id1").and_return("bucket 1")
     Bucket.stub!(:find).with("b_id2").and_return("bucket 2")
     Bucket.stub!(:find).with("b_id3").and_return("bucket 3")
@@ -67,11 +68,12 @@ describe DCCWorker, "when running as follower" do
     before do
       @git = mock('git', :path => 'git path', :update => nil)
       project = mock('project', :name => "project's name",
-          :tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git)
+          :tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git,
+          :e_mail_receivers => [])
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
       @bucket = mock('bucket', :project => project, :name => "t2", :log= => nil, :save => nil,
           :logs => @logs, :status= => nil, :commit => 'the commit', :build_number => 666,
-          :log => "nothing to say here")
+          :log => "nothing to say here", :bucket_id => 1)
     end
 
     after do
