@@ -39,16 +39,16 @@ class DCCWorker
       whole_log << log.log
     end
     bucket.log = whole_log
+    bucket.status = succeeded ? 1 : 2
+    bucket.save
 # FIXME
 # Tests! fürs Mail-Zeux
-    unless succeeded
+    if !succeeded
       Mailer.deliver_failure_message(bucket, @url)
-    elsif last_bucket = Buckets.find(:conditions => "bucket_id < #{bucket.id}"], :limit => 1,
+    elsif last_bucket = Buckets.find(:conditions => "bucket_id < #{bucket.id}", :limit => 1,
         :order => 'DESC') && last_bucket.status != 1
       Mailer.deliver_fixed_message(bucket, @url)
     end
-    bucket.status = succeeded ? 1 : 2
-    bucket.save
     logs.clear
   end
 
