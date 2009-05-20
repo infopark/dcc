@@ -46,7 +46,7 @@ class DCCWorker
 # Tests! fürs Mail-Zeux
     if !succeeded
       Mailer.deliver_failure_message(bucket, @url)
-    elsif last_bucket = Bucket.find(:conditions => "bucket_id < #{bucket.id}", :limit => 1,
+    elsif last_bucket = Bucket.find(:conditions => "id < #{bucket.id}", :limit => 1,
         :order => 'DESC') && last_bucket.status != 1
       Mailer.deliver_fixed_message(bucket, @url)
     end
