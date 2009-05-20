@@ -41,15 +41,15 @@ class DCCWorker
     bucket.log = whole_log
     bucket.status = succeeded ? 1 : 2
     bucket.save
+    logs.clear
 # FIXME
 # Tests! fürs Mail-Zeux
     if !succeeded
       Mailer.deliver_failure_message(bucket, @url)
-    elsif last_bucket = Bucket.find(:conditions => "bucket_id < #{bucket.bucket_id}", :limit => 1,
+    elsif last_bucket = Bucket.find(:conditions => "bucket_id < #{bucket.id}", :limit => 1,
         :order => 'DESC') && last_bucket.status != 1
       Mailer.deliver_fixed_message(bucket, @url)
     end
-    logs.clear
   end
 
   def perform_rake_task(path, task, logs)

@@ -73,7 +73,7 @@ describe DCCWorker, "when running as follower" do
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
       @bucket = mock('bucket', :project => project, :name => "t2", :log= => nil, :save => nil,
           :logs => @logs, :status= => nil, :commit => 'the commit', :build_number => 666,
-          :log => "nothing to say here", :bucket_id => 1)
+          :log => "nothing to say here", :id => 1)
     end
 
     after do
