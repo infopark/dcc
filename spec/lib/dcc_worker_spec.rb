@@ -71,9 +71,9 @@ describe DCCWorker, "when running as follower" do
           :tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git,
           :e_mail_receivers => [])
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
-      @bucket = mock('bucket', :project => project, :name => "t2", :log= => nil, :save => nil,
-          :logs => @logs, :status= => nil, :commit => 'the commit', :build_number => 666,
-          :log => "nothing to say here", :id => 1)
+      @bucket = mock('bucket', :project_id => '1', :project => project, :name => "t2", :log= => nil,
+          :save => nil, :logs => @logs, :status= => nil, :commit => 'the commit',
+          :build_number => 666, :log => "nothing to say here", :id => 1)
     end
 
     after do
@@ -155,6 +155,45 @@ describe DCCWorker, "when running as follower" do
         @worker.perform_rake_task('path', 'task', @logs).should be_true
       end
     end
+  end
+end
+
+describe DCCWorker, "when running as follower with fixtures" do
+  fixtures :buckets
+
+  before do
+    @bucket = mock('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,
+        :save => nil, :id => 1000, :project_id => 33,
+        :project => mock('project', :tasks => {'task' => []},
+        :git => mock('git', :update => nil)))
+    @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
+  end
+
+  it "should send an email if build failed" do
+    @bucket.project.stub!(:tasks).and_return({'task' => ['task']})
+    @bucket.project.git.stub!(:path)
+    @worker.stub!(:perform_rake_task).and_return false
+    Mailer.should_receive(:deliver_failure_message).with(@bucket, nil)
+    @worker.perform_task(@bucket)
+  end
+
+  it "should send no email if build succeeded again" do
+    @bucket.stub!(:project_id => 300)
+    Mailer.should_not_receive(:deliver_failure_message)
+    Mailer.should_not_receive(:deliver_fixed_message)
+    @worker.perform_task(@bucket)
+  end
+
+  it "should send no email if first build ever succeeded" do
+    @bucket.stub!(:project_id => 3000)
+    Mailer.should_not_receive(:deliver_failure_message)
+    Mailer.should_not_receive(:deliver_fixed_message)
+    @worker.perform_task(@bucket)
+  end
+
+  it "should send an email if build was fixed" do
+    Mailer.should_receive(:deliver_fixed_message).with(@bucket, nil)
+    @worker.perform_task(@bucket)
   end
 end
 

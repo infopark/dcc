@@ -42,12 +42,10 @@ class DCCWorker
     bucket.status = succeeded ? 1 : 2
     bucket.save
     logs.clear
-# FIXME
-# Tests! fürs Mail-Zeux
     if !succeeded
       Mailer.deliver_failure_message(bucket, @url)
-    elsif last_bucket = Bucket.find(:conditions => "id < #{bucket.id}", :limit => 1,
-        :order => 'DESC') && last_bucket.status != 1
+    elsif (last_bucket = Bucket.find_last_by_name_and_project_id(bucket.name, bucket.project_id,
+        :conditions => "id < #{bucket.id}")) && last_bucket.status != 1
       Mailer.deliver_fixed_message(bucket, @url)
     end
   end
