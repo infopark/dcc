@@ -25,12 +25,29 @@ class Project < ActiveRecord::Base
   end
 
   def tasks
-    YAML::load(File.read("#{git.path}/dcc.tasks"))
+    read_config['tasks']
+  end
+
+  def e_mail_receivers
+    configured_email = read_config['email']
+    email = if configured_email
+      configured_email.is_a?(Array) ? configured_email : [configured_email]
+    else
+      ['develop@infopark.de']
+    end
   end
 
   def next_build_number
     bucket = buckets.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
         :order => "build_number DESC")
     bucket ? bucket.build_number + 1 : 1
+  end
+
+private
+
+  def read_config
+    config_file = "#{git.path}/dcc.yml"
+    raise "missing config in '#{config_file}'" unless config = YAML::load(File.read(config_file))
+    config
   end
 end

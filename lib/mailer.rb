@@ -3,12 +3,20 @@ require 'action_mailer'
 #FIXME: Mehr Infos über's Projekt per Parameter rein und in den Betreff
 
 class Mailer < ActionMailer::Base
-# FIXME
-# -> Mail-Config per Projekt in dcc.conf
-  def failure_message(bucket)
+  def failure_message(bucket, host)
+    message(bucket, host, 'fehlgeschlagen')
+  end
+
+  def fixed_message(bucket, host)
+    message(bucket, host, 'repariert')
+  end
+
+private
+
+  def message(bucket, host, state)
     from 'develop@infopark.de'
-    recipients 'tilo@infopark.de'
-    subject "#{bucket.project.name}-Build fehlgeschlagen"
+    recipients bucket.project.e_mail_receivers
+    subject "#{bucket.project.name}-Build #{state} auf #{host}"
     body %Q|
 Projekt: #{bucket.project.name}
 Build: #{bucket.commit}.#{bucket.build_number}
