@@ -43,10 +43,10 @@ class DCCWorker
     bucket.save
     logs.clear
     if !succeeded
-      Mailer.deliver_failure_message(bucket, @url)
+      Mailer.deliver_failure_message(bucket, @uri)
     elsif (last_bucket = Bucket.find_last_by_name_and_project_id(bucket.name, bucket.project_id,
         :conditions => "id < #{bucket.id}")) && last_bucket.status != 1
-      Mailer.deliver_fixed_message(bucket, @url)
+      Mailer.deliver_fixed_message(bucket, @uri)
     end
   end
 

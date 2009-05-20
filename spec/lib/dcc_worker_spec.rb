@@ -173,7 +173,7 @@ describe DCCWorker, "when running as follower with fixtures" do
     @bucket.project.stub!(:tasks).and_return({'task' => ['task']})
     @bucket.project.git.stub!(:path)
     @worker.stub!(:perform_rake_task).and_return false
-    Mailer.should_receive(:deliver_failure_message).with(@bucket, nil)
+    Mailer.should_receive(:deliver_failure_message).with(@bucket, %r(^druby://))
     @worker.perform_task(@bucket)
   end
 
@@ -192,7 +192,7 @@ describe DCCWorker, "when running as follower with fixtures" do
   end
 
   it "should send an email if build was fixed" do
-    Mailer.should_receive(:deliver_fixed_message).with(@bucket, nil)
+    Mailer.should_receive(:deliver_fixed_message).with(@bucket, %r(^druby://))
     @worker.perform_task(@bucket)
   end
 end
