@@ -1,18 +1,19 @@
+<%= link_to 'Übersicht', :action => 'index' %>
 <h1>Project <%= @project.name %></h1>
-<table class='buckets'>
-<% buckets = @project.buckets.sort_by {|b| b.id}.reverse
-buckets[0..2].each do |bucket| -%>
+<table class='builds'>
+<% builds = @project.builds.sort_by {|b| b.id}.reverse
+builds[0..2].each do |build| -%>
   <tr>
-    <td class='name'><%= link_to bucket.name, :action => "show_bucket", :id => bucket %></td>
-    <td><%= bucket_status(bucket) %></td>
+    <td class='name'><%= link_to build.identifier, :action => "show_build", :id => build %></td>
+    <td><%= build_status(build) %></td>
   </tr>
 <% end -%>
-<% unless buckets.size < 4 -%>
+<% unless builds.size < 4 -%>
   <tr>
     <td>
       <select>
-      <% buckets[3..-1].each do |bucket| -%>
-        <option><%= bucket.name %></option>
+      <% builds[3..-1].each do |build| -%>
+        <option><%= build.identifier %></option>
       <% end -%>
       </select>
     </td>

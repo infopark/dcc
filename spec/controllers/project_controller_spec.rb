@@ -59,6 +59,23 @@ describe ProjectController, "when showing a project" do
   end
 end
 
+describe ProjectController, "when showing a build" do
+  before do
+    Build.stub!(:find).and_return nil
+  end
+
+  it "should fetch the build and assign it for the view" do
+    Build.should_receive(:find).with("666").and_return "the build"
+    get 'show_build', :id => 666
+    assigns[:build].should == "the build"
+  end
+
+  it "should render the build view" do
+    get 'show_build', :id => 666
+    response.should render_template('project/show_build')
+  end
+end
+
 describe ProjectController, "when showing a bucket" do
   before do
     Bucket.stub!(:find).and_return nil

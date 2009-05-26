@@ -1,53 +1,41 @@
 one:
   id: 1
   name: "one"
-  commit_hash: "c1"
-  build_number: 6
   status: 1
-  project_id: 3
+  build_id: 3
 
 two:
   id: 2
   name: "two"
-  commit_hash: "c1"
-  build_number: 1
   status: 0
-  project_id: 3
+  build_id: 3
   log: "bucket's log"
 
 succeeded:
   id: 31
   name: 'task'
-  commit_hash: 'succeeded'
-  build_number: 33
   status: 1
-  project_id: 33
+  build_id: 330
   log: "bucket's log"
 
 pending:
   id: 32
   name: 'task'
-  commit_hash: 'pending'
-  build_number: 33
   status: 0
-  project_id: 33
+  build_id: 331
   log: "bucket's log"
 
 failed:
   id: 33
   name: 'task'
-  commit_hash: 'failed'
-  build_number: 33
   status: 2
-  project_id: 33
+  build_id: 332
   log: "bucket's log"
 
 succeeded_other_project:
   id: 300
   name: 'task'
-  commit_hash: 'succeeded'
-  build_number: 33
   status: 1
-  project_id: 300
+  build_id: 300
   log: "bucket's log"
 

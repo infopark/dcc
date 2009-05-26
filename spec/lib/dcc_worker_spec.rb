@@ -71,9 +71,10 @@ describe DCCWorker, "when running as follower" do
           :tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git,
           :e_mail_receivers => [])
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
-      @bucket = mock('bucket', :project_id => '1', :project => project, :name => "t2", :log= => nil,
-          :save => nil, :logs => @logs, :status= => nil, :commit => 'the commit',
-          :build_number => 666, :log => "nothing to say here", :id => 1)
+      @bucket = mock('bucket', :name => "t2", :log= => nil,
+          :build => mock('build', :id => 1, :identifier => 'the commit.666', :project_id => '1',
+          :project => project, :commit => 'the commit', :build_number => 666),
+          :save => nil, :logs => @logs, :status= => nil, :log => "nothing to say here")
     end
 
     after do
@@ -163,29 +164,28 @@ describe DCCWorker, "when running as follower with fixtures" do
 
   before do
     @bucket = mock('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,
-        :save => nil, :id => 1000, :project_id => 33,
-        :project => mock('project', :tasks => {'task' => []},
-        :git => mock('git', :update => nil)))
+        :save => nil, :build => mock('build', :id => 1000, :project_id => 33,
+        :project => mock('project', :tasks => {'task' => []}, :git => mock('git', :update => nil))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 
   it "should send an email if build failed" do
-    @bucket.project.stub!(:tasks).and_return({'task' => ['task']})
-    @bucket.project.git.stub!(:path)
+    @bucket.build.project.stub!(:tasks).and_return({'task' => ['task']})
+    @bucket.build.project.git.stub!(:path)
     @worker.stub!(:perform_rake_task).and_return false
     Mailer.should_receive(:deliver_failure_message).with(@bucket, %r(^druby://))
     @worker.perform_task(@bucket)
   end
 
   it "should send no email if build succeeded again" do
-    @bucket.stub!(:project_id => 300)
+    @bucket.build.stub!(:project_id => 300)
     Mailer.should_not_receive(:deliver_failure_message)
     Mailer.should_not_receive(:deliver_fixed_message)
     @worker.perform_task(@bucket)
   end
 
   it "should send no email if first build ever succeeded" do
-    @bucket.stub!(:project_id => 3000)
+    @bucket.build.stub!(:project_id => 3000)
     Mailer.should_not_receive(:deliver_failure_message)
     Mailer.should_not_receive(:deliver_fixed_message)
     @worker.perform_task(@bucket)
@@ -202,7 +202,7 @@ describe DCCWorker, "when running as leader" do
     m = mock(name, :build_requested? => build_requested, :last_commit => "123",
         :current_commit => current_commit, :url => "#{name}_url", :branch => "#{name}_branch",
         :tasks => {"#{name}1" => "tasks1", "#{name}2" => "tasks2", "#{name}3" => "tasks3"},
-        :id => "#{name}_id", :buckets => [])
+        :id => "#{name}_id", :builds => [])
     m.should_receive(:next_build_number).at_most(:once).and_return(next_build_number)
     m.stub!(:last_commit=)
     m.stub!(:build_requested=)
@@ -230,15 +230,21 @@ describe DCCWorker, "when running as leader" do
   describe "when reading the buckets" do
     describe "" do
       before do
+        @requested_project.builds.stub!(:create).
+            and_return(requested_build = mock('', :buckets => mock('')))
+        @updated_project.builds.stub!(:create).
+            and_return(updated_build = mock('', :buckets => mock('')))
+        @unchanged_project.builds.stub!(:create).
+            and_return(unchanged_build = mock('', :buckets => mock('')))
         # Mit stub! gehen return_blocks nicht (stand rspec 1.1.11),
         # daher verwende ich hier should_receive mit at_most(100).
-        @requested_project.buckets.should_receive(:create).at_most(100).and_return do |m|
+        requested_build.buckets.should_receive(:create).at_most(100).and_return do |m|
           mock(m[:name], :id => "#{m[:name]}_id")
         end
-        @updated_project.buckets.should_receive(:create).at_most(100).and_return do |m|
+        updated_build.buckets.should_receive(:create).at_most(100).and_return do |m|
           mock(m[:name], :id => "#{m[:name]}_id")
         end
-        @unchanged_project.buckets.should_receive(:create).at_most(100).and_return do |m|
+        unchanged_build.buckets.should_receive(:create).at_most(100).and_return do |m|
           mock(m[:name], :id => "#{m[:name]}_id")
         end
       end
@@ -273,11 +279,15 @@ describe DCCWorker, "when running as leader" do
     end
 
     it "creates the buckets in the db" do
+      @requested_project.builds.should_receive(:create).with(:commit => "123", :build_number => 6).
+          and_return(requested_build = mock('', :buckets => mock('')))
+      @updated_project.builds.should_receive(:create).with(:commit => "456", :build_number => 1).
+          and_return(updated_build = mock('', :buckets => mock('')))
       [1, 2, 3].each do |task|
-        @requested_project.buckets.should_receive(:create).with(:commit => "123",
-            :build_number => 6, :name => "req#{task}", :status => 0).and_return(mock('', :id => 1))
-        @updated_project.buckets.should_receive(:create).with(:commit => "456",
-            :build_number => 1, :name => "upd#{task}", :status => 0).and_return(mock('', :id => 1))
+        requested_build.buckets.should_receive(:create).with(:name => "req#{task}", :status => 0).
+            and_return(mock('', :id => 1))
+        updated_build.buckets.should_receive(:create).with(:name => "upd#{task}", :status => 0).
+            and_return(mock('', :id => 1))
       end
       @leader.read_buckets
     end

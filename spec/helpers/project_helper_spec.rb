@@ -15,40 +15,42 @@ describe ProjectHelper do
     end
   end
 
+  describe 'build_status' do
+    before do
+      @succeeded_bucket = mock('bucket', :status => 1)
+      @pending_bucket = mock('bucket', :status => 0)
+      @failed_bucket = mock('bucket', :status => 2)
+      @build = Build.new
+    end
+
+    it "should return 'pending' if no bucket failed and at least one is pending" do
+      @build.stub!(:buckets => [@succeeded_bucket, @pending_bucket, @succeeded_bucket])
+      helper.build_status(@build).should == 'pending'
+    end
+
+    it "should return 'done' iff all buckets are done" do
+      @build.stub!(:buckets => [@succeeded_bucket, @succeeded_bucket])
+      helper.build_status(@build).should == 'done'
+    end
+
+    it "should return 'failed' if at least one bucket failed" do
+      @build.stub!(:buckets => [@succeeded_bucket, @failed_bucket, @pending_bucket])
+      helper.build_status(@build).should == 'failed'
+    end
+  end
+
   describe 'project_status' do
     before do
-      @succeeded_bucket = mock('bucket', :status => 1, :build_number => 6)
-      @pending_bucket = mock('bucket', :status => 0, :build_number => 6)
-      @failed_bucket = mock('bucket', :status => 2, :build_number => 6)
       @project = Project.new
       @project.last_commit = 'der commit'
       @project.id = 666
     end
 
-    it "should return 'pending' if no bucket failed and at least one is pending" do
-      Bucket.stub!(:find_all_by_project_id_and_commit_hash).with(666, 'der commit').and_return(
-          [@succeeded_bucket, @pending_bucket, @succeeded_bucket])
-      helper.project_status(@project).should == 'pending'
-    end
-
-    it "should return 'done' iff all buckets are done" do
-      Bucket.stub!(:find_all_by_project_id_and_commit_hash).with(666, 'der commit').and_return(
-          [@succeeded_bucket, @succeeded_bucket])
-      helper.project_status(@project).should == 'done'
-    end
-
-    it "should return 'failed' if at least one bucket failed" do
-      Bucket.stub!(:find_all_by_project_id_and_commit_hash).with(666, 'der commit').and_return(
-          [@succeeded_bucket, @failed_bucket, @pending_bucket])
-      helper.project_status(@project).should == 'failed'
-    end
-
-    it "should return the state of the latest build only" do
-      Bucket.stub!(:find_all_by_project_id_and_commit_hash).with(666, 'der commit').and_return(
-          [@succeeded_bucket, @failed_bucket, @pending_bucket])
-      @pending_bucket.stub!(:build_number).and_return 1
-      @failed_bucket.stub!(:build_number).and_return 3
-      helper.project_status(@project).should == 'done'
+    it "should return the last build's status" do
+      Build.stub!(:find_last_by_project_id_and_commit_hash).with(666, 'der commit',
+          :order => 'build_number').and_return('last build')
+      helper.stub!(:build_status).with('last build').and_return("last build's status")
+      helper.project_status(@project).should == "last build's status"
     end
   end
 end

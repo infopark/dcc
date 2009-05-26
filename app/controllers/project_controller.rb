@@ -18,6 +18,10 @@ class ProjectController < ApplicationController
     @project = Project.find(params[:id])
   end
 
+  def show_build
+    @build = Build.find(params[:id])
+  end
+
   def show_bucket
     @bucket = Bucket.find(params[:id])
   end

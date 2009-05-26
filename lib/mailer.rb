@@ -14,12 +14,14 @@ class Mailer < ActionMailer::Base
 private
 
   def message(bucket, host, state)
+    build = bucket.build
+    project = build.project
     from 'develop@infopark.de'
-    recipients bucket.project.e_mail_receivers
-    subject "#{bucket.project.name}-Build #{state} auf #{host}"
+    recipients project.e_mail_receivers
+    subject "[dcc][#{project.name}] '#{bucket.name}' #{state} auf #{host}"
     body %Q|
-Projekt: #{bucket.project.name}
-Build: #{bucket.commit}.#{bucket.build_number}
+Projekt: #{project.name}
+Build: #{build.identifier}
 Task: #{bucket.name}
 
 Log:

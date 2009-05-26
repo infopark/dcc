@@ -1,0 +1,35 @@
+one:
+  id: 1
+  project_id: 3
+  commit_hash: "c1"
+  build_number: 6
+
+three:
+  id: 3
+  project_id: 3
+  commit_hash: "3"
+  build_number: 1
+
+succeeded:
+  id: 330
+  project_id: 33
+  commit_hash: '330'
+  build_number: 1
+
+pending:
+  id: 331
+  project_id: 33
+  commit_hash: '331'
+  build_number: 1
+
+failed:
+  id: 332
+  project_id: 33
+  commit_hash: '332'
+  build_number: 1
+
+succeeded_other_project:
+  id: 300
+  project_id: 300
+  commit_hash: '300'
+  build_number: 1

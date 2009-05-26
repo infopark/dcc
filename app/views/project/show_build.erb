@@ -1,0 +1,12 @@
+<%= link_to 'Übersicht', :action => 'index' %>
+<h1>Project <%= link_to @build.project.name, :action => 'show', :id => @build.project %>,
+    Build <%= @build.identifier %></h1>
+<table class='buckets'>
+<% buckets = @build.buckets
+buckets.each do |bucket| -%>
+  <tr>
+    <td class='name'><%= link_to bucket.name, :action => "show_bucket", :id => bucket %></td>
+    <td><%= bucket_status(bucket) %></td>
+  </tr>
+<% end -%>
+</table>

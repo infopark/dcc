@@ -1,6 +1,7 @@
 require 'politics'
 require 'politics/static_queue_worker'
 require 'app/models/project'
+require 'app/models/build'
 require 'app/models/bucket'
 require 'app/models/log'
 require 'lib/rake'
@@ -27,7 +28,7 @@ class DCCWorker
   def perform_task(bucket)
     log.debug "performing task #{bucket}"
     logs = bucket.logs
-    project = bucket.project
+    project = bucket.build.project
     git = project.git
     git.update
     succeeded = true
@@ -44,9 +45,13 @@ class DCCWorker
     logs.clear
     if !succeeded
       Mailer.deliver_failure_message(bucket, @uri)
-    elsif (last_bucket = Bucket.find_last_by_name_and_project_id(bucket.name, bucket.project_id,
-        :conditions => "id < #{bucket.id}")) && last_bucket.status != 1
-      Mailer.deliver_fixed_message(bucket, @uri)
+    else
+      last_build = Build.find_last_by_project_id(bucket.build.project_id,
+          :conditions => "id < #{bucket.build.id}")
+      if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
+            last_bucket.status != 1
+        Mailer.deliver_fixed_message(bucket, @uri)
+      end
     end
   end
 
@@ -105,9 +110,9 @@ class DCCWorker
         log.debug "set up buckets for project #{project} with build_number #{build_number}" +
             " because #{project.build_requested?} ||" +
             " #{project.current_commit} != #{project.last_commit}"
+        build = project.builds.create(:commit => project.current_commit, :build_number => build_number)
         project.tasks.each_key do |task|
-          bucket = project.buckets.create(:commit => project.current_commit,
-              :build_number => build_number, :name => task, :status => 0)
+          bucket = build.buckets.create(:name => task, :status => 0)
           buckets << bucket.id
         end
         update_project project

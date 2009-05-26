@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Project do
-  fixtures :projects, :buckets
+  fixtures :projects, :builds
 
   before(:each) do
     @project = Project.find(1)
@@ -30,9 +30,9 @@ describe Project do
     Project.find(3).build_requested.should be_false
   end
 
-  it "may have buckets" do
-    @project.buckets.should be_empty
-    Project.find(3).buckets.should_not be_empty
+  it "may have builds" do
+    @project.builds.should be_empty
+    Project.find(3).builds.should_not be_empty
   end
 end
 
@@ -124,7 +124,7 @@ describe Project do
             |)
       end
 
-      it "should read the bucket config" do
+      it "should read the config" do
         File.should_receive(:read).with("git_path/dcc.yml")
         @project.tasks
       end
@@ -161,16 +161,16 @@ describe Project do
     end
 
     it "should compute the next build number by adding one to the highest for the current commit" do
-      @project.stub!(:buckets).and_return(buckets = mock('buckets'))
-      buckets.stub!(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
-          :order => "build_number DESC").and_return(mock('bucket', :build_number => 5))
+      @project.stub!(:builds).and_return(builds = mock('builds'))
+      builds.stub!(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
+          :order => "build_number DESC").and_return(mock('build', :build_number => 5))
 
       @project.next_build_number.should == 6
     end
 
     it "should compute the next build number with 1 for the first build of a commit" do
-      @project.stub!(:buckets).and_return(buckets = mock('buckets'))
-      buckets.stub!(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
+      @project.stub!(:builds).and_return(builds = mock('builds'))
+      builds.stub!(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
           :order => "build_number DESC").and_return nil
 
       @project.next_build_number.should == 1

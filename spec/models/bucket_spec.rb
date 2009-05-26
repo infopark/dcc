@@ -1,26 +1,18 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Bucket do
-  fixtures :projects, :buckets, :logs
+  fixtures :builds, :buckets, :logs
 
   before do
     @bucket = Bucket.find(1)
   end
 
-  it "should have a project" do
-    @bucket.project.should_not be_nil
+  it "should have a build" do
+    @bucket.build.should_not be_nil
   end
 
   it "should have a name" do
     @bucket.name.should == "one"
-  end
-
-  it "should have a commit" do
-    @bucket.commit.should == "c1"
-  end
-
-  it "should have a build_number" do
-    @bucket.build_number.should == 6
   end
 
   it "should have a status" do

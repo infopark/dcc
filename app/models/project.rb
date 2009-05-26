@@ -2,7 +2,7 @@ require 'forwardable'
 require 'lib/git'
 
 class Project < ActiveRecord::Base
-  has_many :buckets, :dependent => :destroy
+  has_many :builds, :dependent => :destroy
   validate :must_have_name, :must_have_url, :must_have_branch
 
   extend Forwardable
@@ -38,9 +38,9 @@ class Project < ActiveRecord::Base
   end
 
   def next_build_number
-    bucket = buckets.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
+    build = builds.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
         :order => "build_number DESC")
-    bucket ? bucket.build_number + 1 : 1
+    build ? build.build_number + 1 : 1
   end
 
 private

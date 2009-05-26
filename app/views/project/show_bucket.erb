@@ -1,4 +1,9 @@
-<h1>Project <%= @bucket.project.name %>, Task <%= @bucket.name %></h1>
+<%= link_to 'Übersicht', :action => 'index' %>
+<% build = @bucket.build -%>
+<% project = build.project -%>
+<h1>Project <%= link_to project.name, :action => 'show', :id => project %>,
+    Build <%= link_to build.identifier, :action => 'show_build', :id => build %>,
+    Task <%= @bucket.name %></h1>
 <pre><%= @bucket.log %></pre>
 <hr/>
 <table class='logs'>
