@@ -7,7 +7,7 @@ class DCCWorker
   attr_reader :memcache_client, :uri
 
   def log_polling_intervall
-    return 1
+    return 0.1
   end
 end
 
@@ -29,13 +29,13 @@ class TestRake < Rake
     File.open(log_file, mode_string="w" ) do |f|
       f.puts "first rake output"
       f.flush
-      sleep 1.5
+      sleep 0.15
       f.puts "second rake output"
       f.flush
-      sleep 1
+      sleep 0.1
       f.puts "third rake output"
       f.flush
-      sleep 1
+      sleep 0.1
       f.puts "last rake output"
     end
   end
@@ -64,63 +64,111 @@ describe DCCWorker, "when running as follower" do
     @worker.run
   end
 
-  describe "when performing task" do
+  describe '' do
     before do
       @git = mock('git', :path => 'git path', :update => nil)
-      project = mock('project', :name => "project's name",
+      @project = mock('project', :name => "project's name", :before_build_tasks => %w(bb_1 bb_2),
           :tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git,
-          :e_mail_receivers => [])
+          :e_mail_receivers => [], :before_task_tasks => %w(bt_1 bt_2))
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
       @bucket = mock('bucket', :name => "t2", :log= => nil,
-          :build => mock('build', :id => 1, :identifier => 'the commit.666', :project_id => '1',
-          :project => project, :commit => 'the commit', :build_number => 666),
+          :build => mock('build', :id => 123, :identifier => 'the commit.666', :project_id => '1',
+          :project => @project, :commit => 'the commit', :build_number => 666),
           :save => nil, :logs => @logs, :status= => nil, :log => "nothing to say here")
+      @worker.stub!(:last_handled_build).and_return(123)
     end
 
-    after do
-      TestRake.cleanup
-    end
+    describe "when performing task" do
+      before do
+        @worker.stub!(:perform_rake_task).and_return(true)
+      end
 
-    it "should perform the rake tasks for the task one by one on the updated git path" do
-      @git.should_receive(:update)
-      @worker.should_receive(:perform_rake_task).with('git path', 'rt21', @logs).ordered
-      @worker.should_receive(:perform_rake_task).with('git path', 'rt22', @logs).ordered
-      @worker.perform_task(@bucket)
-    end
+      describe "of already handled build" do
+        before do
+          @worker.stub!(:last_handled_build).and_return(123)
+        end
 
-    it "should move the logs into the bucket when processing has finished" do
-      @worker.stub!(:perform_rake_task)
-      @bucket.should_receive(:log=).with("log1log2").ordered
-      @bucket.should_receive(:save).ordered
-      @logs.should_receive(:clear).ordered
-      @worker.perform_task(@bucket)
-    end
+        it "should not perform the before_build rake tasks" do
+          @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_1', @logs)
+          @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_2', @logs)
+          @worker.perform_task(@bucket)
+        end
+      end
 
-    it "should set the state to failed when processing the first of two tasks fails" do
-      @worker.should_receive(:perform_rake_task).and_return(false, true)
-      @bucket.should_receive(:status=).with(2).ordered
-      @bucket.should_receive(:save).ordered
-      @worker.perform_task(@bucket)
-    end
+      describe "of build which is handled for the first time" do
+        before do
+          @worker.stub!(:last_handled_build).and_return(321)
+        end
 
-    it "should set the state to failed when processing the second of two tasks fails" do
-      @worker.should_receive(:perform_rake_task).and_return(true, false)
-      @bucket.should_receive(:status=).with(2).ordered
-      @bucket.should_receive(:save).ordered
-      @worker.perform_task(@bucket)
-    end
+        it "should perform the before_build rake tasks prior to the task's rake tasks" do
+          @git.should_receive(:update).ordered
+          @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).ordered
+          @worker.should_receive(:perform_rake_task).with('git path', 'bb_2', @logs).ordered
+          @worker.should_receive(:perform_rake_task).with('git path', 'bt_1', @logs).ordered
+          @worker.perform_task(@bucket)
+        end
 
-    it "should set the state to done when processing has finished successfully" do
-      @worker.should_receive(:perform_rake_task).and_return(true, true)
-      @bucket.should_receive(:status=).with(1).ordered
-      @bucket.should_receive(:save).ordered
-      @worker.perform_task(@bucket)
+        it "should set the state to failed when processing of a before_build rake task failed" do
+          @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).
+              and_return(false)
+          @bucket.should_receive(:status=).with(2).ordered
+          @bucket.should_receive(:save).ordered
+          @worker.perform_task(@bucket)
+        end
+
+        it "should set the last build to the current build's id" do
+          @bucket.build.stub!(:id).and_return(666)
+          @worker.should_receive(:last_handled_build=).with(666)
+          @worker.perform_task(@bucket)
+        end
+      end
+
+      it "should perform all the rake tasks for the task one by one on the updated git path" do
+        @git.should_receive(:update).ordered
+        @worker.should_receive(:perform_rake_task).with('git path', 'bt_1', @logs).ordered
+        @worker.should_receive(:perform_rake_task).with('git path', 'bt_2', @logs).ordered
+        @worker.should_receive(:perform_rake_task).with('git path', 'rt21', @logs).ordered
+        @worker.should_receive(:perform_rake_task).with('git path', 'rt22', @logs).ordered
+        @worker.perform_task(@bucket)
+      end
+
+      it "should move the logs into the bucket when processing has finished" do
+        @bucket.should_receive(:log=).with("log1log2").ordered
+        @bucket.should_receive(:save).ordered
+        @logs.should_receive(:clear).ordered
+        @worker.perform_task(@bucket)
+      end
+
+      it "should set the state to failed when processing the first task fails" do
+        @worker.should_receive(:perform_rake_task).and_return(false)
+        @bucket.should_receive(:status=).with(2).ordered
+        @bucket.should_receive(:save).ordered
+        @worker.perform_task(@bucket)
+      end
+
+      it "should set the state to failed when processing the second task fails" do
+        @worker.should_receive(:perform_rake_task).and_return(true, false)
+        @bucket.should_receive(:status=).with(2).ordered
+        @bucket.should_receive(:save).ordered
+        @worker.perform_task(@bucket)
+      end
+
+      it "should set the state to done when processing has finished successfully" do
+        @worker.should_receive(:perform_rake_task).and_return(true, true)
+        @bucket.should_receive(:status=).with(1).ordered
+        @bucket.should_receive(:save).ordered
+        @worker.perform_task(@bucket)
+      end
     end
 
     describe "when performing rake task" do
       before do
         @rake = TestRake.new
         Rake.stub!(:new).and_return @rake
+      end
+
+      after do
+        TestRake.cleanup
       end
 
 # FIXME 'rake.rake task' wird in einem Fork gefahren. Liegt es daran, daß der rake-Aufruf nicht
@@ -165,7 +213,8 @@ describe DCCWorker, "when running as follower with fixtures" do
   before do
     @bucket = mock('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,
         :save => nil, :build => mock('build', :id => 1000, :project_id => 33,
-        :project => mock('project', :tasks => {'task' => []}, :git => mock('git', :update => nil))))
+        :project => mock('project', :tasks => {'task' => []}, :before_build_tasks => [],
+        :before_task_tasks => [], :git => mock('git', :update => nil, :path => nil))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 

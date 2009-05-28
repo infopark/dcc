@@ -43,6 +43,14 @@ class Project < ActiveRecord::Base
     build ? build.build_number + 1 : 1
   end
 
+  def before_build_tasks
+    read_config['before_build'] || []
+  end
+
+  def before_task_tasks
+    read_config['before_task'] || []
+  end
+
 private
 
   def read_config

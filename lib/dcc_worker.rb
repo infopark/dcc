@@ -10,6 +10,8 @@ require 'lib/mailer'
 class DCCWorker
   include Politics::StaticQueueWorker
 
+  attr_accessor :last_handled_build
+
   def initialize(group_name, memcached_servers, options = {})
     options = {:log_level => Logger::WARN, :servers => memcached_servers, :iteration_length => 10
         }.merge(options)
@@ -28,13 +30,17 @@ class DCCWorker
   def perform_task(bucket)
     log.debug "performing task #{bucket}"
     logs = bucket.logs
-    project = bucket.build.project
+    build = bucket.build
+    project = build.project
     git = project.git
     git.update
     succeeded = true
-    project.tasks[bucket.name].each do |task|
-      succeeded = perform_rake_task(git.path, task, logs) && succeeded
+    if last_handled_build != build.id
+      succeeded = perform_rake_tasks(git.path, project.before_build_tasks, logs)
+      self.last_handled_build = build.id
     end
+    succeeded &&= perform_rake_tasks(git.path, project.before_task_tasks, logs)
+    succeeded &&= perform_rake_tasks(git.path, project.tasks[bucket.name], logs)
     whole_log = ''
     logs.each do |log|
       whole_log << log.log
@@ -128,5 +134,13 @@ class DCCWorker
     project.build_requested = false
     project.save
     log.debug "project's last commit is now #{project.last_commit}"
+  end
+
+private
+
+  def perform_rake_tasks(path, tasks, logs)
+    succeeded = true
+    tasks.each {|task| succeeded = perform_rake_task(path, task, logs) && succeeded}
+    succeeded
   end
 end

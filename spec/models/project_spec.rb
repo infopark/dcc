@@ -137,6 +137,42 @@ describe Project do
             }
       end
 
+      describe "when providing the before_build tasks" do
+        it "should return an empty array if no before_build tasks are configured" do
+          File.stub!(:read).with("git_path/dcc.yml").and_return("---\ntasks:\n")
+          @project.before_build_tasks.should == []
+          File.stub!(:read).with("git_path/dcc.yml").and_return("---\nbefore_build:\n")
+          @project.before_build_tasks.should == []
+        end
+
+        it "should return the configured tasks" do
+          File.stub!(:read).with("git_path/dcc.yml").and_return("---
+                before_build:
+                  - task_one
+                  - task_two
+              ")
+          @project.before_build_tasks.should == %w(task_one task_two)
+        end
+      end
+
+      describe "when providing the before_task tasks" do
+        it "should return an empty array if no before_task tasks are configured" do
+          File.stub!(:read).with("git_path/dcc.yml").and_return("---\ntasks:\n")
+          @project.before_task_tasks.should == []
+          File.stub!(:read).with("git_path/dcc.yml").and_return("---\nbefore_task:\n")
+          @project.before_task_tasks.should == []
+        end
+
+        it "should return the configured tasks" do
+          File.stub!(:read).with("git_path/dcc.yml").and_return("---
+                before_task:
+                  - task_one
+                  - task_two
+              ")
+          @project.before_task_tasks.should == %w(task_one task_two)
+        end
+      end
+
       describe "when providing the E-Mail addresses" do
         it "should return a single address in an array" do
           @project.e_mail_receivers.should == ['to@me.de']
