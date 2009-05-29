@@ -383,5 +383,20 @@ describe DCCWorker, "when running as leader" do
     it "should deliver the next bucket" do
       @leader.next_bucket("requestor").should == [123, 0]
     end
+
+    describe "when no buckets are left" do
+      before do
+        @leader.stub!(:mocked_next_bucket).and_return([nil, 0])
+      end
+
+      it "should not try to change bucket" do
+        Bucket.should_not_receive(:find)
+        @leader.next_bucket("requestor")
+      end
+
+      it "should deliver the nil bucket" do
+        @leader.next_bucket("requestor").should == [nil, 0]
+      end
+    end
   end
 end

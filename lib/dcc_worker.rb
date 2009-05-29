@@ -138,10 +138,12 @@ class DCCWorker
 
   def next_bucket(requestor_uri)
     bucket_spec = super
-    bucket = Bucket.find(bucket_spec[0])
-    bucket.worker_uri = requestor_uri
-    bucket.status = 30
-    bucket.save
+    if bucket_id = bucket_spec[0]
+      bucket = Bucket.find(bucket_id)
+      bucket.worker_uri = requestor_uri
+      bucket.status = 30
+      bucket.save
+    end
     bucket_spec
   end
 
