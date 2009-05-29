@@ -1,41 +1,42 @@
 one:
   id: 1
   name: "one"
-  status: 1
+  status: 10
   build_id: 3
 
 two:
   id: 2
   name: "two"
-  status: 0
+  status: 20
   build_id: 3
+  worker_uri: "worker's uri"
   log: "bucket's log"
 
 succeeded:
   id: 31
   name: 'task'
-  status: 1
+  status: 10
   build_id: 330
   log: "bucket's log"
 
 pending:
   id: 32
   name: 'task'
-  status: 0
+  status: 20
   build_id: 331
   log: "bucket's log"
 
 failed:
   id: 33
   name: 'task'
-  status: 2
+  status: 40
   build_id: 332
   log: "bucket's log"
 
 succeeded_other_project:
   id: 300
   name: 'task'
-  status: 1
+  status: 10
   build_id: 300
   log: "bucket's log"
 

@@ -4,29 +4,29 @@ module ProjectHelper
   end
 
   def build_status(build)
-    status = build.buckets.map {|b| b.status}.sort
-    display_status(status.last == 1 ? status.first : status.last)
+    display_status(build.buckets.map {|b| b.status}.sort.last)
   end
 
   def project_status(project)
-    if last_build = Build.find_last_by_project_id_and_commit_hash(project.id, project.last_commit,
+    last_build = Build.find_last_by_project_id_and_commit_hash(project.id, project.last_commit,
         :order => 'build_number')
-      build_status(last_build)
-    else
-      nil
-    end
+    build_status(last_build) if last_build
   end
 
 private
 
   def display_status(status)
     case status
-    when 0
-      'pending'
-    when 1
+    when 10
       'done'
-    when 2
+    when 20
+      'pending'
+    when 30
+      'in work'
+    when 40
       'failed'
+    else
+      "unknown status #{status}"
     end
   end
 end

@@ -16,12 +16,17 @@ describe Bucket do
   end
 
   it "should have a status" do
-    @bucket.status.should == 1
+    @bucket.status.should == 10
   end
 
   it "may have a log text" do
     @bucket.log.should be_nil
     Bucket.find(2).log.should == "bucket's log"
+  end
+
+  it "may have a worker uri" do
+    @bucket.worker_uri.should be_nil
+    Bucket.find(2).worker_uri.should == "worker's uri"
   end
 
   it "may have logs" do

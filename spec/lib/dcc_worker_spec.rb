@@ -111,7 +111,7 @@ describe DCCWorker, "when running as follower" do
         it "should set the state to failed when processing of a before_build rake task failed" do
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).
               and_return(false)
-          @bucket.should_receive(:status=).with(2).ordered
+          @bucket.should_receive(:status=).with(40).ordered
           @bucket.should_receive(:save).ordered
           @worker.perform_task(@bucket)
         end
@@ -141,21 +141,21 @@ describe DCCWorker, "when running as follower" do
 
       it "should set the state to failed when processing the first task fails" do
         @worker.should_receive(:perform_rake_task).and_return(false)
-        @bucket.should_receive(:status=).with(2).ordered
+        @bucket.should_receive(:status=).with(40).ordered
         @bucket.should_receive(:save).ordered
         @worker.perform_task(@bucket)
       end
 
       it "should set the state to failed when processing the second task fails" do
         @worker.should_receive(:perform_rake_task).and_return(true, false)
-        @bucket.should_receive(:status=).with(2).ordered
+        @bucket.should_receive(:status=).with(40).ordered
         @bucket.should_receive(:save).ordered
         @worker.perform_task(@bucket)
       end
 
       it "should set the state to done when processing has finished successfully" do
         @worker.should_receive(:perform_rake_task).and_return(true, true)
-        @bucket.should_receive(:status=).with(1).ordered
+        @bucket.should_receive(:status=).with(10).ordered
         @bucket.should_receive(:save).ordered
         @worker.perform_task(@bucket)
       end
@@ -333,9 +333,9 @@ describe DCCWorker, "when running as leader" do
       @updated_project.builds.should_receive(:create).with(:commit => "456", :build_number => 1).
           and_return(updated_build = mock('', :buckets => mock('')))
       [1, 2, 3].each do |task|
-        requested_build.buckets.should_receive(:create).with(:name => "req#{task}", :status => 0).
+        requested_build.buckets.should_receive(:create).with(:name => "req#{task}", :status => 20).
             and_return(mock('', :id => 1))
-        updated_build.buckets.should_receive(:create).with(:name => "upd#{task}", :status => 0).
+        updated_build.buckets.should_receive(:create).with(:name => "upd#{task}", :status => 20).
             and_return(mock('', :id => 1))
       end
       @leader.read_buckets
@@ -353,6 +353,34 @@ describe DCCWorker, "when running as leader" do
       @updated_project.should_receive(:build_requested=).with(false).ordered
       @updated_project.should_receive(:save).ordered
       @leader.update_project(@updated_project)
+    end
+  end
+
+  describe "when delivering buckets" do
+    before do
+      module Politics::StaticQueueWorker
+        def next_bucket(requestor)
+          return mocked_next_bucket
+        end
+      end
+      @bucket = mock('bucket', :worker_uri= => nil, :status= => nil, :save => nil)
+      @leader.stub!(:mocked_next_bucket).and_return(@bucket)
+    end
+
+    it "should store the requestor's uri into the bucket" do
+      @bucket.should_receive(:worker_uri=).with("requestor").ordered
+      @bucket.should_receive(:save).ordered
+      @leader.next_bucket("requestor")
+    end
+
+    it "should store the status 'in work' uri into the bucket" do
+      @bucket.should_receive(:status=).with(30).ordered
+      @bucket.should_receive(:save).ordered
+      @leader.next_bucket("requestor")
+    end
+
+    it "should deliver the next bucket" do
+      @leader.next_bucket("requestor").should == @bucket
     end
   end
 end

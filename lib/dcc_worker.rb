@@ -46,7 +46,7 @@ class DCCWorker
       whole_log << log.log
     end
     bucket.log = whole_log
-    bucket.status = succeeded ? 1 : 2
+    bucket.status = succeeded ? 10 : 40
     bucket.save
     logs.clear
     if !succeeded
@@ -55,7 +55,7 @@ class DCCWorker
       last_build = Build.find_last_by_project_id(bucket.build.project_id,
           :conditions => "id < #{bucket.build.id}")
       if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
-            last_bucket.status != 1
+            last_bucket.status != 10
         Mailer.deliver_fixed_message(bucket, @uri)
       end
     end
@@ -118,7 +118,7 @@ class DCCWorker
             " #{project.current_commit} != #{project.last_commit}"
         build = project.builds.create(:commit => project.current_commit, :build_number => build_number)
         project.tasks.each_key do |task|
-          bucket = build.buckets.create(:name => task, :status => 0)
+          bucket = build.buckets.create(:name => task, :status => 20)
           buckets << bucket.id
         end
         update_project project
@@ -134,6 +134,14 @@ class DCCWorker
     project.build_requested = false
     project.save
     log.debug "project's last commit is now #{project.last_commit}"
+  end
+
+  def next_bucket(requestor_uri)
+    bucket = super
+    bucket.worker_uri = requestor_uri
+    bucket.status = 30
+    bucket.save
+    bucket
   end
 
 private
