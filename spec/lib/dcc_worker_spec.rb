@@ -363,8 +363,9 @@ describe DCCWorker, "when running as leader" do
           return mocked_next_bucket
         end
       end
-      @bucket = mock('bucket', :worker_uri= => nil, :status= => nil, :save => nil)
-      @leader.stub!(:mocked_next_bucket).and_return(@bucket)
+      @bucket = mock('bucket', :worker_uri= => nil, :status= => nil, :save => nil, :id => 123)
+      Bucket.stub!(:find).with(123).and_return(@bucket)
+      @leader.stub!(:mocked_next_bucket).and_return([123, 0])
     end
 
     it "should store the requestor's uri into the bucket" do
@@ -380,7 +381,7 @@ describe DCCWorker, "when running as leader" do
     end
 
     it "should deliver the next bucket" do
-      @leader.next_bucket("requestor").should == @bucket
+      @leader.next_bucket("requestor").should == [123, 0]
     end
   end
 end
