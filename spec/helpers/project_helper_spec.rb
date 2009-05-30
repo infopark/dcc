@@ -14,6 +14,10 @@ describe ProjectHelper do
       helper.bucket_status(mock('bucket', :status => 10)).should == 'done'
     end
 
+    it "should return 'processing failed' if bucket processing has failed" do
+      helper.bucket_status(mock('bucket', :status => 35)).should == 'processing failed'
+    end
+
     it "should return 'failed' if bucket has failed" do
       helper.bucket_status(mock('bucket', :status => 40)).should == 'failed'
     end
@@ -24,6 +28,7 @@ describe ProjectHelper do
       @succeeded_bucket = mock('bucket', :status => 10)
       @pending_bucket = mock('bucket', :status => 20)
       @inwork_bucket = mock('bucket', :status => 30)
+      @processing_failed_bucket = mock('bucket', :status => 30)
       @failed_bucket = mock('bucket', :status => 40)
       @build = Build.new
     end
@@ -33,9 +38,15 @@ describe ProjectHelper do
       helper.build_status(@build).should == 'pending'
     end
 
-    it "should return 'in work' if no bucket failed at least one is in work" do
+    it "should return 'in work' if no bucket failed and at least one is in work" do
       @build.stub!(:buckets =>
           [@succeeded_bucket, @pending_bucket, @inwork_bucket, @succeeded_bucket])
+      helper.build_status(@build).should == 'in work'
+    end
+
+    it "should return 'processing failed' if no bucket failed and at least one's processing failed" do
+      @build.stub!(:buckets => [@succeeded_bucket, @pending_bucket, @inwork_bucket,
+          @processing_failed_bucket, @succeeded_bucket])
       helper.build_status(@build).should == 'in work'
     end
 
@@ -45,7 +56,8 @@ describe ProjectHelper do
     end
 
     it "should return 'failed' if at least one bucket failed" do
-      @build.stub!(:buckets => [@succeeded_bucket, @failed_bucket, @pending_bucket, @inwork_bucket])
+      @build.stub!(:buckets => [@succeeded_bucket, @failed_bucket, @pending_bucket, @inwork_bucket,
+          @processing_failed_bucket])
       helper.build_status(@build).should == 'failed'
     end
   end

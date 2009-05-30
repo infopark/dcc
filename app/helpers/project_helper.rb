@@ -23,6 +23,8 @@ private
       'pending'
     when 30
       'in work'
+    when 35
+      'processing failed'
     when 40
       'failed'
     else

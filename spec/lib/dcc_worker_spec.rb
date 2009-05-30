@@ -64,6 +64,15 @@ describe DCCWorker, "when running as follower" do
     @worker.run
   end
 
+  it "should set bucket's status to 'processing failed' if perform_task fails" do
+    @worker.stub!(:loop?).and_return false
+    Bucket.stub!(:find).and_return(bucket = mock('bucket'))
+    @worker.should_receive(:perform_task).with(bucket).and_raise("an error")
+    bucket.should_receive(:status=).with(35).ordered
+    bucket.should_receive(:save).ordered
+    @worker.run
+  end
+
   describe '' do
     before do
       @git = mock('git', :path => 'git path', :update => nil)

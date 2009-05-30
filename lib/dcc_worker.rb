@@ -23,7 +23,15 @@ class DCCWorker
   def run
     log.debug "running"
     process_bucket do |bucket_id|
-      perform_task Bucket.find(bucket_id)
+      bucket = Bucket.find(bucket_id)
+      begin
+        perform_task bucket
+      rescue Exception => e
+        bucket.status = 35
+        bucket.save
+        log.error "failed to process #{bucket}: #{e.message}"
+        log.error e.backtrace.join("\n")
+      end
     end
   end
 
