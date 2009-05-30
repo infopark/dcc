@@ -44,6 +44,7 @@ Gem::Specification.new do |s|
      "db/migrate/002_rename_commit_column.rb",
      "db/migrate/003_create_builds.rb",
      "db/migrate/004_add_worker_uri_to_buckets_and_update_status.rb",
+     "db/migrate/005_enlarge_buckets_log_column.rb",
      "db/schema.rb",
      "db/test.sqlite3",
      "lib/command_line.rb",
