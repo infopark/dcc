@@ -22,3 +22,4 @@ production:
   username: dcc
   password: dcc
   encoding: utf8
+  pool: 50
