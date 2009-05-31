@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tilo Pr\303\274tz"]
-  s.date = %q{2009-05-30}
+  s.date = %q{2009-05-31}
   s.default_executable = %q{worker}
   s.description = %q{Distributed Cruise Control for projects in git using rake.}
   s.email = %q{tilo@infopark.de}
@@ -39,14 +39,11 @@ Gem::Specification.new do |s|
      "config/initializers/new_rails_defaults.rb",
      "config/locales/en.yml",
      "config/routes.rb",
-     "db/development.sqlite3",
      "db/migrate/001_create_projects_buckets_and_logs.rb",
      "db/migrate/002_rename_commit_column.rb",
      "db/migrate/003_create_builds.rb",
      "db/migrate/004_add_worker_uri_to_buckets_and_update_status.rb",
      "db/migrate/005_enlarge_buckets_log_column.rb",
-     "db/schema.rb",
-     "db/test.sqlite3",
      "lib/command_line.rb",
      "lib/cruise_control/log.rb",
      "lib/dcc_worker.rb",

@@ -14,7 +14,7 @@ begin
     gemspec.add_dependency 'actionmailer', '>=2.2.2'
     gemspec.add_dependency 'rails', '>=2.2.2'
     gemspec.add_dependency 'rake'
-    gemspec.files = FileList["{app,config,db,lib,public,script,vendor}/**/*"]
+    gemspec.files = FileList["{app,config,db/migrate,lib,public,script,vendor}/**/*"]
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
