@@ -2,15 +2,15 @@
 
 Gem::Specification.new do |s|
   s.name = %q{dcc}
-  s.version = "0.1.2"
+  s.version = "0.1.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tilo Pr\303\274tz"]
   s.date = %q{2009-05-31}
-  s.default_executable = %q{worker}
+  s.default_executable = %q{dcc-worker}
   s.description = %q{Distributed Cruise Control for projects in git using rake.}
   s.email = %q{tilo@infopark.de}
-  s.executables = ["worker"]
+  s.executables = ["dcc-worker"]
   s.extra_rdoc_files = [
     "README"
   ]
