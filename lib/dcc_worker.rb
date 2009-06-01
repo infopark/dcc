@@ -151,6 +151,7 @@ class DCCWorker
       bucket.worker_uri = requestor_uri
       bucket.status = 30
       bucket.save
+      log.debug "deliver bucket #{bucket} to #{requestor_uri}"
     end
     bucket_spec
   end
