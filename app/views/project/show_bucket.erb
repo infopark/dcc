@@ -4,12 +4,12 @@
 <h1>Project <%= link_to project.name, :action => 'show', :id => project %>,
     Build <%= link_to build.identifier, :action => 'show_build', :id => build %>,
     Task <%= @bucket.name %><%= " auf #{@bucket.worker_uri}" if @bucket.worker_uri %></h1>
-<pre><%= @bucket.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") %></pre>
+<pre><%= @bucket.log ? @bucket.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %></pre>
 <hr/>
 <table class='logs'>
 <% @bucket.logs.each do |log| -%>
   <tr>
-    <td><pre><%= log.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") %></pre></td>
+    <td><pre><%= log.log ? log.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %></pre></td>
   </tr>
 <% end -%>
 </table>
