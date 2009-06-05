@@ -76,9 +76,9 @@ describe DCCWorker, "when running as follower" do
   describe '' do
     before do
       @git = mock('git', :path => 'git path', :update => nil)
-      @project = mock('project', :name => "project's name", :before_build_tasks => %w(bb_1 bb_2),
-          :tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git,
-          :e_mail_receivers => [], :before_task_tasks => %w(bt_1 bt_2))
+      @project = mock('project', :name => "project's name", :before_all_tasks => %w(bb_1 bb_2),
+          :buckets_tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git,
+          :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [])
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
       @bucket = mock('bucket', :name => "t2", :log= => nil,
           :build => mock('build', :id => 123, :identifier => 'the commit.666', :project_id => '1',
@@ -90,6 +90,8 @@ describe DCCWorker, "when running as follower" do
     describe "when performing task" do
       before do
         @worker.stub!(:perform_rake_task).and_return(true)
+        @project.stub!(:before_bucket_tasks).with("t2").and_return %w(bt_1 bt_2)
+        @project.stub!(:after_bucket_tasks).with("t2").and_return %w(at_1 at_2)
       end
 
       describe "of already handled build" do
@@ -97,7 +99,7 @@ describe DCCWorker, "when running as follower" do
           @worker.stub!(:last_handled_build).and_return(123)
         end
 
-        it "should not perform the before_build rake tasks" do
+        it "should not perform the before_all rake tasks" do
           @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_1', @logs)
           @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_2', @logs)
           @worker.perform_task(@bucket)
@@ -109,7 +111,7 @@ describe DCCWorker, "when running as follower" do
           @worker.stub!(:last_handled_build).and_return(321)
         end
 
-        it "should perform the before_build rake tasks prior to the task's rake tasks" do
+        it "should perform the before_all rake tasks prior to the task's rake tasks" do
           @git.should_receive(:update).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_2', @logs).ordered
@@ -117,7 +119,7 @@ describe DCCWorker, "when running as follower" do
           @worker.perform_task(@bucket)
         end
 
-        it "should set the state to failed when processing of a before_build rake task failed" do
+        it "should set the state to failed when processing of a before_all rake task failed" do
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).
               and_return(false)
           @bucket.should_receive(:status=).with(40).ordered
@@ -130,6 +132,14 @@ describe DCCWorker, "when running as follower" do
           @worker.should_receive(:last_handled_build=).with(666)
           @worker.perform_task(@bucket)
         end
+
+        it "should not perform the after_each_bucket tasks if a before_all task failed" do
+          @worker.should_receive(:perform_rake_task).with('git path', "bb_1", @logs).
+              and_return false
+          @worker.should_not_receive(:perform_rake_task).with('git path', 'at_1', @logs)
+          @worker.should_not_receive(:perform_rake_task).with('git path', 'at_2', @logs)
+          @worker.perform_task(@bucket)
+        end
       end
 
       it "should perform all the rake tasks for the task one by one on the updated git path" do
@@ -138,6 +148,8 @@ describe DCCWorker, "when running as follower" do
         @worker.should_receive(:perform_rake_task).with('git path', 'bt_2', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'rt21', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'rt22', @logs).ordered
+        @worker.should_receive(:perform_rake_task).with('git path', 'at_1', @logs).ordered
+        @worker.should_receive(:perform_rake_task).with('git path', 'at_2', @logs).ordered
         @worker.perform_task(@bucket)
       end
 
@@ -165,6 +177,27 @@ describe DCCWorker, "when running as follower" do
       it "should set the state to done when processing has finished successfully" do
         @worker.should_receive(:perform_rake_task).and_return(true, true)
         @bucket.should_receive(:status=).with(10).ordered
+        @bucket.should_receive(:save).ordered
+        @worker.perform_task(@bucket)
+      end
+
+      it "should perform the after_each_bucket tasks even if a before_each_bucket task failed" do
+        @worker.should_receive(:perform_rake_task).with('git path', "bt_1", @logs).and_return false
+        @worker.should_receive(:perform_rake_task).with('git path', 'at_1', @logs)
+        @worker.should_receive(:perform_rake_task).with('git path', 'at_2', @logs)
+        @worker.perform_task(@bucket)
+      end
+
+      it "should perform the after_each_bucket tasks even if a bucket task failed" do
+        @worker.should_receive(:perform_rake_task).with('git path', "rt21", @logs).and_return false
+        @worker.should_receive(:perform_rake_task).with('git path', 'at_1', @logs)
+        @worker.should_receive(:perform_rake_task).with('git path', 'at_2', @logs)
+        @worker.perform_task(@bucket)
+      end
+
+      it "should set the state to failed when processing an after_each_bucket task fails" do
+        @worker.should_receive(:perform_rake_task).with('git path', "at_1", @logs).and_return false
+        @bucket.should_receive(:status=).with(40).ordered
         @bucket.should_receive(:save).ordered
         @worker.perform_task(@bucket)
       end
@@ -222,13 +255,14 @@ describe DCCWorker, "when running as follower with fixtures" do
   before do
     @bucket = mock('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,
         :save => nil, :build => mock('build', :id => 1000, :project_id => 33,
-        :project => mock('project', :tasks => {'task' => []}, :before_build_tasks => [],
-        :before_task_tasks => [], :git => mock('git', :update => nil, :path => nil))))
+        :project => mock('project', :buckets_tasks => {'task' => []}, :before_all_tasks => [],
+        :before_bucket_tasks => [], :after_bucket_tasks => [],
+        :git => mock('git', :update => nil, :path => nil))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 
   it "should send an email if build failed" do
-    @bucket.build.project.stub!(:tasks).and_return({'task' => ['task']})
+    @bucket.build.project.stub!(:buckets_tasks).and_return({'task' => ['task']})
     @bucket.build.project.git.stub!(:path)
     @worker.stub!(:perform_rake_task).and_return false
     Mailer.should_receive(:deliver_failure_message).with(@bucket, %r(^druby://))
@@ -259,7 +293,7 @@ describe DCCWorker, "when running as leader" do
   def project_mock(name, build_requested, current_commit, next_build_number)
     m = mock(name, :build_requested? => build_requested, :last_commit => "123",
         :current_commit => current_commit, :url => "#{name}_url", :branch => "#{name}_branch",
-        :tasks => {"#{name}1" => "tasks1", "#{name}2" => "tasks2", "#{name}3" => "tasks3"},
+        :buckets_tasks => {"#{name}1" => "tasks1", "#{name}2" => "tasks2", "#{name}3" => "tasks3"},
         :id => "#{name}_id", :builds => [])
     m.should_receive(:next_build_number).at_most(:once).and_return(next_build_number)
     m.stub!(:last_commit=)

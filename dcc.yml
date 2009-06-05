@@ -1,6 +1,0 @@
-email:
-  - tilo@infopark.de
-tasks:
-  specs:
-    - db:migrate
-    - spec

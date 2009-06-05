@@ -107,69 +107,121 @@ describe Project do
 
     describe "when providing configured information" do
       before do
-        File.stub!(:read).with("git_path/dcc.yml").and_return(%Q|
-              ---
-              email:
-                to@me.de
-              tasks:
-                one:
-                  - 1a
-                  - 1b
-                  - 1c
-                two:
-                  - "2"
-                three:
-                  - 3a
-                  - 3b
+        File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+              send_notifications_to "to@me.de"
+              buckets "default" do
+                bucket(:one).performs_rake_tasks %w(1a 1b 1c)
+                bucket(:two).performs_rake_tasks "2"
+              end
+
+              buckets "extra" do
+                bucket(:three).performs_rake_tasks %w(3a 3b)
+              end
             |)
       end
 
       it "should read the config" do
-        File.should_receive(:read).with("git_path/dcc.yml")
-        @project.tasks
+        File.should_receive(:read).with("git_path/dcc_config.rb")
+        @project.buckets_tasks
       end
 
       it "should provide the configured tasks" do
-        @project.tasks.should == {
-              "one" => ["1a", "1b", "1c"],
-              "two" => ["2"],
-              "three" => ["3a", "3b"]
+        @project.buckets_tasks.should == {
+              "default:one" => ["1a", "1b", "1c"],
+              "default:two" => ["2"],
+              "extra:three" => ["3a", "3b"]
             }
       end
 
-      describe "when providing the before_build tasks" do
-        it "should return an empty array if no before_build tasks are configured" do
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---\ntasks:\n")
-          @project.before_build_tasks.should == []
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---\nbefore_build:\n")
-          @project.before_build_tasks.should == []
+      describe "when providing the before_all tasks" do
+        it "should return an empty array if no before_all tasks are configured" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
+          @project.before_all_tasks.should == []
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(
+              "before_all.performs_rake_tasks")
+          @project.before_all_tasks.should == []
         end
 
         it "should return the configured tasks" do
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---
-                before_build:
-                  - task_one
-                  - task_two
-              ")
-          @project.before_build_tasks.should == %w(task_one task_two)
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(
+                "before_all.performs_rake_tasks %w(task_one task_two)")
+          @project.before_all_tasks.should == %w(task_one task_two)
         end
       end
 
-      describe "when providing the before_task tasks" do
-        it "should return an empty array if no before_task tasks are configured" do
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---\ntasks:\n")
-          @project.before_task_tasks.should == []
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---\nbefore_task:\n")
-          @project.before_task_tasks.should == []
+      describe "when providing the before_each_bucket tasks for a bucket" do
+        it "should return an empty array if no before_each_bucket tasks are configured" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
+          @project.before_bucket_tasks("default:bucket").should == []
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                buckets :default do
+                  before_each_bucket.performs_rake_tasks
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.before_bucket_tasks("default:bucket").should == []
+        end
+
+        it "should not return the configured tasks of another bunch of buckets" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                buckets :default do
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+
+                buckets :other do
+                  before_each_bucket.performs_rake_tasks %w(task_one task_two)
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.before_bucket_tasks("default:bucket").should == []
         end
 
         it "should return the configured tasks" do
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---
-                before_task:
-                  - task_one
-                  - task_two
-              ")
-          @project.before_task_tasks.should == %w(task_one task_two)
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                buckets :default do
+                  before_each_bucket.performs_rake_tasks %w(task_one task_two)
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.before_bucket_tasks("default:bucket").should == %w(task_one task_two)
+        end
+      end
+
+      describe "when providing the after_each_bucket tasks for a bucket" do
+        it "should return an empty array if no after_each_bucket tasks are configured" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
+          @project.after_bucket_tasks("default:bucket").should == []
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                buckets :default do
+                  after_each_bucket.performs_rake_tasks
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.after_bucket_tasks("default:bucket").should == []
+        end
+
+        it "should not return the configured tasks of another bunch of buckets" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                buckets :default do
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+
+                buckets :other do
+                  after_each_bucket.performs_rake_tasks %w(task_one task_two)
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.after_bucket_tasks("default:bucket").should == []
+        end
+
+        it "should return the configured tasks" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                buckets :default do
+                  after_each_bucket.performs_rake_tasks %w(task_one task_two)
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.after_bucket_tasks("default:bucket").should == %w(task_one task_two)
         end
       end
 
@@ -178,19 +230,21 @@ describe Project do
           @project.e_mail_receivers.should == ['to@me.de']
         end
 
-        it "should return an array containing the develop address if no address were specified" do
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---\ntasks:\n")
-          @project.e_mail_receivers.should == ['develop@infopark.de']
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---\nemail:\n")
-          @project.e_mail_receivers.should == ['develop@infopark.de']
+        it "should return an empty array if no address were specified" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
+          @project.e_mail_receivers.should == []
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("send_notifications_to")
+          @project.e_mail_receivers.should == []
         end
 
         it "should return the specified addresses" do
-          File.stub!(:read).with("git_path/dcc.yml").and_return("---
-                email:
-                  - to@me.de
-                  - to@me.too
-              ")
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                send_notifications_to "to@me.de", "to@me.too"
+              |)
+          @project.e_mail_receivers.should == ['to@me.de', 'to@me.too']
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                send_notifications_to %w(to@me.de to@me.too)
+              |)
           @project.e_mail_receivers.should == ['to@me.de', 'to@me.too']
         end
       end

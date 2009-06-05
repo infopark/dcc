@@ -5,6 +5,8 @@ class Project < ActiveRecord::Base
   has_many :builds, :dependent => :destroy
   validate :must_have_name, :must_have_url, :must_have_branch
 
+  attr_writer :before_all_tasks
+
   extend Forwardable
   def_delegators :git, :current_commit
 
@@ -24,17 +26,14 @@ class Project < ActiveRecord::Base
     @git ||= Git.new(name, url, branch)
   end
 
-  def tasks
-    read_config['tasks']
+  def buckets_tasks
+    read_config
+    @buckets_tasks
   end
 
   def e_mail_receivers
-    configured_email = read_config['email']
-    email = if configured_email
-      configured_email.is_a?(Array) ? configured_email : [configured_email]
-    else
-      ['develop@infopark.de']
-    end
+    read_config
+    @e_mail_receivers || []
   end
 
   def next_build_number
@@ -43,19 +42,115 @@ class Project < ActiveRecord::Base
     build ? build.build_number + 1 : 1
   end
 
-  def before_build_tasks
-    read_config['before_build'] || []
+  def before_all_tasks
+    read_config
+    @before_all_tasks || []
   end
 
-  def before_task_tasks
-    read_config['before_task'] || []
+  def before_bucket_tasks(bucket_identifier)
+    read_config
+    _before_bucket_tasks[buckets_groups[bucket_identifier]] || []
+  end
+
+  def after_bucket_tasks(bucket_identifier)
+    read_config
+    _after_bucket_tasks[buckets_groups[bucket_identifier]] || []
+  end
+
+  def set_rake_tasks(bucket_name, bucket_group_name, rake_tasks)
+    bucket_identifier = "#{bucket_group_name}:#{bucket_name}"
+    (@buckets_tasks ||= {})[bucket_identifier] = rake_tasks
+    buckets_groups[bucket_identifier] = bucket_group_name
+  end
+
+  def set_before_each_rake_tasks(bucket_group_name, rake_tasks)
+    _before_bucket_tasks[bucket_group_name] = rake_tasks
+  end
+
+  def set_after_each_rake_tasks(bucket_group_name, rake_tasks)
+    _after_bucket_tasks[bucket_group_name] = rake_tasks
   end
 
 private
 
+  def buckets_groups
+    @buckets_groups ||= {}
+  end
+
+  def _before_bucket_tasks
+    @before_bucket_tasks ||= {}
+  end
+
+  def _after_bucket_tasks
+    @after_bucket_tasks ||= {}
+  end
+
+  @@inner_class = Class.new do
+    def initialize(project)
+      @project = project
+    end
+  end
+
+  def send_notifications_to(*args)
+    @e_mail_receivers = args.flatten
+  end
+
+  def before_all
+    Class.new(super_class = @@inner_class) do
+      def performs_rake_tasks(*args)
+        @project.before_all_tasks = args.flatten
+      end
+    end.new(self)
+  end
+
+  def buckets(name, &block)
+    Class.new(super_class = @@inner_class) do
+      @@bucket_group_inner_class = Class.new(@@inner_class) do
+        def initialize(project, bucket_group_name)
+          @bucket_group_name = bucket_group_name
+          super project
+        end
+      end
+
+      def initialize(project, name)
+        @name = name.to_s
+        super project
+      end
+
+      def before_each_bucket
+        Class.new(@@bucket_group_inner_class) do
+          def performs_rake_tasks(*args)
+            @project.set_before_each_rake_tasks(@bucket_group_name, args.flatten)
+          end
+        end.new(@project, @name)
+      end
+
+      def after_each_bucket
+        Class.new(@@bucket_group_inner_class) do
+          def performs_rake_tasks(*args)
+            @project.set_after_each_rake_tasks(@bucket_group_name, args.flatten)
+          end
+        end.new(@project, @name)
+      end
+
+      def bucket(name)
+        Class.new(@@bucket_group_inner_class) do
+          def initialize(project, bucket_group_name, name)
+            @name = name.to_s
+            super project, bucket_group_name
+          end
+
+          def performs_rake_tasks(*args)
+            @project.set_rake_tasks(@name, @bucket_group_name, args.flatten)
+          end
+        end.new(@project, @name, name)
+      end
+    end.new(self, name).instance_eval(&block)
+  end
+
   def read_config
-    config_file = "#{git.path}/dcc.yml"
-    raise "missing config in '#{config_file}'" unless config = YAML::load(File.read(config_file))
-    config
+    config_file = "#{git.path}/dcc_config.rb"
+    raise "missing config in '#{config_file}'" unless config = File.read(config_file)
+    self.instance_eval(config)
   end
 end

@@ -44,11 +44,15 @@ class DCCWorker
     git.update
     succeeded = true
     if last_handled_build != build.id
-      succeeded = perform_rake_tasks(git.path, project.before_build_tasks, logs)
+      succeeded = perform_rake_tasks(git.path, project.before_all_tasks, logs)
       self.last_handled_build = build.id
     end
-    succeeded &&= perform_rake_tasks(git.path, project.before_task_tasks, logs)
-    succeeded &&= perform_rake_tasks(git.path, project.tasks[bucket.name], logs)
+    if succeeded
+      succeeded &&= perform_rake_tasks(git.path, project.before_bucket_tasks(bucket.name), logs)
+      succeeded &&= perform_rake_tasks(git.path, project.buckets_tasks[bucket.name], logs)
+      succeeded = perform_rake_tasks(git.path, project.after_bucket_tasks(bucket.name), logs) &&
+          succeeded
+    end
     whole_log = ''
     logs.each do |log|
       whole_log << log.log
@@ -125,7 +129,7 @@ class DCCWorker
             " because #{project.build_requested?} ||" +
             " #{project.current_commit} != #{project.last_commit}"
         build = project.builds.create(:commit => project.current_commit, :build_number => build_number)
-        project.tasks.each_key do |task|
+        project.buckets_tasks.each_key do |task|
           bucket = build.buckets.create(:name => task, :status => 20)
           buckets << bucket.id
         end
