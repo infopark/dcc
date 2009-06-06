@@ -42,9 +42,9 @@ class Project < ActiveRecord::Base
     build ? build.build_number + 1 : 1
   end
 
-  def before_all_tasks
+  def before_all_tasks(bucket_identifier)
     read_config
-    @before_all_tasks || []
+    (@before_all_tasks || []) + (_before_all_tasks[buckets_groups[bucket_identifier]] || [])
   end
 
   def before_bucket_tasks(bucket_identifier)
@@ -63,6 +63,10 @@ class Project < ActiveRecord::Base
     buckets_groups[bucket_identifier] = bucket_group_name
   end
 
+  def set_before_all_rake_tasks(bucket_group_name, rake_tasks)
+    _before_all_tasks[bucket_group_name] = rake_tasks
+  end
+
   def set_before_each_rake_tasks(bucket_group_name, rake_tasks)
     _before_bucket_tasks[bucket_group_name] = rake_tasks
   end
@@ -75,6 +79,10 @@ private
 
   def buckets_groups
     @buckets_groups ||= {}
+  end
+
+  def _before_all_tasks
+    @before_all_tasks_of_bucket_group ||= {}
   end
 
   def _before_bucket_tasks
@@ -104,7 +112,7 @@ private
   end
 
   def buckets(name, &block)
-    Class.new(super_class = @@inner_class) do
+    Class.new(@@inner_class) do
       @@bucket_group_inner_class = Class.new(@@inner_class) do
         def initialize(project, bucket_group_name)
           @bucket_group_name = bucket_group_name
@@ -115,6 +123,14 @@ private
       def initialize(project, name)
         @name = name.to_s
         super project
+      end
+
+      def before_all
+        Class.new(@@bucket_group_inner_class) do
+          def performs_rake_tasks(*args)
+            @project.set_before_all_rake_tasks(@bucket_group_name, args.flatten)
+          end
+        end.new(@project, @name)
       end
 
       def before_each_bucket

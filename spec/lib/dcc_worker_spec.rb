@@ -76,7 +76,7 @@ describe DCCWorker, "when running as follower" do
   describe '' do
     before do
       @git = mock('git', :path => 'git path', :update => nil)
-      @project = mock('project', :name => "project's name", :before_all_tasks => %w(bb_1 bb_2),
+      @project = mock('project', :name => "project's name", :before_all_tasks => [],
           :buckets_tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git,
           :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [])
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
@@ -90,6 +90,7 @@ describe DCCWorker, "when running as follower" do
     describe "when performing task" do
       before do
         @worker.stub!(:perform_rake_task).and_return(true)
+        @project.stub!(:before_all_tasks).with("t2").and_return %w(bb_1 bb_2)
         @project.stub!(:before_bucket_tasks).with("t2").and_return %w(bt_1 bt_2)
         @project.stub!(:after_bucket_tasks).with("t2").and_return %w(at_1 at_2)
       end

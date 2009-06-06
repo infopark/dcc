@@ -136,16 +136,43 @@ describe Project do
       describe "when providing the before_all tasks" do
         it "should return an empty array if no before_all tasks are configured" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.before_all_tasks.should == []
+          @project.before_all_tasks("default:bucket").should == []
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(
               "before_all.performs_rake_tasks")
-          @project.before_all_tasks.should == []
+          @project.before_all_tasks("default:bucket").should == []
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                buckets :default do
+                  before_all.performs_rake_tasks
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.before_all_tasks("default:bucket").should == []
         end
 
         it "should return the configured tasks" do
-          File.stub!(:read).with("git_path/dcc_config.rb").and_return(
-                "before_all.performs_rake_tasks %w(task_one task_two)")
-          @project.before_all_tasks.should == %w(task_one task_two)
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                before_all.performs_rake_tasks %w(task_one task_two)
+                buckets :default do
+                  before_all.performs_rake_tasks %w(task_three task_four)
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.before_all_tasks("default:bucket").should ==
+              %w(task_one task_two task_three task_four)
+        end
+
+        it "should not return the configured tasks of another bunch of buckets" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                buckets :default do
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+
+                buckets :other do
+                  before_all.performs_rake_tasks %w(task_one task_two)
+                  bucket(:bucket).performs_rake_tasks("rake_task")
+                end
+              |)
+          @project.before_all_tasks("default:bucket").should == []
         end
       end
 
