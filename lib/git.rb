@@ -3,19 +3,25 @@ require "lib/command_line"
 class Git
   include CommandLine
 
-  def initialize(name, url, branch)
+  def initialize(name, url, branch, is_dependency = false)
     # FIXME: Tests
     @name = name
     @branch = branch
     @url = url
+    @is_dependency = is_dependency
     checkout
     #FIXME
   end
 
+  attr_reader :url, :branch
+
+  def dependency?
+    @is_dependency
+  end
+
   def path
     # FIXME: Tests
-    # FIXME
-    "/tmp/dcc/#{@name}"
+    "/tmp/dcc/#{@name}/#{sub_path}"
   end
 
   def checkout
@@ -26,9 +32,9 @@ class Git
   def clone
     # FIXME: Tests
     FileUtils.rm_rf(path) if File.exists?(path)
-    git("clone", [@url, path], :do_not_chdir => true)
-    git("checkout", git("name-rev", ["--name-only", @branch]).include?(@branch) ? [@branch] :
-        %W(-t -b #{@branch} origin/#{@branch}))
+    git("clone", [url, path], :do_not_chdir => true)
+    git("checkout", git("name-rev", ["--name-only", branch]).include?(branch) ? [branch] :
+        %W(-t -b #{branch} origin/#{branch}))
     git("submodule", ["update", "--init"])
   end
 
@@ -41,7 +47,7 @@ class Git
     # FIXME: Tests
     fetch
     Dir.chdir(path) do
-      git("reset", ["--hard", "origin/#{@branch}"])
+      git("reset", ["--hard", "origin/#{branch}"])
       git("submodule", ['update', "--init"])
       git("clean", ["-f", "-d"])
     end
@@ -50,7 +56,7 @@ class Git
   def current_commit
     # FIXME: Tests
     update
-    git("log", %W(--pretty=format:%H -n 1 #{@branch}))[0]
+    git("log", %W(--pretty=format:%H -n 1 #{branch}))[0]
   end
 
   def git(operation, arguments = [], options = {})
@@ -67,6 +73,12 @@ class Git
     execute(command, options) do |io|
       io.readlines.collect {|line| line.chomp}
     end
+  end
+
+  private
+
+  def sub_path
+    dependency? ? "/dependencies/#{url.gsub(/(.*:)?(.*)(\.git)?/, '\2')}" : 'repos'
   end
 end
 

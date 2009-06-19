@@ -295,7 +295,7 @@ describe DCCWorker, "when running as leader" do
     m = mock(name, :build_requested? => build_requested, :last_commit => "123",
         :current_commit => current_commit, :url => "#{name}_url", :branch => "#{name}_branch",
         :buckets_tasks => {"#{name}1" => "tasks1", "#{name}2" => "tasks2", "#{name}3" => "tasks3"},
-        :id => "#{name}_id", :builds => [])
+        :id => "#{name}_id", :builds => [], :dependency_gits => [])
     m.should_receive(:next_build_number).at_most(:once).and_return(next_build_number)
     m.stub!(:last_commit=)
     m.stub!(:build_requested=)
@@ -303,12 +303,44 @@ describe DCCWorker, "when running as leader" do
     m
   end
 
+  def dependency_git_mock(num, changed)
+    mock("dep#{num}", :current_commit => changed ? "new" : "old", :url => "url#{num}")
+  end
+
+  def dep_changed_project_mock(changed_dep_num)
+    m = project_mock(name = "dep#{changed_dep_num}", false, "123", 3)
+    m.stub!(:dependencies).and_return(deps = mock("deps#{changed_dep_num}", :create => nil))
+    dep_mocks = {
+          "url1" => mock("dep#{changed_dep_num}url1", :last_commit => "old"),
+          "url2" => mock("dep#{changed_dep_num}url2", :last_commit => "old")
+        }
+    deps.stub!(:find_by_url).and_return do |url|
+      dep = dep_mocks[url]
+      if dep
+        dep.stub!(:last_commit=)
+        dep.stub!(:save)
+      end
+      dep
+    end
+    m.stub!(:buckets_tasks).and_return({name => "tasks"})
+    m.stub!(:dependency_gits).and_return [
+          dependency_git_mock(1, changed_dep_num == 1),
+          dependency_git_mock(2, changed_dep_num == 2),
+          dependency_git_mock(3, changed_dep_num == 3)
+        ]
+    m
+  end
+
   before do
     @requested_project = project_mock("req", true, "123", 6)
     @unchanged_project = project_mock("unc", false, "123", 1)
     @updated_project = project_mock("upd", false, "456", 1)
+    @dep_changed_project1 = dep_changed_project_mock(1)
+    @dep_changed_project2 = dep_changed_project_mock(2)
+    @dep_changed_project3 = dep_changed_project_mock(3)
     Project.stub!(:find).with(:all).and_return(
-        [@requested_project, @unchanged_project, @updated_project])
+        [@requested_project, @unchanged_project, @updated_project,
+        @dep_changed_project1, @dep_changed_project2, @dep_changed_project3])
     @leader = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 
@@ -329,15 +361,28 @@ describe DCCWorker, "when running as leader" do
             and_return(updated_build = mock('', :buckets => mock('')))
         @unchanged_project.builds.stub!(:create).
             and_return(unchanged_build = mock('', :buckets => mock('')))
-        # Mit stub! gehen return_blocks nicht (stand rspec 1.1.11),
-        # daher verwende ich hier should_receive mit at_most(100).
-        requested_build.buckets.should_receive(:create).at_most(100).and_return do |m|
+        @dep_changed_project1.builds.stub!(:create).
+            and_return(dep_changed_build1 = mock('', :buckets => mock('')))
+        @dep_changed_project2.builds.stub!(:create).
+            and_return(dep_changed_build2 = mock('', :buckets => mock('')))
+        @dep_changed_project3.builds.stub!(:create).
+            and_return(dep_changed_build3 = mock('', :buckets => mock('')))
+        requested_build.buckets.stub!(:create).and_return do |m|
           mock(m[:name], :id => "#{m[:name]}_id")
         end
-        updated_build.buckets.should_receive(:create).at_most(100).and_return do |m|
+        updated_build.buckets.stub!(:create).and_return do |m|
           mock(m[:name], :id => "#{m[:name]}_id")
         end
-        unchanged_build.buckets.should_receive(:create).at_most(100).and_return do |m|
+        unchanged_build.buckets.stub!(:create).and_return do |m|
+          mock(m[:name], :id => "#{m[:name]}_id")
+        end
+        dep_changed_build1.buckets.stub!(:create).and_return do |m|
+          mock(m[:name], :id => "#{m[:name]}_id")
+        end
+        dep_changed_build2.buckets.stub!(:create).and_return do |m|
+          mock(m[:name], :id => "#{m[:name]}_id")
+        end
+        dep_changed_build3.buckets.stub!(:create).and_return do |m|
           mock(m[:name], :id => "#{m[:name]}_id")
         end
       end
@@ -356,6 +401,13 @@ describe DCCWorker, "when running as leader" do
         buckets.should include("req3_id")
       end
 
+      it "should return updated dependency buckets" do
+        buckets = @leader.read_buckets
+        buckets.should include("dep1_id")
+        buckets.should include("dep2_id")
+        buckets.should include("dep3_id")
+      end
+
       it "should not return unchanched buckets" do
         buckets = @leader.read_buckets
         buckets.should_not include("unc1_id")
@@ -366,6 +418,9 @@ describe DCCWorker, "when running as leader" do
       it "should update the projects state" do
         @leader.should_receive(:update_project).with(@requested_project)
         @leader.should_receive(:update_project).with(@updated_project)
+        @leader.should_receive(:update_project).with(@dep_changed_project1)
+        @leader.should_receive(:update_project).with(@dep_changed_project2)
+        @leader.should_receive(:update_project).with(@dep_changed_project3)
         @leader.should_not_receive(:update_project).with(@unchanged_project)
         @leader.read_buckets
       end
@@ -376,12 +431,27 @@ describe DCCWorker, "when running as leader" do
           and_return(requested_build = mock('', :buckets => mock('')))
       @updated_project.builds.should_receive(:create).with(:commit => "456", :build_number => 1).
           and_return(updated_build = mock('', :buckets => mock('')))
+      @dep_changed_project1.builds.
+          should_receive(:create).with(:commit => "123", :build_number => 3).
+          and_return(dep_changed_build1 = mock('', :buckets => mock('')))
+      @dep_changed_project2.builds.
+          should_receive(:create).with(:commit => "123", :build_number => 3).
+          and_return(dep_changed_build2 = mock('', :buckets => mock('')))
+      @dep_changed_project3.builds.
+          should_receive(:create).with(:commit => "123", :build_number => 3).
+          and_return(dep_changed_build3 = mock('', :buckets => mock('')))
       [1, 2, 3].each do |task|
         requested_build.buckets.should_receive(:create).with(:name => "req#{task}", :status => 20).
             and_return(mock('', :id => 1))
         updated_build.buckets.should_receive(:create).with(:name => "upd#{task}", :status => 20).
             and_return(mock('', :id => 1))
       end
+      dep_changed_build1.buckets.should_receive(:create).with(:name => "dep1", :status => 20).
+            and_return(mock('', :id => 1))
+      dep_changed_build2.buckets.should_receive(:create).with(:name => "dep2", :status => 20).
+            and_return(mock('', :id => 1))
+      dep_changed_build3.buckets.should_receive(:create).with(:name => "dep3", :status => 20).
+            and_return(mock('', :id => 1))
       @leader.read_buckets
     end
   end
@@ -397,6 +467,18 @@ describe DCCWorker, "when running as leader" do
       @updated_project.should_receive(:build_requested=).with(false).ordered
       @updated_project.should_receive(:save).ordered
       @leader.update_project(@updated_project)
+    end
+
+    it "should update the last commit of all dependencies and save them" do
+      dep1 = @dep_changed_project1.dependencies.find_by_url('url1')
+      dep1.should_receive(:last_commit=).with("new").ordered
+      dep1.should_receive(:save).ordered
+      dep2 = @dep_changed_project1.dependencies.find_by_url('url2')
+      dep2.should_receive(:last_commit=).with("old").ordered
+      dep2.should_receive(:save).ordered
+      @dep_changed_project1.dependencies.
+          should_receive(:create).with(:url => 'url3', :last_commit => "old")
+      @leader.update_project(@dep_changed_project1)
     end
   end
 

@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Project do
-  fixtures :projects, :builds
+  fixtures :projects, :builds, :dependencies
 
   before(:each) do
     @project = Project.find(1)
@@ -33,6 +33,11 @@ describe Project do
   it "may have builds" do
     @project.builds.should be_empty
     Project.find(3).builds.should_not be_empty
+  end
+
+  it "may have dependencies" do
+    @project.dependencies.should be_empty
+    Project.find(3).dependencies.should_not be_empty
   end
 end
 
@@ -273,6 +278,71 @@ describe Project do
                 send_notifications_to %w(to@me.de to@me.too)
               |)
           @project.e_mail_receivers.should == ['to@me.de', 'to@me.too']
+        end
+      end
+
+      # TODO: Dependency-Logik in Dependency-Klasse auslagern
+      # -> dependencies liest Config und gleicht DB-Inhalte ab (löscht/kreiert dependencies ->
+      # last_commit muß null sein dürfen)
+      # -> dependenies wissen selbst über ihr git und somit über ihren Status Bescheid
+      describe "when providing the build triggering projects" do
+        before do
+          Git.stub!(:new).and_return do |name, url, branch, is_dependency|
+            mock(name, :url => url, :branch => branch, :dependency? => is_dependency)
+          end
+        end
+        it "should return an empty array if no build triggering projects are configured" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
+          @project.dependency_gits.should == []
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("depends_upon")
+          @project.dependency_gits.should == []
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                depends_upon do
+                end
+              |)
+          @project.dependency_gits.should == []
+        end
+
+        it "should return gits for the configured projects" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                depends_upon.project "url1"
+                depends_upon.project "url2"
+                depends_upon do
+                  project "url3"
+                  project "url4"
+                end
+              |)
+          @project.dependency_gits.map {|g| g.url}.should == %w(url1 url2 url3 url4)
+        end
+
+        it "should set the branch into the git if given" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                depends_upon.project "url1", :branch => "branch1"
+                depends_upon do
+                  project "url2", :branch => "branch2"
+                end
+              |)
+          @project.dependency_gits.map {|g| g.branch}.should == %w(branch1 branch2)
+        end
+
+        it "should set the master branch into the git if no other is given" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                depends_upon.project "url1"
+                depends_upon do
+                  project "url2"
+                end
+              |)
+          @project.dependency_gits.map {|g| g.branch}.should == %w(master master)
+        end
+
+        it "should create the gits as dependencies" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                depends_upon.project "url1"
+                depends_upon do
+                  project "url2"
+                end
+              |)
+          @project.dependency_gits.each {|g| g.should be_dependency}
         end
       end
     end

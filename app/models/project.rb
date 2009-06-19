@@ -3,6 +3,7 @@ require 'lib/git'
 
 class Project < ActiveRecord::Base
   has_many :builds, :dependent => :destroy
+  has_many :dependencies, :dependent => :destroy
   validate :must_have_name, :must_have_url, :must_have_branch
 
   attr_writer :before_all_tasks
@@ -34,6 +35,11 @@ class Project < ActiveRecord::Base
   def e_mail_receivers
     read_config
     @e_mail_receivers || []
+  end
+
+  def dependency_gits
+    read_config
+    @dependency_gits || []
   end
 
   def next_build_number
@@ -75,6 +81,11 @@ class Project < ActiveRecord::Base
     _after_bucket_tasks[bucket_group_name] = rake_tasks
   end
 
+  def add_dependency_git(url, branch)
+    @dependency_gits ||= []
+    @dependency_gits << Git.new(name , url, branch, true)
+  end
+
 private
 
   def buckets_groups
@@ -109,6 +120,17 @@ private
         @project.before_all_tasks = args.flatten
       end
     end.new(self)
+  end
+
+  def depends_upon(&block)
+    dependency_logger = Class.new(@@inner_class) do
+      def project(url, options = {})
+        options = {:branch => 'master'}.merge(options)
+        @project.add_dependency_git url, options[:branch]
+      end
+    end.new(self)
+    dependency_logger.instance_eval(&block) if block_given?
+    dependency_logger
   end
 
   def buckets(name, &block)

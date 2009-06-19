@@ -123,7 +123,8 @@ class DCCWorker
     log.debug "reading buckets"
     Project.find(:all).each do |project|
       log.debug "reading buckets for project #{project}"
-      if project.build_requested? || project.current_commit != project.last_commit
+      if project.build_requested? || project.current_commit != project.last_commit ||
+          dependency_changed(project)
         build_number = project.next_build_number
         log.debug "set up buckets for project #{project} with build_number #{build_number}" +
             " because #{project.build_requested?} ||" +
@@ -146,6 +147,15 @@ class DCCWorker
     project.build_requested = false
     project.save
     log.debug "project's last commit is now #{project.last_commit}"
+    project.dependency_gits.each do |git|
+      dependency = project.dependencies.find_by_url(git.url)
+      if dependency
+        dependency.last_commit = git.current_commit
+        dependency.save
+      else
+        project.dependencies.create(:url => git.url, :last_commit => git.current_commit)
+      end
+    end
   end
 
   def next_bucket(requestor_uri)
@@ -161,6 +171,17 @@ class DCCWorker
   end
 
 private
+
+  def dependency_changed(project)
+    # TODO: die ganze Dependency-Logik ins Projekt verschieben und dort besser Unit-Testen
+    # -> z.B. daß der current_commit für das dependency-Update hier gemerkt wird - dadurch führen
+    # Updates während des Builds auch wieder zu rebuilds.
+    # Momentan ist das _nicht_ so!
+    project.dependency_gits.any? do |git|
+      dependency = project.dependencies.find_by_url(git.url)
+      !dependency || git.current_commit != dependency.last_commit
+    end
+  end
 
   def perform_rake_tasks(path, tasks, logs)
     succeeded = true
