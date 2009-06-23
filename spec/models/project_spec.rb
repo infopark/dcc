@@ -291,6 +291,7 @@ describe Project do
             mock(name, :url => url, :branch => branch, :dependency? => is_dependency)
           end
         end
+
         it "should return an empty array if no build triggering projects are configured" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
           @project.dependency_gits.should == []
@@ -325,14 +326,15 @@ describe Project do
           @project.dependency_gits.map {|g| g.branch}.should == %w(branch1 branch2)
         end
 
-        it "should set the master branch into the git if no other is given" do
+        it "should set the same branch as the current project into the git if no other is given" do
+          @project.stub!(:branch).and_return "current"
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1"
                 depends_upon do
                   project "url2"
                 end
               |)
-          @project.dependency_gits.map {|g| g.branch}.should == %w(master master)
+          @project.dependency_gits.map {|g| g.branch}.should == %w(current current)
         end
 
         it "should create the gits as dependencies" do

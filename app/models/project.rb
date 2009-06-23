@@ -125,7 +125,7 @@ private
   def depends_upon(&block)
     dependency_logger = Class.new(@@inner_class) do
       def project(url, options = {})
-        options = {:branch => 'master'}.merge(options)
+        options = {:branch => @project.branch}.merge(options)
         @project.add_dependency_git url, options[:branch]
       end
     end.new(self)
