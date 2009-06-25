@@ -1,6 +1,7 @@
 require 'politics'
 require 'politics/static_queue_worker'
 require 'app/models/project'
+require 'app/models/dependency'
 require 'app/models/build'
 require 'app/models/bucket'
 require 'app/models/log'
