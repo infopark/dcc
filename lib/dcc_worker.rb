@@ -7,9 +7,11 @@ require 'app/models/bucket'
 require 'app/models/log'
 require 'lib/rake'
 require 'lib/mailer'
+require 'monitor'
 
 class DCCWorker
   include Politics::StaticQueueWorker
+  include MonitorMixin
 
   attr_accessor :last_handled_build
 
@@ -116,7 +118,16 @@ class DCCWorker
 
   def initialize_buckets
     log.debug "initializing buckets"
-    @buckets = read_buckets
+    buckets = read_buckets
+    synchronize do
+      @buckets = buckets
+    end
+  end
+
+  def update_buckets
+    synchronize do
+# FIXME
+    end
   end
 
   def read_buckets
