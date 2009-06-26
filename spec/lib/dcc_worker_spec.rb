@@ -292,7 +292,7 @@ end
 
 describe DCCWorker, "when running as leader" do
   def project_mock(name, build_requested, current_commit, next_build_number)
-    m = mock(name, :build_requested? => build_requested, :last_commit => "123",
+    m = mock(name, :name => name, :build_requested? => build_requested, :last_commit => "123",
         :current_commit => current_commit, :url => "#{name}_url", :branch => "#{name}_branch",
         :buckets_tasks => {"#{name}1" => "tasks1", "#{name}2" => "tasks2", "#{name}3" => "tasks3"},
         :id => "#{name}_id", :builds => [], :dependency_gits => [])
@@ -345,10 +345,17 @@ describe DCCWorker, "when running as leader" do
   end
 
   describe "when initializing the buckets" do
-    it "should read and set the buckets from the database" do
-      @leader.should_receive(:read_buckets).and_return "buckets from the database"
+    it "should read and set the buckets from the database for every project" do
+      @leader.should_receive(:read_buckets).exactly(6).times.and_return do |p|
+        "#{p.name}_buckets"
+      end
       @leader.initialize_buckets
-      @leader.buckets.should == "buckets from the database"
+      @leader.buckets.buckets['req'].should == 'req_buckets'
+      @leader.buckets.buckets['unc'].should == 'unc_buckets'
+      @leader.buckets.buckets['upd'].should == 'upd_buckets'
+      @leader.buckets.buckets['dep1'].should == 'dep1_buckets'
+      @leader.buckets.buckets['dep2'].should == 'dep2_buckets'
+      @leader.buckets.buckets['dep3'].should == 'dep3_buckets'
     end
   end
 
@@ -388,71 +395,40 @@ describe DCCWorker, "when running as leader" do
       end
 
       it "should return updated buckets" do
-        buckets = @leader.read_buckets
-        buckets.should include("upd1_id")
-        buckets.should include("upd2_id")
-        buckets.should include("upd3_id")
+        @leader.read_buckets(@updated_project).should == %w(upd1_id upd2_id upd3_id)
       end
 
       it "should return requested buckets" do
-        buckets = @leader.read_buckets
-        buckets.should include("req1_id")
-        buckets.should include("req2_id")
-        buckets.should include("req3_id")
+        @leader.read_buckets(@requested_project).should == %w(req1_id req2_id req3_id)
       end
 
       it "should return updated dependency buckets" do
-        buckets = @leader.read_buckets
-        buckets.should include("dep1_id")
-        buckets.should include("dep2_id")
-        buckets.should include("dep3_id")
+        @leader.read_buckets(@dep_changed_project1).should == %w(dep1_id)
       end
 
       it "should not return unchanched buckets" do
-        buckets = @leader.read_buckets
-        buckets.should_not include("unc1_id")
-        buckets.should_not include("unc2_id")
-        buckets.should_not include("unc3_id")
+        @leader.read_buckets(@unchanged_project).should be_empty
       end
 
-      it "should update the projects state" do
+      it "should update the projects state if buckets were read" do
         @leader.should_receive(:update_project).with(@requested_project)
-        @leader.should_receive(:update_project).with(@updated_project)
-        @leader.should_receive(:update_project).with(@dep_changed_project1)
-        @leader.should_receive(:update_project).with(@dep_changed_project2)
-        @leader.should_receive(:update_project).with(@dep_changed_project3)
-        @leader.should_not_receive(:update_project).with(@unchanged_project)
-        @leader.read_buckets
+        @leader.read_buckets(@requested_project)
+      end
+
+      it "should not update the projects state if buckets were not read" do
+        @leader.should_not_receive(:update_project)
+        @leader.read_buckets(@unchanged_project)
       end
     end
 
     it "creates the buckets in the db" do
       @requested_project.builds.should_receive(:create).with(:commit => "123", :build_number => 6).
           and_return(requested_build = mock('', :buckets => mock('')))
-      @updated_project.builds.should_receive(:create).with(:commit => "456", :build_number => 1).
-          and_return(updated_build = mock('', :buckets => mock('')))
-      @dep_changed_project1.builds.
-          should_receive(:create).with(:commit => "123", :build_number => 3).
-          and_return(dep_changed_build1 = mock('', :buckets => mock('')))
-      @dep_changed_project2.builds.
-          should_receive(:create).with(:commit => "123", :build_number => 3).
-          and_return(dep_changed_build2 = mock('', :buckets => mock('')))
-      @dep_changed_project3.builds.
-          should_receive(:create).with(:commit => "123", :build_number => 3).
-          and_return(dep_changed_build3 = mock('', :buckets => mock('')))
       [1, 2, 3].each do |task|
         requested_build.buckets.should_receive(:create).with(:name => "req#{task}", :status => 20).
             and_return(mock('', :id => 1))
-        updated_build.buckets.should_receive(:create).with(:name => "upd#{task}", :status => 20).
-            and_return(mock('', :id => 1))
       end
-      dep_changed_build1.buckets.should_receive(:create).with(:name => "dep1", :status => 20).
-            and_return(mock('', :id => 1))
-      dep_changed_build2.buckets.should_receive(:create).with(:name => "dep2", :status => 20).
-            and_return(mock('', :id => 1))
-      dep_changed_build3.buckets.should_receive(:create).with(:name => "dep3", :status => 20).
-            and_return(mock('', :id => 1))
-      @leader.read_buckets
+      @leader.read_buckets(@requested_project)
     end
   end
 
@@ -484,14 +460,18 @@ describe DCCWorker, "when running as leader" do
 
   describe "when delivering buckets" do
     before do
-      module Politics::StaticQueueWorker
-        def next_bucket(requestor)
-          return mocked_next_bucket
-        end
-      end
       @bucket = mock('bucket', :worker_uri= => nil, :status= => nil, :save => nil, :id => 123)
       Bucket.stub!(:find).with(123).and_return(@bucket)
-      @leader.stub!(:mocked_next_bucket).and_return([123, 0])
+      @leader.buckets.stub!(:next_bucket).and_return(123)
+      @leader.stub!(:until_next_iteration).and_return(0)
+    end
+
+    it "should deliver the next bucket from the bucket store" do
+      Bucket.stub!(:find).with("next bucket").and_return(@bucket)
+
+      @leader.buckets.should_receive(:next_bucket).and_return("next bucket")
+      @leader.should_receive(:until_next_iteration).and_return(666)
+      @leader.next_bucket("requestor").should == ["next bucket", 666]
     end
 
     it "should store the requestor's uri into the bucket" do
@@ -506,13 +486,9 @@ describe DCCWorker, "when running as leader" do
       @leader.next_bucket("requestor")
     end
 
-    it "should deliver the next bucket" do
-      @leader.next_bucket("requestor").should == [123, 0]
-    end
-
     describe "when no buckets are left" do
       before do
-        @leader.stub!(:mocked_next_bucket).and_return([nil, 0])
+        @leader.buckets.stub!(:next_bucket).and_return(nil)
       end
 
       it "should not try to change bucket" do

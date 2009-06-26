@@ -7,6 +7,7 @@ require 'app/models/bucket'
 require 'app/models/log'
 require 'lib/rake'
 require 'lib/mailer'
+require 'lib/bucket_store'
 require 'monitor'
 
 class DCCWorker
@@ -22,6 +23,7 @@ class DCCWorker
     log.level = options[:log_level]
     log.formatter = Logger::Formatter.new()
     register_worker group_name, 0, options
+    @buckets = BucketStore.new
   end
 
   def run
@@ -119,9 +121,11 @@ class DCCWorker
 
   def initialize_buckets
     log.debug "initializing buckets"
-    buckets = read_buckets
-    synchronize do
-      @buckets = buckets
+    Project.find(:all).each do |project|
+      buckets = read_buckets(project)
+      synchronize do
+        @buckets.buckets[project.name] = buckets
+      end
     end
   end
 
@@ -131,24 +135,22 @@ class DCCWorker
     end
   end
 
-  def read_buckets
+  def read_buckets(project)
     buckets = []
-    log.debug "reading buckets"
-    Project.find(:all).each do |project|
-      log.debug "reading buckets for project #{project}"
-      if project.build_requested? || project.current_commit != project.last_commit ||
-          dependency_changed(project)
-        build_number = project.next_build_number
-        log.debug "set up buckets for project #{project} with build_number #{build_number}" +
-            " because #{project.build_requested?} ||" +
-            " #{project.current_commit} != #{project.last_commit}"
-        build = project.builds.create(:commit => project.current_commit, :build_number => build_number)
-        project.buckets_tasks.each_key do |task|
-          bucket = build.buckets.create(:name => task, :status => 20)
-          buckets << bucket.id
-        end
-        update_project project
+    log.debug "reading buckets for project #{project}"
+    if project.build_requested? || project.current_commit != project.last_commit ||
+        dependency_changed(project)
+      build_number = project.next_build_number
+      log.debug "set up buckets for project #{project} with build_number #{build_number}" +
+          " because #{project.build_requested?} ||" +
+          " #{project.current_commit} != #{project.last_commit} ||" +
+          " dependency_changed(#{project})"
+      build = project.builds.create(:commit => project.current_commit, :build_number => build_number)
+      project.buckets_tasks.each_key do |task|
+        bucket = build.buckets.create(:name => task, :status => 20)
+        buckets << bucket.id
       end
+      update_project project
     end
     log.debug "read buckets #{buckets.inspect}"
     buckets
@@ -172,7 +174,7 @@ class DCCWorker
   end
 
   def next_bucket(requestor_uri)
-    bucket_spec = super
+    bucket_spec = [buckets.next_bucket, until_next_iteration]
     if bucket_id = bucket_spec[0]
       bucket = Bucket.find(bucket_id)
       bucket.worker_uri = requestor_uri
