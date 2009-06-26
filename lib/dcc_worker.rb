@@ -16,6 +16,7 @@ class DCCWorker
   attr_accessor :last_handled_build
 
   def initialize(group_name, memcached_servers, options = {})
+    super()
     options = {:log_level => Logger::WARN, :servers => memcached_servers, :iteration_length => 10
         }.merge(options)
     log.level = options[:log_level]
