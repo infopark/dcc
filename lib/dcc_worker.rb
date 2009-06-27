@@ -130,8 +130,14 @@ class DCCWorker
   end
 
   def update_buckets
-    synchronize do
-# FIXME
+    log.debug "updating buckets"
+    Project.find(:all).each do |project|
+      if !@buckets.buckets[project.name] || @buckets.buckets[project.name].empty?
+        buckets = read_buckets(project)
+        synchronize do
+          @buckets.buckets[project.name] = buckets
+        end
+      end
     end
   end
 

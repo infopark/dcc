@@ -345,7 +345,7 @@ describe DCCWorker, "when running as leader" do
   end
 
   describe "when initializing the buckets" do
-    it "should read and set the buckets from the database for every project" do
+    it "should read and set the buckets for every project" do
       @leader.should_receive(:read_buckets).exactly(6).times.and_return do |p|
         "#{p.name}_buckets"
       end
@@ -355,6 +355,26 @@ describe DCCWorker, "when running as leader" do
       @leader.buckets.buckets['upd'].should == 'upd_buckets'
       @leader.buckets.buckets['dep1'].should == 'dep1_buckets'
       @leader.buckets.buckets['dep2'].should == 'dep2_buckets'
+      @leader.buckets.buckets['dep3'].should == 'dep3_buckets'
+    end
+  end
+
+  describe "when updating the buckets" do
+    it "should read and set for every project which is not actually build" do
+      @leader.buckets.buckets['unc'] = 'old_unc_buckets'
+      @leader.buckets.buckets['dep2'] = 'old_dep2_buckets'
+      @leader.buckets.buckets['dep3'] = []
+
+      @leader.should_receive(:read_buckets).exactly(4).times.and_return do |p|
+        "#{p.name}_buckets"
+      end
+      @leader.update_buckets
+
+      @leader.buckets.buckets['req'].should == 'req_buckets'
+      @leader.buckets.buckets['unc'].should == 'old_unc_buckets'
+      @leader.buckets.buckets['upd'].should == 'upd_buckets'
+      @leader.buckets.buckets['dep1'].should == 'dep1_buckets'
+      @leader.buckets.buckets['dep2'].should == 'old_dep2_buckets'
       @leader.buckets.buckets['dep3'].should == 'dep3_buckets'
     end
   end
