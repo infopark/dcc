@@ -76,7 +76,7 @@ describe BucketStore do
 
   it "should be empty if no buckets are available" do
     @store.buckets['p1'] = []
-    @store.buckets['p2'] = []
+    @store.buckets['p2'] = nil
     @store.buckets['p3'] = []
     @store.should be_empty
   end

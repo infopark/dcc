@@ -14,6 +14,6 @@ class BucketStore
   end
 
   def empty?
-    @buckets.empty? || @buckets.all? {|k,v| v.empty?}
+    @buckets.empty? || @buckets.all? {|k,v| !v || v.empty?}
   end
 end
