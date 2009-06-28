@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe Build do
+describe Dependency do
   fixtures :projects, :dependencies
 
   before do
@@ -15,7 +15,70 @@ describe Build do
     @dependency.url.should == "url1"
   end
 
+  it "should have a branch" do
+    @dependency.branch.should == "branch1"
+  end
+
   it "should have a last_commit" do
     @dependency.last_commit.should == "old"
+  end
+end
+
+describe Dependency do
+  before do
+    @dependency = Dependency.new(:url => "url", :branch => "branch")
+    @dependency.stub!(:project).and_return mock('project', :name => "project's name")
+  end
+
+  describe "when providing git" do
+    it "should create a new dependency git using url, branch and project's name" do
+      Git.should_receive(:new).with("project's name", "url", "branch", true).and_return "the git"
+      @dependency.git.should == "the git"
+    end
+
+    it "should reuse an already created git" do
+      Git.should_receive(:new).once.and_return "the git"
+      @dependency.git.should == "the git"
+      @dependency.git.should == "the git"
+      @dependency.git.should == "the git"
+    end
+  end
+
+  describe "with git" do
+    before do
+      git = mock("git", :current_commit => "the current commit", :path => 'git_path')
+      @dependency.stub!(:git).and_return git
+    end
+
+    describe "when providing current commit" do
+      it "should get and return the current commit" do
+        @dependency.current_commit.should == "the current commit"
+      end
+    end
+  end
+
+  describe "when asked 'has_changed?'" do
+    before do
+      @dependency.stub!(:current_commit).and_return 'old'
+      @dependency.stub!(:last_commit).and_return 'old'
+    end
+
+    it "should answer 'true' if current commit has changed" do
+      @dependency.stub!(:current_commit).and_return 'new'
+      @dependency.has_changed?.should be_true
+    end
+
+    it "should answer 'false' if current commit has not changed" do
+      @dependency.has_changed?.should be_false
+    end
+  end
+
+  describe "when updating state" do
+    it "should set last commit to current commit and save" do
+      @dependency.stub!(:current_commit).and_return 'new'
+      @dependency.should_receive(:last_commit=).with('new').ordered
+      @dependency.should_receive(:save).ordered
+      @dependency.update_state
+    end
   end
 end

@@ -1,7 +1,6 @@
 require 'politics'
 require 'politics/static_queue_worker'
 require 'app/models/project'
-require 'app/models/dependency'
 require 'app/models/build'
 require 'app/models/bucket'
 require 'app/models/log'
@@ -144,39 +143,17 @@ class DCCWorker
   def read_buckets(project)
     buckets = []
     log.debug "reading buckets for project #{project}"
-    if project.build_requested? || project.current_commit != project.last_commit ||
-        dependency_changed(project)
+    if project.wants_build?
       build_number = project.next_build_number
-      log.debug "set up buckets for project #{project} with build_number #{build_number}" +
-          " because #{project.build_requested?} ||" +
-          " #{project.current_commit} != #{project.last_commit} ||" +
-          " dependency_changed(#{project})"
       build = project.builds.create(:commit => project.current_commit, :build_number => build_number)
       project.buckets_tasks.each_key do |task|
         bucket = build.buckets.create(:name => task, :status => 20)
         buckets << bucket.id
       end
-      update_project project
+      project.update_state
     end
     log.debug "read buckets #{buckets.inspect}"
     buckets
-  end
-
-  def update_project(project)
-    log.debug "updating project #{project} with commit #{project.current_commit}"
-    project.last_commit = project.current_commit
-    project.build_requested = false
-    project.save
-    log.debug "project's last commit is now #{project.last_commit}"
-    project.dependency_gits.each do |git|
-      dependency = project.dependencies.find_by_url(git.url)
-      if dependency
-        dependency.last_commit = git.current_commit
-        dependency.save
-      else
-        project.dependencies.create(:url => git.url, :last_commit => git.current_commit)
-      end
-    end
   end
 
   def next_bucket(requestor_uri)
@@ -192,17 +169,6 @@ class DCCWorker
   end
 
 private
-
-  def dependency_changed(project)
-    # TODO: die ganze Dependency-Logik ins Projekt verschieben und dort besser Unit-Testen
-    # -> z.B. daß der current_commit für das dependency-Update hier gemerkt wird - dadurch führen
-    # Updates während des Builds auch wieder zu rebuilds.
-    # Momentan ist das _nicht_ so!
-    project.dependency_gits.any? do |git|
-      dependency = project.dependencies.find_by_url(git.url)
-      !dependency || git.current_commit != dependency.last_commit
-    end
-  end
 
   def perform_rake_tasks(path, tasks, logs)
     succeeded = true

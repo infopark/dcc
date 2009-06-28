@@ -291,190 +291,97 @@ describe DCCWorker, "when running as follower with fixtures" do
 end
 
 describe DCCWorker, "when running as leader" do
-  def project_mock(name, build_requested, current_commit, next_build_number)
-    m = mock(name, :name => name, :build_requested? => build_requested, :last_commit => "123",
-        :current_commit => current_commit, :url => "#{name}_url", :branch => "#{name}_branch",
-        :buckets_tasks => {"#{name}1" => "tasks1", "#{name}2" => "tasks2", "#{name}3" => "tasks3"},
-        :id => "#{name}_id", :builds => [], :dependency_gits => [])
+  def project_mock(name, current_commit, next_build_number)
+    m = mock(name, :name => name, :wants_build? => false, :current_commit => current_commit,
+        :id => "#{name}_id", :builds => [], :dependencies => [],
+        :buckets_tasks => {"#{name}1" => "tasks1", "#{name}2" => "tasks2", "#{name}3" => "tasks3"})
     m.should_receive(:next_build_number).at_most(:once).and_return(next_build_number)
-    m.stub!(:last_commit=)
-    m.stub!(:build_requested=)
-    m.stub!(:save)
-    m
-  end
-
-  def dependency_git_mock(num, changed)
-    mock("dep#{num}", :current_commit => changed ? "new" : "old", :url => "url#{num}")
-  end
-
-  def dep_changed_project_mock(changed_dep_num)
-    m = project_mock(name = "dep#{changed_dep_num}", false, "123", 3)
-    m.stub!(:dependencies).and_return(deps = mock("deps#{changed_dep_num}", :create => nil))
-    dep_mocks = {
-          "url1" => mock("dep#{changed_dep_num}url1", :last_commit => "old"),
-          "url2" => mock("dep#{changed_dep_num}url2", :last_commit => "old")
-        }
-    deps.stub!(:find_by_url).and_return do |url|
-      dep = dep_mocks[url]
-      if dep
-        dep.stub!(:last_commit=)
-        dep.stub!(:save)
-      end
-      dep
-    end
-    m.stub!(:buckets_tasks).and_return({name => "tasks"})
-    m.stub!(:dependency_gits).and_return [
-          dependency_git_mock(1, changed_dep_num == 1),
-          dependency_git_mock(2, changed_dep_num == 2),
-          dependency_git_mock(3, changed_dep_num == 3)
-        ]
+    m.stub!(:update_state)
     m
   end
 
   before do
-    @requested_project = project_mock("req", true, "123", 6)
-    @unchanged_project = project_mock("unc", false, "123", 1)
-    @updated_project = project_mock("upd", false, "456", 1)
-    @dep_changed_project1 = dep_changed_project_mock(1)
-    @dep_changed_project2 = dep_changed_project_mock(2)
-    @dep_changed_project3 = dep_changed_project_mock(3)
-    Project.stub!(:find).with(:all).and_return(
-        [@requested_project, @unchanged_project, @updated_project,
-        @dep_changed_project1, @dep_changed_project2, @dep_changed_project3])
+    @project1 = project_mock("p1", "12", 2)
+    @project2 = project_mock("p2", "34", 4)
+    @project3 = project_mock("p3", "56", 6)
+    @project4 = project_mock("p4", "78", 8)
+    Project.stub!(:find).with(:all).and_return [@project1, @project2, @project3, @project4]
     @leader = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 
   describe "when initializing the buckets" do
     it "should read and set the buckets for every project" do
-      @leader.should_receive(:read_buckets).exactly(6).times.and_return do |p|
+      @leader.should_receive(:read_buckets).exactly(4).times.and_return do |p|
         "#{p.name}_buckets"
       end
       @leader.initialize_buckets
-      @leader.buckets.buckets['req'].should == 'req_buckets'
-      @leader.buckets.buckets['unc'].should == 'unc_buckets'
-      @leader.buckets.buckets['upd'].should == 'upd_buckets'
-      @leader.buckets.buckets['dep1'].should == 'dep1_buckets'
-      @leader.buckets.buckets['dep2'].should == 'dep2_buckets'
-      @leader.buckets.buckets['dep3'].should == 'dep3_buckets'
+      @leader.buckets.buckets.should == {
+            'p1' => 'p1_buckets',
+            'p2' => 'p2_buckets',
+            'p3' => 'p3_buckets',
+            'p4' => 'p4_buckets'
+          }
     end
   end
 
   describe "when updating the buckets" do
     it "should read and set for every project which is not actually build" do
-      @leader.buckets.buckets['unc'] = 'old_unc_buckets'
-      @leader.buckets.buckets['dep2'] = 'old_dep2_buckets'
-      @leader.buckets.buckets['dep3'] = []
+      @leader.buckets.buckets['p1'] = 'old_p1_buckets'
+      @leader.buckets.buckets['p2'] = []
+      @leader.buckets.buckets['p3'] = 'old_p3_buckets'
 
-      @leader.should_receive(:read_buckets).exactly(4).times.and_return do |p|
+      @leader.should_receive(:read_buckets).exactly(2).times.and_return do |p|
         "#{p.name}_buckets"
       end
       @leader.update_buckets
 
-      @leader.buckets.buckets['req'].should == 'req_buckets'
-      @leader.buckets.buckets['unc'].should == 'old_unc_buckets'
-      @leader.buckets.buckets['upd'].should == 'upd_buckets'
-      @leader.buckets.buckets['dep1'].should == 'dep1_buckets'
-      @leader.buckets.buckets['dep2'].should == 'old_dep2_buckets'
-      @leader.buckets.buckets['dep3'].should == 'dep3_buckets'
+      @leader.buckets.buckets['p1'].should == 'old_p1_buckets'
+      @leader.buckets.buckets['p2'].should == 'p2_buckets'
+      @leader.buckets.buckets['p3'].should == 'old_p3_buckets'
+      @leader.buckets.buckets['p4'].should == 'p4_buckets'
     end
   end
 
   describe "when reading the buckets" do
-    describe "" do
-      before do
-        @requested_project.builds.stub!(:create).
-            and_return(requested_build = mock('', :buckets => mock('')))
-        @updated_project.builds.stub!(:create).
-            and_return(updated_build = mock('', :buckets => mock('')))
-        @unchanged_project.builds.stub!(:create).
-            and_return(unchanged_build = mock('', :buckets => mock('')))
-        @dep_changed_project1.builds.stub!(:create).
-            and_return(dep_changed_build1 = mock('', :buckets => mock('')))
-        @dep_changed_project2.builds.stub!(:create).
-            and_return(dep_changed_build2 = mock('', :buckets => mock('')))
-        @dep_changed_project3.builds.stub!(:create).
-            and_return(dep_changed_build3 = mock('', :buckets => mock('')))
-        requested_build.buckets.stub!(:create).and_return do |m|
-          mock(m[:name], :id => "#{m[:name]}_id")
-        end
-        updated_build.buckets.stub!(:create).and_return do |m|
-          mock(m[:name], :id => "#{m[:name]}_id")
-        end
-        unchanged_build.buckets.stub!(:create).and_return do |m|
-          mock(m[:name], :id => "#{m[:name]}_id")
-        end
-        dep_changed_build1.buckets.stub!(:create).and_return do |m|
-          mock(m[:name], :id => "#{m[:name]}_id")
-        end
-        dep_changed_build2.buckets.stub!(:create).and_return do |m|
-          mock(m[:name], :id => "#{m[:name]}_id")
-        end
-        dep_changed_build3.buckets.stub!(:create).and_return do |m|
-          mock(m[:name], :id => "#{m[:name]}_id")
-        end
+    before do
+      @project1.builds.stub!(:create).and_return(changed_build = mock('', :buckets => mock('')))
+      @project2.builds.stub!(:create).and_return(unchanged_build = mock('', :buckets => mock('')))
+      @project1.stub!(:wants_build?).and_return true
+      @project2.stub!(:wants_build?).and_return false
+      changed_build.buckets.stub!(:create).and_return do |m|
+        mock(m[:name], :id => "#{m[:name]}_id")
       end
+      unchanged_build.buckets.stub!(:create).and_return do |m|
+        mock(m[:name], :id => "#{m[:name]}_id")
+      end
+    end
 
-      it "should return updated buckets" do
-        @leader.read_buckets(@updated_project).should == %w(upd1_id upd2_id upd3_id)
-      end
+    it "should return changed buckets" do
+      @leader.read_buckets(@project1).should == %w(p11_id p12_id p13_id)
+    end
 
-      it "should return requested buckets" do
-        @leader.read_buckets(@requested_project).should == %w(req1_id req2_id req3_id)
-      end
+    it "should not return unchanched buckets" do
+      @leader.read_buckets(@project2).should be_empty
+    end
 
-      it "should return updated dependency buckets" do
-        @leader.read_buckets(@dep_changed_project1).should == %w(dep1_id)
-      end
+    it "should update the projects state if buckets were read" do
+      @project1.should_receive(:update_state)
+      @leader.read_buckets(@project1)
+    end
 
-      it "should not return unchanched buckets" do
-        @leader.read_buckets(@unchanged_project).should be_empty
-      end
-
-      it "should update the projects state if buckets were read" do
-        @leader.should_receive(:update_project).with(@requested_project)
-        @leader.read_buckets(@requested_project)
-      end
-
-      it "should not update the projects state if buckets were not read" do
-        @leader.should_not_receive(:update_project)
-        @leader.read_buckets(@unchanged_project)
-      end
+    it "should not update the projects state if buckets were not read" do
+      @project2.should_not_receive(:update_state)
+      @leader.read_buckets(@project2)
     end
 
     it "creates the buckets in the db" do
-      @requested_project.builds.should_receive(:create).with(:commit => "123", :build_number => 6).
-          and_return(requested_build = mock('', :buckets => mock('')))
+      @project1.builds.should_receive(:create).with(:commit => "12", :build_number => 2).
+          and_return(build = mock('', :buckets => mock('')))
       [1, 2, 3].each do |task|
-        requested_build.buckets.should_receive(:create).with(:name => "req#{task}", :status => 20).
+        build.buckets.should_receive(:create).with(:name => "p1#{task}", :status => 20).
             and_return(mock('', :id => 1))
       end
-      @leader.read_buckets(@requested_project)
-    end
-  end
-
-  describe "when updating a project" do
-    it "should set the last commit to the current commit and save the project" do
-      @updated_project.should_receive(:last_commit=).with("456").ordered
-      @updated_project.should_receive(:save).ordered
-      @leader.update_project(@updated_project)
-    end
-
-    it "should unset the build request flag and save the project" do
-      @updated_project.should_receive(:build_requested=).with(false).ordered
-      @updated_project.should_receive(:save).ordered
-      @leader.update_project(@updated_project)
-    end
-
-    it "should update the last commit of all dependencies and save them" do
-      dep1 = @dep_changed_project1.dependencies.find_by_url('url1')
-      dep1.should_receive(:last_commit=).with("new").ordered
-      dep1.should_receive(:save).ordered
-      dep2 = @dep_changed_project1.dependencies.find_by_url('url2')
-      dep2.should_receive(:last_commit=).with("old").ordered
-      dep2.should_receive(:save).ordered
-      @dep_changed_project1.dependencies.
-          should_receive(:create).with(:url => 'url3', :last_commit => "old")
-      @leader.update_project(@dep_changed_project1)
+      @leader.read_buckets(@project1)
     end
   end
 

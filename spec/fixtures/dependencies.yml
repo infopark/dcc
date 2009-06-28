@@ -3,9 +3,11 @@ one:
   project_id: 3
   url: "url1"
   last_commit: "old"
+  branch: 'branch1'
 
 two:
   id: 2
   project_id: 3
   url: "url2"
   last_commit: "new"
+  branch: 'branch2'

@@ -37,9 +37,26 @@ class Project < ActiveRecord::Base
     @e_mail_receivers || []
   end
 
-  def dependency_gits
+  alias :_dependencies :dependencies
+  def dependencies
+    @logged_deps = {}
     read_config
-    @dependency_gits || []
+    deps = (Dependency.find_by_project_id(id) || [])
+    (deps.is_a?(Array) ? deps : [deps]).each do |d|
+      if @logged_deps.include?(d.url)
+        if d.branch != @logged_deps[d.url]
+          d.branch = @logged_deps[d.url]
+          d.save
+        end
+      else
+        d.delete
+      end
+      @logged_deps.delete(d.url)
+    end
+    @logged_deps.each do |url, branch|
+      _dependencies.create(:url => url, :branch => branch)
+    end
+    _dependencies
   end
 
   def next_build_number
@@ -81,9 +98,21 @@ class Project < ActiveRecord::Base
     _after_bucket_tasks[bucket_group_name] = rake_tasks
   end
 
-  def add_dependency_git(url, branch)
-    @dependency_gits ||= []
-    @dependency_gits << Git.new(name , url, branch, true)
+  def log_dependency(url, branch)
+    @logged_deps[url] = branch
+  end
+
+  def update_state
+    self.last_commit = current_commit
+    self.build_requested = false
+    save
+    dependencies.each do |dependency|
+      dependency.update_state
+    end
+  end
+
+  def wants_build?
+    build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
   end
 
 private
@@ -125,8 +154,7 @@ private
   def depends_upon(&block)
     dependency_logger = Class.new(@@inner_class) do
       def project(url, options = {})
-        options = {:branch => @project.branch}.merge(options)
-        @project.add_dependency_git url, options[:branch]
+        @project.log_dependency(url, options[:branch] || @project.branch)
       end
     end.new(self)
     dependency_logger.instance_eval(&block) if block_given?
