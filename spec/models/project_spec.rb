@@ -114,7 +114,13 @@ describe Project do
       before do
         File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
               send_notifications_to "to@me.de"
+              depends_upon.project "dependency"
+              before_all.performs_rake_tasks 'before_all'
+
               buckets "default" do
+                before_all.performs_rake_tasks 'before_all_2'
+                before_each_bucket.performs_rake_tasks 'before_each'
+                after_each_bucket.performs_rake_tasks 'after_each'
                 bucket(:one).performs_rake_tasks %w(1a 1b 1c)
                 bucket(:two).performs_rake_tasks "2"
               end

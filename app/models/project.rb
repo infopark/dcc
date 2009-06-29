@@ -100,7 +100,7 @@ class Project < ActiveRecord::Base
   end
 
   def log_dependency(url, branch)
-    @logged_deps[url] = branch
+    (@logged_deps || {})[url] = branch
   end
 
   def update_state
