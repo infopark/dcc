@@ -1,5 +1,6 @@
 require 'forwardable'
 require 'lib/git'
+require 'app/models/dependency'
 
 class Project < ActiveRecord::Base
   has_many :builds, :dependent => :destroy
