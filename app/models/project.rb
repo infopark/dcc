@@ -230,7 +230,7 @@ private
     begin
       raise "missing config in '#{config_file}'" unless config = File.read(config_file)
       self.instance_eval(config)
-    rescue Exception => e
+    rescue => e
       msg = "Reading config file '#{config_file}' failed: #{e}"
       log.error msg
       Mailer.deliver_message(self, "reading config failed", msg)
