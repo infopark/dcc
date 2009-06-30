@@ -42,18 +42,20 @@ class Project < ActiveRecord::Base
   def update_dependencies
     @logged_deps = {}
     read_config
-    deps = (Dependency.find_by_project_id(id) || [])
-    (deps.is_a?(Array) ? deps : [deps]).each do |d|
+log.warn "logged deps: #{@logged_deps.inspect}"
+log.warn "existing deps: #{Dependency.find_all_by_project_id(id).inspect}"
+    Dependency.find_all_by_project_id(id).each do |d|
       if @logged_deps.include?(d.url)
         if d.branch != @logged_deps[d.url]
           d.branch = @logged_deps[d.url]
           d.save
+      @logged_deps.delete(d.url)
         end
       else
-        d.delete
+        d.destroy
       end
-      @logged_deps.delete(d.url)
     end
+log.warn "logged deps after cleanup: #{@logged_deps.inspect}"
     @logged_deps.each do |url, branch|
       dependencies.create(:url => url, :branch => branch)
     end

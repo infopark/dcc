@@ -368,6 +368,19 @@ describe Project do
           @project.update_dependencies
           @project.dependencies.map {|d| d.url}.should == %w(url2)
         end
+
+        it "should keep untouched dependencies" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                depends_upon.project "url1", :branch => "branch1"
+              |)
+          @project.update_dependencies
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                depends_upon.project "url1", :branch => "branch1"
+              |)
+          @project.update_dependencies
+          @project.dependencies.map {|d| d.branch}.should == %w(branch1)
+          @project.dependencies.map {|d| d.url}.should == %w(url1)
+        end
       end
     end
 
