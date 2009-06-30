@@ -143,18 +143,35 @@ class DCCWorker
   def read_buckets(project)
     buckets = []
     log.debug "reading buckets for project #{project}"
-    if project.wants_build?
-      build_number = project.next_build_number
-      build = project.builds.create(:commit => project.current_commit,
-          :build_number => build_number)
-      project.buckets_tasks.each_key do |task|
-        bucket = build.buckets.create(:name => task, :status => 20)
-        buckets << bucket.id
+    send_error_mail_on_failure(project, "reading buckets failed", "Failed to read the buckets") do
+      if project.wants_build?
+        build_number = project.next_build_number
+        build = project.builds.create(:commit => project.current_commit,
+            :build_number => build_number)
+        project.buckets_tasks.each_key do |task|
+          bucket = build.buckets.create(:name => task, :status => 20)
+          buckets << bucket.id
+        end
+        project.update_state
       end
-      project.update_state
     end
     log.debug "read buckets #{buckets.inspect}"
     buckets
+  end
+
+  def send_error_mail_on_failure(project, subject, message, &block)
+    begin
+      yield
+    rescue => e
+      receivers = begin
+        project.e_mail_receivers
+      rescue
+        %w(tilo@infopark.de)
+      end
+      msg = "#{message}: #{e}\n\n#{e.backtrace}"
+      log.error msg
+      Mailer.deliver_message(project, receivers, subject, msg)
+    end
   end
 
   def next_bucket(requestor_uri)

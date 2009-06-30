@@ -26,10 +26,7 @@ class Project < ActiveRecord::Base
   end
 
   def git
-    send_error_mail_on_failure("creating git failed",
-        "Could not create git (#{name}, #{url}, #{branch}) for project") do
-      @git ||= Git.new(name, url, branch)
-    end
+    @git ||= Git.new(name, url, branch)
   end
 
   def buckets_tasks
@@ -105,23 +102,17 @@ class Project < ActiveRecord::Base
   end
 
   def update_state
-    send_error_mail_on_failure("updating build state failed",
-        "Could not determine update project's build state") do
-      self.last_commit = current_commit
-      self.build_requested = false
-      save
-      dependencies.each do |dependency|
-        dependency.update_state
-      end
+    self.last_commit = current_commit
+    self.build_requested = false
+    save
+    dependencies.each do |dependency|
+      dependency.update_state
     end
   end
 
   def wants_build?
-    send_error_mail_on_failure("checking project for build failed",
-        "Could not determine if project wants build") do
-      update_dependencies
-      build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
-    end
+    update_dependencies
+    build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
   end
 
 private
@@ -223,36 +214,9 @@ private
     end.new(self, name).instance_eval(&block)
   end
 
-  def log
-    @logger ||= (
-      logger = Logger.new(STDOUT)
-      logger.level = Logger::WARN
-      logger.formatter = Logger::Formatter.new()
-      logger
-    )
-  end
-
   def read_config
     config_file = "#{git.path}/dcc_config.rb"
-    send_error_mail_on_failure("reading config failed",
-        "Reading config file '#{config_file}' failed") do
-      raise "missing config in '#{config_file}'" unless config = File.read(config_file)
-      self.instance_eval(config)
-    end
-  end
-
-  def send_error_mail_on_failure(subject, message, &block)
-    begin
-      yield
-    rescue => e
-      receivers = begin
-        project.e_mail_receivers
-      rescue
-        %w(tilo@infopark.de)
-      end
-      msg = "#{message}: #{e}"
-      log.error msg
-      Mailer.deliver_message(self, receivers, subject, msg)
-    end
+    raise "missing config in '#{config_file}'" unless config = File.read(config_file)
+    self.instance_eval(config)
   end
 end
