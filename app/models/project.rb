@@ -118,9 +118,9 @@ log.warn "logged deps after cleanup: #{@logged_deps.inspect}"
   end
 
   def wants_build?
-    update_dependencies
     send_error_mail_on_failure("checking project for build failed",
         "Could not determine if project wants build") do
+      update_dependencies
       build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
     end
   end
