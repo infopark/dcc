@@ -116,7 +116,10 @@ log.warn "logged deps after cleanup: #{@logged_deps.inspect}"
 
   def wants_build?
     update_dependencies
-    build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
+    send_error_mail_on_failure("checking project for build failed",
+        "Could not determine if project wants build") do
+      build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
+    end
   end
 
 private
@@ -229,13 +232,20 @@ private
 
   def read_config
     config_file = "#{git.path}/dcc_config.rb"
-    begin
+    send_error_mail_on_failure("reading config failed",
+        "Reading config file '#{config_file}' failed") do
       raise "missing config in '#{config_file}'" unless config = File.read(config_file)
       self.instance_eval(config)
+    end
+  end
+
+  def send_error_mail_on_failure(subject, message, &block)
+    begin
+      yield
     rescue => e
-      msg = "Reading config file '#{config_file}' failed: #{e}"
+      msg = "#{message}: #{e}"
       log.error msg
-      Mailer.deliver_message(self, "reading config failed", msg)
+      Mailer.deliver_message(self, subject, msg)
     end
   end
 end
