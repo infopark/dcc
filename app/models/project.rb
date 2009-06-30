@@ -105,17 +105,23 @@ class Project < ActiveRecord::Base
   end
 
   def update_state
-    self.last_commit = current_commit
-    self.build_requested = false
-    save
-    dependencies.each do |dependency|
-      dependency.update_state
+    send_error_mail_on_failure("updating build state failed",
+        "Could not determine update project's build state") do
+      self.last_commit = current_commit
+      self.build_requested = false
+      save
+      dependencies.each do |dependency|
+        dependency.update_state
+      end
     end
   end
 
   def wants_build?
-    update_dependencies
-    build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
+    send_error_mail_on_failure("checking project for build failed",
+        "Could not determine if project wants build") do
+      update_dependencies
+      build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
+    end
   end
 
 private
