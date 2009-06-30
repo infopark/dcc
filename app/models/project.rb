@@ -106,11 +106,14 @@ log.warn "logged deps after cleanup: #{@logged_deps.inspect}"
   end
 
   def update_state
-    self.last_commit = current_commit
-    self.build_requested = false
-    save
-    dependencies.each do |dependency|
-      dependency.update_state
+    send_error_mail_on_failure("updating build state failed",
+        "Could not determine update project's build state") do
+      self.last_commit = current_commit
+      self.build_requested = false
+      save
+      dependencies.each do |dependency|
+        dependency.update_state
+      end
     end
   end
 
