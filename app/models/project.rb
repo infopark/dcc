@@ -63,9 +63,12 @@ log.warn "logged deps after cleanup: #{@logged_deps.inspect}"
   end
 
   def next_build_number
-    build = builds.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
-        :order => "build_number DESC")
-    build ? build.build_number + 1 : 1
+    send_error_mail_on_failure("computing next build number failed",
+        "Could not determine project's next build number") do
+      build = builds.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
+          :order => "build_number DESC")
+      build ? build.build_number + 1 : 1
+    end
   end
 
   def before_all_tasks(bucket_identifier)
