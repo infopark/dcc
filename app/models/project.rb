@@ -39,8 +39,7 @@ class Project < ActiveRecord::Base
     @e_mail_receivers || []
   end
 
-  alias :_dependencies :dependencies
-  def dependencies
+  def update_dependencies
     @logged_deps = {}
     read_config
     deps = (Dependency.find_by_project_id(id) || [])
@@ -56,9 +55,8 @@ class Project < ActiveRecord::Base
       @logged_deps.delete(d.url)
     end
     @logged_deps.each do |url, branch|
-      _dependencies.create(:url => url, :branch => branch)
+      dependencies.create(:url => url, :branch => branch)
     end
-    _dependencies
   end
 
   def next_build_number
@@ -114,6 +112,7 @@ class Project < ActiveRecord::Base
   end
 
   def wants_build?
+    update_dependencies
     build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
   end
 

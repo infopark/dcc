@@ -145,7 +145,8 @@ class DCCWorker
     log.debug "reading buckets for project #{project}"
     if project.wants_build?
       build_number = project.next_build_number
-      build = project.builds.create(:commit => project.current_commit, :build_number => build_number)
+      build = project.builds.create(:commit => project.current_commit,
+          :build_number => build_number)
       project.buckets_tasks.each_key do |task|
         bucket = build.buckets.create(:name => task, :status => 20)
         buckets << bucket.id

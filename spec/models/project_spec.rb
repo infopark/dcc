@@ -36,8 +36,8 @@ describe Project do
   end
 
   it "may have dependencies" do
-    @project._dependencies.should be_empty
-    Project.find(3)._dependencies.should_not be_empty
+    @project.dependencies.should be_empty
+    Project.find(3).dependencies.should_not be_empty
   end
 end
 
@@ -287,17 +287,16 @@ describe Project do
         end
       end
 
-      describe "when providing the build triggering projects" do
+      describe "when updating the dependencies" do
         before do
           @project.save
-          Dependency.delete_all
         end
 
         after do
           @project.delete
         end
 
-        it "should return an empty array if no build triggering projects are configured" do
+        it "should set no dependencies if no build triggering projects are configured" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
           @project.dependencies.should == []
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("depends_upon")
@@ -306,11 +305,11 @@ describe Project do
                 depends_upon do
                 end
               |)
+          @project.update_dependencies
           @project.dependencies.should == []
-          Dependency.all.should be_empty
         end
 
-        it "should return the configured dependencies" do
+        it "should set the configured dependencies" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1"
                 depends_upon.project "url2"
@@ -319,19 +318,19 @@ describe Project do
                   project "url4"
                 end
               |)
+          @project.update_dependencies
           @project.dependencies.map {|d| d.url}.should == %w(url1 url2 url3 url4)
-          Dependency.all.should have(4).items
         end
 
-        it "should set the branch into the dependency if given" do
+        it "should set the branch into the dependencies if given" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1"
                 depends_upon do
                   project "url2", :branch => "branch2"
                 end
               |)
+          @project.update_dependencies
           @project.dependencies.map {|d| d.branch}.should == %w(branch1 branch2)
-          Dependency.all.should have(2).items
         end
 
         it "should use the projects branch as default of the dependencies' branch" do
@@ -342,32 +341,32 @@ describe Project do
                   project "url2"
                 end
               |)
+          @project.update_dependencies
           @project.dependencies.map {|d| d.branch}.should == %w(current current)
-          Dependency.all.should have(2).items
         end
 
         it "should update changed dependencies" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1"
               |)
-          @project.dependencies
+          @project.update_dependencies
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch2"
               |)
+          @project.update_dependencies
           @project.dependencies.map {|d| d.branch}.should == %w(branch2)
-          Dependency.all.map {|d| d.branch}.should == %w(branch2)
         end
 
         it "should delete removed dependencies" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1"
               |)
-          @project.dependencies
+          @project.update_dependencies
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url2", :branch => "branch1"
               |)
+          @project.update_dependencies
           @project.dependencies.map {|d| d.url}.should == %w(url2)
-          Dependency.all.should have(1).item
         end
       end
     end
@@ -427,6 +426,7 @@ describe Project do
             @dep1 = mock('', :has_changed? => false),
             @dep2 = mock('', :has_changed? => false)
           ]
+      @project.stub!(:update_dependencies)
     end
 
     it "should say 'true' if the current commit has changed" do
@@ -446,6 +446,12 @@ describe Project do
 
     it "should say 'false' else" do
       @project.wants_build?.should be_false
+    end
+
+    it "should update the dependencies prior to getting them" do
+      @project.should_receive(:update_dependencies).ordered
+      @project.should_receive(:dependencies).ordered
+      @project.wants_build?
     end
   end
 end
