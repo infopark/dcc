@@ -26,7 +26,10 @@ class Project < ActiveRecord::Base
   end
 
   def git
-    @git ||= Git.new(name, url, branch)
+    send_error_mail_on_failure("creating git failed",
+        "Could not create git (#{name}, #{url}, #{branch}) for project") do
+      @git ||= Git.new(name, url, branch)
+    end
   end
 
   def buckets_tasks
@@ -42,8 +45,6 @@ class Project < ActiveRecord::Base
   def update_dependencies
     @logged_deps = {}
     read_config
-log.warn "logged deps: #{@logged_deps.inspect}"
-log.warn "existing deps: #{Dependency.find_all_by_project_id(id).inspect}"
     Dependency.find_all_by_project_id(id).each do |d|
       if @logged_deps.include?(d.url)
         if d.branch != @logged_deps[d.url]
@@ -51,24 +52,19 @@ log.warn "existing deps: #{Dependency.find_all_by_project_id(id).inspect}"
           d.save
         end
       else
-log.warn "delete: #{d.inspect}"
         d.destroy
       end
       @logged_deps.delete(d.url)
     end
-log.warn "logged deps after cleanup: #{@logged_deps.inspect}"
     @logged_deps.each do |url, branch|
       dependencies.create(:url => url, :branch => branch)
     end
   end
 
   def next_build_number
-    send_error_mail_on_failure("computing next build number failed",
-        "Could not determine project's next build number") do
-      build = builds.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
-          :order => "build_number DESC")
-      build ? build.build_number + 1 : 1
-    end
+    build = builds.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
+        :order => "build_number DESC")
+    build ? build.build_number + 1 : 1
   end
 
   def before_all_tasks(bucket_identifier)
@@ -109,23 +105,17 @@ log.warn "logged deps after cleanup: #{@logged_deps.inspect}"
   end
 
   def update_state
-    send_error_mail_on_failure("updating build state failed",
-        "Could not determine update project's build state") do
-      self.last_commit = current_commit
-      self.build_requested = false
-      save
-      dependencies.each do |dependency|
-        dependency.update_state
-      end
+    self.last_commit = current_commit
+    self.build_requested = false
+    save
+    dependencies.each do |dependency|
+      dependency.update_state
     end
   end
 
   def wants_build?
-    send_error_mail_on_failure("checking project for build failed",
-        "Could not determine if project wants build") do
-      update_dependencies
-      build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
-    end
+    update_dependencies
+    build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
   end
 
 private
