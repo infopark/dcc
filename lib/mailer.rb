@@ -11,9 +11,9 @@ class Mailer < ActionMailer::Base
     bucket_message(bucket, host, 'repariert')
   end
 
-  def message(project, subject, message)
+  def message(project, receivers, subject, message)
     from 'develop@infopark.de'
-    recipients project.e_mail_receivers
+    recipients receivers
     subject "[dcc][#{project.name}] #{subject}"
     body %Q|
 Projekt: #{project.name}
@@ -25,7 +25,7 @@ private
 
   def bucket_message(bucket, host, state)
     build = bucket.build
-    message(build.project, "'#{bucket.name}' #{state} auf #{host}",
+    message(build.project, build.project.e_mail_receivers, "'#{bucket.name}' #{state} auf #{host}",
 "Build: #{build.identifier}
 Task: #{bucket.name}
 

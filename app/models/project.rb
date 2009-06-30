@@ -246,9 +246,14 @@ private
     begin
       yield
     rescue => e
+      receivers = begin
+        project.e_mail_receivers
+      rescue
+        %w(tilo@infopark.de)
+      end
       msg = "#{message}: #{e}"
       log.error msg
-      Mailer.deliver_message(self, subject, msg)
+      Mailer.deliver_message(self, receivers, subject, msg)
     end
   end
 end
