@@ -1,5 +1,6 @@
 require 'forwardable'
 require 'lib/git'
+require 'lib/mailer'
 require 'app/models/dependency'
 
 class Project < ActiveRecord::Base
@@ -215,9 +216,24 @@ private
     end.new(self, name).instance_eval(&block)
   end
 
+  def log
+    @logger ||= (
+      logger = Logger.new(STDOUT)
+      logger.level = Logger::WARN
+      logger.formatter = Logger::Formatter.new()
+      logger
+    )
+  end
+
   def read_config
     config_file = "#{git.path}/dcc_config.rb"
-    raise "missing config in '#{config_file}'" unless config = File.read(config_file)
-    self.instance_eval(config)
+    begin
+      raise "missing config in '#{config_file}'" unless config = File.read(config_file)
+      self.instance_eval(config)
+    rescue Exception => e
+      msg = "Reading config file '#{config_file}' failed: #{e}"
+      log.error msg
+      Mailer.deliver_message(self, "reading config failed", msg)
+    end
   end
 end

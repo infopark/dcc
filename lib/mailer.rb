@@ -4,29 +4,33 @@ require 'action_mailer'
 
 class Mailer < ActionMailer::Base
   def failure_message(bucket, host)
-    message(bucket, host, 'fehlgeschlagen')
+    bucket_message(bucket, host, 'fehlgeschlagen')
   end
 
   def fixed_message(bucket, host)
-    message(bucket, host, 'repariert')
+    bucket_message(bucket, host, 'repariert')
+  end
+
+  def message(project, subject, message)
+    from 'develop@infopark.de'
+    recipients project.e_mail_receivers
+    subject "[dcc][#{project.name}] #{subject}"
+    body %Q|
+Projekt: #{project.name}
+#{message}
+|
   end
 
 private
 
-  def message(bucket, host, state)
+  def bucket_message(bucket, host, state)
     build = bucket.build
-    project = build.project
-    from 'develop@infopark.de'
-    recipients project.e_mail_receivers
-    subject "[dcc][#{project.name}] '#{bucket.name}' #{state} auf #{host}"
-    body %Q|
-Projekt: #{project.name}
-Build: #{build.identifier}
+    message(build.project, "'#{bucket.name}' #{state} auf #{host}",
+"Build: #{build.identifier}
 Task: #{bucket.name}
 
 Log:
 
-#{bucket.log}
-|
+#{bucket.log}")
   end
 end
