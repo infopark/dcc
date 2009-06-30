@@ -49,11 +49,12 @@ log.warn "existing deps: #{Dependency.find_all_by_project_id(id).inspect}"
         if d.branch != @logged_deps[d.url]
           d.branch = @logged_deps[d.url]
           d.save
-      @logged_deps.delete(d.url)
         end
       else
+log.warn "delete: #{d.inspect}"
         d.destroy
       end
+      @logged_deps.delete(d.url)
     end
 log.warn "logged deps after cleanup: #{@logged_deps.inspect}"
     @logged_deps.each do |url, branch|
