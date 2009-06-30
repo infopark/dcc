@@ -8,6 +8,7 @@ require 'fileutils'
 
 FileUtils.chdir("#{File.dirname($0[0..0] == '/' ? $0 : "#{FileUtils.pwd}/#{$0}")}/..") do
   require 'lib/dcc_worker'
+  require 'lib/ruby_backtracer/backtrace_nothing_swallowed'
   # FIXME: Konfig aus Datei lesen
   # -> memcached-Server(s)
   # -> DB-Verbindung

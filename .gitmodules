@@ -1,0 +1,3 @@
+[submodule "lib/ruby_backtracer"]
+	path = lib/ruby_backtracer
+	url = git://github.com/rogerdpack/ruby_backtracer.git
