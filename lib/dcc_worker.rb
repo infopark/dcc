@@ -175,7 +175,7 @@ class DCCWorker
   end
 
   def next_bucket(requestor_uri)
-    bucket_spec = [@buckets.next_bucket, until_next_iteration]
+    bucket_spec = [@buckets.next_bucket, sleep_until_next_bucket_time]
     if bucket_id = bucket_spec[0]
       bucket = Bucket.find(bucket_id)
       bucket.worker_uri = requestor_uri

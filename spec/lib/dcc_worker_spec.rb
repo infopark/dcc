@@ -390,14 +390,14 @@ describe DCCWorker, "when running as leader" do
       @bucket = mock('bucket', :worker_uri= => nil, :status= => nil, :save => nil, :id => 123)
       Bucket.stub!(:find).with(123).and_return(@bucket)
       @leader.buckets.stub!(:next_bucket).and_return(123)
-      @leader.stub!(:until_next_iteration).and_return(0)
+      @leader.stub!(:sleep_until_next_bucket_time).and_return(0)
     end
 
     it "should deliver the next bucket from the bucket store" do
       Bucket.stub!(:find).with("next bucket").and_return(@bucket)
 
       @leader.buckets.should_receive(:next_bucket).and_return("next bucket")
-      @leader.should_receive(:until_next_iteration).and_return(666)
+      @leader.should_receive(:sleep_until_next_bucket_time).and_return(666)
       @leader.next_bucket("requestor").should == ["next bucket", 666]
     end
 
