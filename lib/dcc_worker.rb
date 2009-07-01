@@ -17,8 +17,7 @@ class DCCWorker
 
   def initialize(group_name, memcached_servers, options = {})
     super()
-    options = {:log_level => Logger::WARN, :servers => memcached_servers, :iteration_length => 10
-        }.merge(options)
+    options = {:log_level => Logger::WARN, :servers => memcached_servers}.merge(options)
     log.level = options[:log_level]
     log.formatter = Logger::Formatter.new()
     register_worker group_name, 0, options
