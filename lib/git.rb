@@ -1,11 +1,12 @@
 require "lib/command_line"
+require "digest/md5"
 
 class Git
   include CommandLine
 
   def initialize(name, url, branch, is_dependency = false)
     # FIXME: Tests
-    @name = name
+    @name = "#{name.gsub(/[^-_a-zA-Z0-9]/, '_')}_#{Digest::MD5.hexdigest(name)}"
     @branch = branch
     @url = url
     @is_dependency = is_dependency
