@@ -21,6 +21,7 @@ class DCCWorker
     options = {:log_level => Logger::WARN, :servers => memcached_servers}.merge(options)
     log.level = options[:log_level]
     log.formatter = Logger::Formatter.new()
+    DccLogger.setLog(log)
     register_worker group_name, 0, options
     @buckets = BucketStore.new
     @admin_e_mail_address = options[:admin_e_mail_address]

@@ -1,9 +1,12 @@
 require 'forwardable'
 require 'lib/git'
 require 'lib/mailer'
+require 'lib/dcc_logger'
 require 'app/models/dependency'
 
 class Project < ActiveRecord::Base
+  include DccLogger
+
   has_many :builds, :dependent => :destroy
   has_many :dependencies, :dependent => :destroy
   validate :must_have_name, :must_have_url, :must_have_branch
@@ -112,7 +115,18 @@ class Project < ActiveRecord::Base
 
   def wants_build?
     update_dependencies
-    build_requested? || current_commit != last_commit || dependencies.any? {|d| d.has_changed?}
+    log.debug "determining if #{self} wants build..."
+    wants_build = build_requested?
+    log.debug "build_requested? -> #{wants_build}"
+    unless wants_build
+      wants_build = current_commit != last_commit
+      log.debug "current_commit != last_commit -> #{wants_build}"
+    end
+    unless wants_build
+      wants_build = dependencies.any? {|d| d.has_changed?}
+      log.debug "dependency has changed -> #{wants_build}"
+    end
+    wants_build
   end
 
 private

@@ -1,6 +1,9 @@
 require 'forwardable'
+require 'lib/dcc_logger'
 
 class Dependency < ActiveRecord::Base
+  include DccLogger
+
   belongs_to :project
 
   extend Forwardable
@@ -11,7 +14,9 @@ class Dependency < ActiveRecord::Base
   end
 
   def has_changed?
-    last_commit != current_commit
+    has_changed = last_commit != current_commit
+    log.debug "#{self} has changed -> #{has_changed}"
+    has_changed
   end
 
   def update_state

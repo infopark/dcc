@@ -3,7 +3,7 @@
 <% project = build.project -%>
 <h1>Project <%= link_to project.name, :action => 'show', :id => project %>,
     Build <%= link_to build_display_value(build), :action => 'show_build', :id => build %>,
-    Task <%= @bucket.name %><%= " auf #{@bucket.worker_uri}" if @bucket.worker_uri %></h1>
+    Task <%= bucket_display_value(@bucket) %></h1>
 <pre><%= @bucket.log ? @bucket.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %></pre>
 <hr/>
 <table class='logs'>

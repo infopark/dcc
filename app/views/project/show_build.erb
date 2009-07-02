@@ -5,7 +5,7 @@
 <% buckets = @build.buckets
 buckets.each do |bucket| -%>
   <tr>
-    <td class='name'><%= link_to bucket.name, :action => "show_bucket", :id => bucket %></td>
+    <td class='name'><%= link_to bucket_display_value(bucket), :action => "show_bucket", :id => bucket %></td>
     <td><%= bucket_status(bucket) %></td>
   </tr>
 <% end -%>

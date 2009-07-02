@@ -1,0 +1,9 @@
+<ul>
+<% @buckets.each do |bucket| -%>
+  <li>
+  <% form_for :bucket, :url => {:action => :failed, :id => bucket} do -%>
+    <%= bucket.build.project.name %> - <%= build_display_value(bucket.build) %> - <%= bucket_display_value(bucket) %>&nbsp;&nbsp;&nbsp;<%= submit_tag 'Manuell auf "failed" setzen' %>
+  <% end -%>
+  </li>
+<% end -%>
+</ul>
