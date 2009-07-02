@@ -4,7 +4,7 @@ require 'lib/rake'
 
 class DCCWorker
   attr_accessor :buckets
-  attr_reader :memcache_client, :uri
+  attr_reader :memcache_client
 
   def log_polling_intervall
     return 0.1
@@ -354,6 +354,7 @@ describe DCCWorker, "when running as leader" do
       unchanged_build.buckets.stub!(:create).and_return do |m|
         mock(m[:name], :id => "#{m[:name]}_id")
       end
+      @leader.stub!(:uri).and_return "leader's uri"
     end
 
     it "should return changed buckets" do
@@ -375,7 +376,8 @@ describe DCCWorker, "when running as leader" do
     end
 
     it "creates the buckets in the db" do
-      @project1.builds.should_receive(:create).with(:commit => "12", :build_number => 2).
+      @project1.builds.should_receive(:create).
+          with(:commit => "12", :build_number => 2, :leader_uri => "leader's uri").
           and_return(build = mock('', :buckets => mock('')))
       [1, 2, 3].each do |task|
         build.buckets.should_receive(:create).with(:name => "p1#{task}", :status => 20).
@@ -407,7 +409,7 @@ describe DCCWorker, "when running as leader" do
       @leader.next_bucket("requestor")
     end
 
-    it "should store the status 'in work' uri into the bucket" do
+    it "should store the status 'in work' into the bucket" do
       @bucket.should_receive(:status=).with(30).ordered
       @bucket.should_receive(:save).ordered
       @leader.next_bucket("requestor")

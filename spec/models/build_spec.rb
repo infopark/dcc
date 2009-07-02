@@ -19,6 +19,10 @@ describe Build do
     @build.build_number.should == 6
   end
 
+  it "should have a leader_uri" do
+    @build.leader_uri.should == "leader's uri"
+  end
+
   it "may have buckets" do
     @build.buckets.should be_empty
     Build.find(3).buckets.should_not be_empty

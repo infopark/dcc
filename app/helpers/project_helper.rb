@@ -13,6 +13,10 @@ module ProjectHelper
     build_status(last_build) if last_build
   end
 
+  def build_display_value(build)
+    "#{build.identifier} verwaltet von #{build.leader_uri}"
+  end
+
 private
 
   def display_status(status)

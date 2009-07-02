@@ -76,4 +76,14 @@ describe ProjectHelper do
       helper.project_status(@project).should == "last build's status"
     end
   end
+
+  describe 'build_display_value' do
+    before do
+      @build = mock('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri')
+    end
+
+    it "should return the display value containing the identifier and the leader_uri" do
+      helper.build_display_value(@build).should == "build_identifier verwaltet von leader_uri"
+    end
+  end
 end

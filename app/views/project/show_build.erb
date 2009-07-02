@@ -1,6 +1,6 @@
 <%= link_to 'Übersicht', :action => 'index' %>
 <h1>Project <%= link_to @build.project.name, :action => 'show', :id => @build.project %>,
-    Build <%= @build.identifier %></h1>
+    Build <%= build_display_value(@build) %></h1>
 <table class='buckets'>
 <% buckets = @build.buckets
 buckets.each do |bucket| -%>

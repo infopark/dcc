@@ -71,13 +71,13 @@ class DCCWorker
     bucket.save
     logs.clear
     if !succeeded
-      Mailer.deliver_failure_message(bucket, @uri)
+      Mailer.deliver_failure_message(bucket, uri)
     else
       last_build = Build.find_last_by_project_id(bucket.build.project_id,
           :conditions => "id < #{bucket.build.id}")
       if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
             last_bucket.status != 10
-        Mailer.deliver_fixed_message(bucket, @uri)
+        Mailer.deliver_fixed_message(bucket, uri)
       end
     end
   end
@@ -151,7 +151,7 @@ class DCCWorker
       if project.wants_build?
         build_number = project.next_build_number
         build = project.builds.create(:commit => project.current_commit,
-            :build_number => build_number)
+            :build_number => build_number, :leader_uri => uri)
         project.buckets_tasks.each_key do |task|
           bucket = build.buckets.create(:name => task, :status => 20)
           buckets << bucket.id
