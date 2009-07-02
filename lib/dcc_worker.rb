@@ -14,6 +14,7 @@ class DCCWorker
   include MonitorMixin
 
   attr_accessor :last_handled_build
+  attr_reader :admin_e_mail_address
 
   def initialize(group_name, memcached_servers, options = {})
     super()
@@ -22,19 +23,23 @@ class DCCWorker
     log.formatter = Logger::Formatter.new()
     register_worker group_name, 0, options
     @buckets = BucketStore.new
+    @admin_e_mail_address = options[:admin_e_mail_address]
   end
 
   def run
     log.debug "running"
-    process_bucket do |bucket_id|
-      bucket = Bucket.find(bucket_id)
-      begin
-        perform_task bucket
-      rescue Exception => e
-        bucket.status = 35
-        bucket.save
-        log.error "failed to process #{bucket}: #{e.message}"
-        log.error e.backtrace.join("\n")
+    send_general_error_mail_on_failure("running worker failed") do
+      process_bucket do |bucket_id|
+        bucket = Bucket.find(bucket_id)
+        send_bucket_error_mail_on_failure(bucket, "processing bucket failed") do
+          begin
+            perform_task bucket
+          rescue => e
+            bucket.status = 35
+            bucket.save
+            raise e
+          end
+        end
       end
     end
   end
@@ -142,7 +147,7 @@ class DCCWorker
   def read_buckets(project)
     buckets = []
     log.debug "reading buckets for project #{project}"
-    send_error_mail_on_failure(project, "reading buckets failed", "Failed to read the buckets") do
+    send_project_error_mail_on_failure(project, "reading buckets failed") do
       if project.wants_build?
         build_number = project.next_build_number
         build = project.builds.create(:commit => project.current_commit,
@@ -158,21 +163,6 @@ class DCCWorker
     buckets
   end
 
-  def send_error_mail_on_failure(project, subject, message, &block)
-    begin
-      yield
-    rescue => e
-      receivers = begin
-        project.e_mail_receivers
-      rescue
-        %w(tilo@infopark.de)
-      end
-      msg = "#{message}: #{e}\n\n#{e.backtrace}"
-      log.error msg
-      Mailer.deliver_message(project, receivers, subject, msg)
-    end
-  end
-
   def next_bucket(requestor_uri)
     bucket_spec = [@buckets.next_bucket, sleep_until_next_bucket_time]
     if bucket_id = bucket_spec[0]
@@ -185,7 +175,35 @@ class DCCWorker
     bucket_spec
   end
 
+  def send_bucket_error_mail_on_failure(bucket, subject, &block)
+    send_error_mail_on_failure(:deliver_bucket_message, subject, bucket, &block)
+  end
+
+  def send_project_error_mail_on_failure(project, subject, &block)
+    send_error_mail_on_failure(:deliver_project_message, subject, project, &block)
+  end
+
+  def send_general_error_mail_on_failure(subject, &block)
+    send_error_mail_on_failure(:deliver_message, subject, &block)
+  end
+
 private
+
+  def send_error_mail_on_failure(deliver_method, subject, *args, &block)
+    begin
+      yield
+    rescue => e
+      msg = "#{e.message}\n\n#{e.backtrace.join("\n")}"
+      log.error msg
+      if admin_e_mail_address
+        deliver_args = Array.new(args)
+        deliver_args << admin_e_mail_address
+        deliver_args << subject
+        deliver_args << msg
+        Mailer.send :deliver_method, *args
+      end
+    end
+  end
 
   def perform_rake_tasks(path, tasks, logs)
     succeeded = true
