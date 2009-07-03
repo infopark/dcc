@@ -33,10 +33,10 @@ class Git
   def clone
     # FIXME: Tests
     FileUtils.rm_rf(path) if File.exists?(path)
-    git("clone", [url, path], :do_not_chdir => true)
-    git("checkout", git("name-rev", ["--name-only", branch]).include?(branch) ? [branch] :
-        %W(-t -b #{branch} origin/#{branch}))
-    git("submodule", ["update", "--init"])
+    git("clone", url, path, :do_not_chdir => true)
+    git("checkout", *(git("name-rev", "--name-only", branch).include?(branch) ? branch :
+        %W(-t -b #{branch} origin/#{branch})))
+    git("submodule", "update", "--init")
   end
 
   def fetch
@@ -48,23 +48,27 @@ class Git
     # FIXME: Tests
     fetch
     Dir.chdir(path) do
-      git("reset", ["--hard", "origin/#{branch}"])
-      git("submodule", ['update', "--init"])
-      git("clean", ["-f", "-d"])
+      git("checkout", branch)
+      git("reset", "--hard", "origin/#{branch}")
+      git("submodule", 'update', "--init")
+      git("clean", "-f", "-d")
     end
   end
 
   def current_commit
     # FIXME: Tests
     update
-    git("log", %W(--pretty=format:%H -n 1 #{branch}))[0]
+    git("log", '--pretty=format:%H', '-n', '1', branch)[0]
   end
 
-  def git(operation, arguments = [], options = {})
+  private
+
+  def git(operation, *args)
     # FIXME: Tests
+    options = (args.last.is_a? Hash) ? args.pop : {}
     command = ["git"]
     command << operation
-    command += arguments.compact
+    command += args.compact
     error_log = File.expand_path(File.join(path, "..", "#{@name}_git.err"))
     FileUtils.rm_f(error_log)
     FileUtils.mkdir_p(File.dirname(error_log))
@@ -75,8 +79,6 @@ class Git
       io.readlines.collect {|line| line.chomp}
     end
   end
-
-  private
 
   def sub_path
     dependency? ? "/dependencies/#{url.gsub(/(.*:)?(.*)(\.git)?/, '\2')}" : 'repos'
