@@ -119,14 +119,20 @@ class Project < ActiveRecord::Base
     wants_build = build_requested?
     log.debug "build_requested? -> #{wants_build}"
     unless wants_build
-      wants_build = current_commit != last_commit
-      log.debug "current_commit != last_commit -> #{wants_build}"
+      cc = current_commit
+      lc = last_commit
+      wants_build = cc != lc
+      log.debug "current_commit (#{cc}) != last_commit (#{lc}) -> #{wants_build}"
     end
     unless wants_build
       wants_build = dependencies.any? {|d| d.has_changed?}
       log.debug "dependency has changed -> #{wants_build}"
     end
     wants_build
+  end
+
+  def to_s
+    "#<Project; ID: #{id}, Name: #{name}>"
   end
 
 private

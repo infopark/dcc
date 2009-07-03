@@ -3,6 +3,6 @@ class Bucket < ActiveRecord::Base
   belongs_to :build
 
   def to_s
-    "#<Bucket; Task: #{name}, Build: #{build.identifier}, Project: #{build.project.name}>"
+    "#<Bucket; ID: #{id}, Task: #{name}, Build: #{build.identifier}, Project: #{build.project.name}>"
   end
 end

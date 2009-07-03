@@ -13,4 +13,8 @@ class Build < ActiveRecord::Base
   def identifier
     "#{commit}.#{build_number}"
   end
+
+  def to_s
+    "#<Build; ID: #{id}, Identifier: #{identifier}, Project: #{project.name}>"
+  end
 end
