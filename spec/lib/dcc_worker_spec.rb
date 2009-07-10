@@ -64,13 +64,38 @@ describe DCCWorker, "when running as follower" do
     @worker.run
   end
 
-  it "should set bucket's status to 'processing failed' if perform_task fails" do
-    @worker.stub!(:loop?).and_return false
-    Bucket.stub!(:find).and_return(bucket = mock('bucket'))
-    @worker.should_receive(:perform_task).with(bucket).and_raise("an error")
-    bucket.should_receive(:status=).with(35).ordered
-    bucket.should_receive(:save).ordered
-    @worker.run
+  describe 'when even the basic things (process_bucket) fail' do
+    before do
+      @worker.stub!(:process_bucket).and_raise("an error")
+    end
+
+    it "should send an email to the admin" do
+      @worker.stub!(:admin_e_mail_address).and_return('admin-e-mail')
+      Mailer.should_receive(:send).with(:deliver_message,
+          'admin-e-mail', 'running worker failed', /an error/)
+      @worker.run
+    end
+  end
+
+  describe 'when perform_task fails' do
+    before do
+      @worker.stub!(:loop?).and_return false
+      Bucket.stub!(:find).and_return(@bucket = mock('bucket', :status= => nil, :save => nil))
+      @worker.stub!(:perform_task).and_raise("an error")
+    end
+
+    it "should set bucket's status to 'processing failed'" do
+      @bucket.should_receive(:status=).with(35).ordered
+      @bucket.should_receive(:save).ordered
+      @worker.run
+    end
+
+    it "should send a 'bucket message' email to the admin" do
+      @worker.stub!(:admin_e_mail_address).and_return('admin-e-mail')
+      Mailer.should_receive(:send).with(:deliver_bucket_message,
+          @bucket, 'admin-e-mail', 'processing bucket failed', /an error/)
+      @worker.run
+    end
   end
 
   describe '' do
@@ -306,7 +331,7 @@ describe DCCWorker, "when running as leader" do
     @project3 = project_mock("p3", "56", 6)
     @project4 = project_mock("p4", "78", 8)
     Project.stub!(:find).with(:all).and_return [@project1, @project2, @project3, @project4]
-    @leader = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
+    @leader = DCCWorker.new('dcc_test', nil, :log_level => Logger::FATAL)
   end
 
   describe "when initializing the buckets" do
@@ -383,6 +408,14 @@ describe DCCWorker, "when running as leader" do
         build.buckets.should_receive(:create).with(:name => "p1#{task}", :status => 20).
             and_return(mock('', :id => 1))
       end
+      @leader.read_buckets(@project1)
+    end
+
+    it "should send a 'project message' email to the admin if an error occurs" do
+      @project1.stub!(:update_state).and_raise "an error"
+      @leader.stub!(:admin_e_mail_address).and_return('admin-e-mail')
+      Mailer.should_receive(:send).with(:deliver_project_message,
+          @project1, 'admin-e-mail', 'reading buckets failed', /an error/)
       @leader.read_buckets(@project1)
     end
   end

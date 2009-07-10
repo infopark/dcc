@@ -201,7 +201,7 @@ private
         deliver_args << admin_e_mail_address
         deliver_args << subject
         deliver_args << msg
-        Mailer.send :deliver_method, *args
+        Mailer.send deliver_method, *deliver_args
       end
     end
   end
