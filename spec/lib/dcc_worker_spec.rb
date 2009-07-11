@@ -412,6 +412,7 @@ describe DCCWorker, "when running as leader" do
     end
 
     it "should send a 'project message' email to the admin if an error occurs" do
+      @leader.stub!(:leader_uri)
       @project1.stub!(:update_state).and_raise "an error"
       @leader.stub!(:admin_e_mail_address).and_return('admin-e-mail')
       Mailer.should_receive(:send).with(:deliver_project_message,

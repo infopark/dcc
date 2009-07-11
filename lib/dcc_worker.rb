@@ -194,7 +194,7 @@ private
     begin
       yield
     rescue => e
-      msg = "#{e.message}\n\n#{e.backtrace.join("\n")}"
+      msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
       log.error msg
       if admin_e_mail_address
         deliver_args = Array.new(args)
