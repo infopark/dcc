@@ -190,10 +190,14 @@ class DCCWorker
 
 private
 
+  @@pbl = 0
   def send_error_mail_on_failure(deliver_method, subject, *args, &block)
     begin
+      log.debug "entering protected block (->#{@@pbl += 1})"
       yield
+      log.debug "leaving protected block (->#{@@pbl -= 1})"
     rescue => e
+      log.debug "error occurred in protected block (->#{@@pbl -= 1})"
       msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
       log.error msg
       if admin_e_mail_address
