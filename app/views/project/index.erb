@@ -1,5 +1,5 @@
 <table class='projects'>
-<% @projects.each do |project| -%>
+<% @projects.sort_by {|p| p.name.downcase}.each do |project| -%>
   <tr>
     <td class='name'><%= link_to project.name, :action => "show", :id => project %>
         (URL: <%= project.url %>, Branch: <%= project.branch %>)</td>
