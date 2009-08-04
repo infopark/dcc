@@ -1,0 +1,15 @@
+.success {
+  background-color: lightGreen;
+}
+
+.failure {
+  background-color: pink;
+}
+
+.pending {
+  background-color: lightGrey;
+}
+
+.processing {
+  background-color: lightBlue;
+}

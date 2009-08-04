@@ -5,7 +5,7 @@
 builds[0..2].each do |build| -%>
   <tr>
     <td class='name'><%= link_to build_display_value(build), :action => "show_build", :id => build %></td>
-    <td><%= build_status(build) %></td>
+    <td><%= build_display_status(build) %></td>
   </tr>
 <% end -%>
 <% unless builds.size < 4 -%>

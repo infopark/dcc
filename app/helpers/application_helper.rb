@@ -8,8 +8,12 @@ module ApplicationHelper
     "#{bucket.name}#{" auf #{bucket.worker_uri}" if bucket.worker_uri}"
   end
 
-  def bucket_status(bucket)
+  def bucket_display_status(bucket)
     display_status(bucket.status)
+  end
+
+  def build_display_status(build)
+    display_status(build_status(build))
   end
 
   def display_status(status)
@@ -26,6 +30,25 @@ module ApplicationHelper
       'failed'
     else
       "unknown status #{status}"
+    end
+  end
+
+  def build_status(build)
+    build.buckets.map {|b| b.status}.sort.last
+  end
+
+  def status_css_class(status)
+    case status
+    when 10
+      'success'
+    when 20
+      'pending'
+    when 30
+      'processing'
+    when 35
+      'failure'
+    when 40
+      'failure'
     end
   end
 end

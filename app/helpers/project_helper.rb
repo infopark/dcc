@@ -1,11 +1,16 @@
 module ProjectHelper
-  def build_status(build)
-    display_status(build.buckets.map {|b| b.status}.sort.last)
+  def last_build(project)
+    Build.find_last_by_project_id_and_commit_hash(project.id, project.last_commit,
+        :order => 'build_number')
+  end
+
+  def project_display_status(project)
+    build = last_build(project)
+    build_display_status(build) if build
   end
 
   def project_status(project)
-    last_build = Build.find_last_by_project_id_and_commit_hash(project.id, project.last_commit,
-        :order => 'build_number')
-    build_status(last_build) if last_build
+    build = last_build(project)
+    build_status(build) if build
   end
 end

@@ -1,9 +1,9 @@
 <table class='projects'>
 <% @projects.sort_by {|p| p.name.downcase}.each do |project| -%>
-  <tr>
+  <tr class="<%= status_css_class(project_status(project)) %>">
     <td class='name'><%= link_to project.name, :action => "show", :id => project %>
         (URL: <%= project.url %>, Branch: <%= project.branch %>)</td>
-    <td><%= project_status(project) %></td>
+    <td><%= project_display_status(project) %></td>
     </td>
     <td>
     <% form_for :project, :url => {:action => :build, :id => project} do |f| -%>
