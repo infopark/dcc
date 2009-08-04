@@ -1,11 +1,11 @@
 # Methods added to this helper will be available to all templates in the application.
 module ApplicationHelper
   def build_display_value(build)
-    "#{build.identifier} verwaltet von #{build.leader_uri}"
+    "<span title='#{build.identifier} verwaltet von #{build.leader_uri}'>#{build.identifier[0..7]}</span>"
   end
 
   def bucket_display_value(bucket)
-    "#{bucket.name}#{" auf #{bucket.worker_uri}" if bucket.worker_uri}"
+    "<span title='#{"auf #{bucket.worker_uri}" if bucket.worker_uri}'>#{bucket.name}</span>"
   end
 
   def bucket_display_status(bucket)

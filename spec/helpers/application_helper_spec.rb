@@ -98,8 +98,9 @@ describe ApplicationHelper do
       @build = mock('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri')
     end
 
-    it "should return the display value containing the identifier and the leader_uri" do
-      helper.build_display_value(@build).should == "build_identifier verwaltet von leader_uri"
+    it "should return the display value containing the short identifier and the full identifier and the leader_uri as tooltips" do
+      helper.build_display_value(@build).should ==
+          "<span title='build_identifier verwaltet von leader_uri'>build_id</span>"
     end
   end
 
@@ -108,13 +109,12 @@ describe ApplicationHelper do
       @bucket = mock('bucket', :name => 'bucket_name', :worker_uri => 'worker_uri')
     end
 
-    it "should return the display value containing the name and the worker_uri" do
-      helper.bucket_display_value(@bucket).should == "bucket_name auf worker_uri"
+    it "should return the display value containing the name" do
+      helper.bucket_display_value(@bucket).should =~ /bucket_name/
     end
 
-    it "should return the name only if worker_uri is nil" do
-      @bucket.stub!(:worker_uri).and_return nil
-      helper.bucket_display_value(@bucket).should == "bucket_name"
+    it "should return the worker_uri as tooltip" do
+      helper.bucket_display_value(@bucket).should =~ /title='auf worker_uri'/
     end
   end
 
