@@ -1,5 +1,5 @@
 <%= link_to 'Übersicht', :action => 'index' %>
-<h1>Project <%= @project.name %></h1>
+<h1>Project <%= project_display_value(@project) %></h1>
 <table class='builds'>
 <% builds = @project.builds.sort_by {|b| b.id}.reverse
 builds[0..2].each do |build| -%>

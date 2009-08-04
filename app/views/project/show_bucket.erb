@@ -1,7 +1,7 @@
 <%= link_to 'Übersicht', :action => 'index' %>
 <% build = @bucket.build -%>
 <% project = build.project -%>
-<h1>Project <%= link_to project.name, :action => 'show', :id => project %>,
+<h1>Project <%= link_to project_display_value(project), :action => 'show', :id => project %>,
     Build <%= link_to build_display_value(build), :action => 'show_build', :id => build %>,
     Task <%= bucket_display_value(@bucket) %></h1>
 <pre><%= @bucket.log ? @bucket.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %></pre>

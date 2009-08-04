@@ -1,5 +1,9 @@
 # Methods added to this helper will be available to all templates in the application.
 module ApplicationHelper
+  def project_display_value(project)
+    "<span title='URL: #{project.url}; Branch: #{project.branch}'>#{project.name}</span>"
+  end
+
   def build_display_value(build)
     "<span title='#{build.identifier} verwaltet von #{build.leader_uri}'>#{build.identifier[0..7]}</span>"
   end

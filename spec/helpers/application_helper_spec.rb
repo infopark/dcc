@@ -93,6 +93,18 @@ describe ApplicationHelper do
     end
   end
 
+  describe 'project_display_value' do
+    before do
+      @project = mock('project', :name => 'project name', :url => 'project url',
+          :branch => 'project branch')
+    end
+
+    it "should return the name as display value containing the url and the branch as tooltip" do
+      helper.project_display_value(@project).should ==
+          "<span title='URL: project url; Branch: project branch'>project name</span>"
+    end
+  end
+
   describe 'build_display_value' do
     before do
       @build = mock('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri')

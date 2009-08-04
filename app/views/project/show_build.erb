@@ -1,5 +1,5 @@
 <%= link_to 'Übersicht', :action => 'index' %>
-<h1>Project <%= link_to @build.project.name, :action => 'show', :id => @build.project %>,
+<h1>Project <%= link_to project_display_value(@build.project), :action => 'show', :id => @build.project %>,
     Build <%= build_display_value(@build) %></h1>
 <table class='buckets'>
 <% buckets = @build.buckets
