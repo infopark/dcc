@@ -7,11 +7,12 @@ module ApplicationHelper
   def build_display_value(build)
     value = "<span title='#{build.identifier} " +
         "verwaltet von #{build.leader_uri}'>#{build.identifier[0..7]}</span>"
-    if gitweb_base_url = build.project.gitweb_base_url
-      value = "<a href='#{gitweb_base_url}?p=#{build.project.git_project};a=commit;" +
-          "h=#{build.commit}'>#{value}</a>"
+    href = if gitweb_base_url = build.project.gitweb_base_url
+      "#{gitweb_base_url}?p=#{build.project.git_project};a=commit;h=#{build.commit}"
+    elsif build.project.url =~ %r|^git://github.com/(.*?)(\.git)?$|
+      "http://github.com/#{$1}/commit/#{build.commit}"
     end
-    value
+    href ? "#{value} (<a href='#{href}'>Commit anschauen</a>)" : value
   end
 
   def bucket_display_value(bucket)

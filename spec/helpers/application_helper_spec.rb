@@ -107,7 +107,7 @@ describe ApplicationHelper do
 
   describe 'build_display_value' do
     before do
-      @project = mock('project', :gitweb_base_url => nil, :git_project => 'git-project')
+      @project = mock('project', :gitweb_base_url => nil, :git_project => 'git-project', :url => '')
       @build = mock('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri',
           :project => @project, :commit => 'commit_hash')
     end
@@ -121,6 +121,12 @@ describe ApplicationHelper do
       @project.stub!(:gitweb_base_url).and_return "gitweb_base_url"
       helper.build_display_value(@build).should =~
           %r|<a href='gitweb_base_url\?p=git-project;a=commit;h=commit_hash'>.*</a>|
+    end
+
+    it "should link to github if project has a github clone url" do
+      @project.stub!(:url).and_return "git://github.com/path/to/my/project.git"
+      helper.build_display_value(@build).should =~
+          %r|<a href='http://github.com/path/to/my/project/commit/commit_hash'>.*</a>|
     end
   end
 
