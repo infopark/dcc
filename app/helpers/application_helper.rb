@@ -4,13 +4,22 @@ module ApplicationHelper
     "<span title='URL: #{project.url}; Branch: #{project.branch}'>#{project.name}</span>"
   end
 
+  def gitweb_url_map
+    @@gitweb_url_map ||=
+        begin
+          YAML.load_file("#{RAILS_ROOT}/config/gitweb_url_map.yml")
+        rescue Errno::ENOENT
+          {}
+        end
+  end
+
   def build_display_value(build)
     value = "<span title='#{build.identifier} " +
         "verwaltet von #{build.leader_uri}'>#{build.identifier[0..7]}</span>"
-    href = if gitweb_base_url = build.project.gitweb_base_url
-      "#{gitweb_base_url}?p=#{build.project.git_project};a=commit;h=#{build.commit}"
-    elsif build.project.url =~ %r|^git://github.com/(.*?)(\.git)?$|
-      "http://github.com/#{$1}/commit/#{build.commit}"
+    dummy, url_code = gitweb_url_map.find {|pattern, code| build.project.url =~ Regexp.new(pattern)}
+    href = if url_code
+      commit = build.commit
+      eval %Q|"#{url_code}"|
     end
     href ? "#{value} (<a href='#{href}'>Commit anschauen</a>)" : value
   end

@@ -107,9 +107,14 @@ describe ApplicationHelper do
 
   describe 'build_display_value' do
     before do
-      @project = mock('project', :gitweb_base_url => nil, :git_project => 'git-project', :url => '')
+      @project = mock('project', :url => '')
       @build = mock('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri',
           :project => @project, :commit => 'commit_hash')
+      YAML.stub!(:load_file).with("#{RAILS_ROOT}/config/gitweb_url_map.yml").and_return({
+            '^git@machine:(.*?)(\.git)?$' => 'gitweb_url1 #{$1} #{commit}',
+            '^git+ssh://machine/(.*?)(\.git)?$' => 'gitweb_url2 #{$1} #{commit}',
+            '^git://github.com/(.*?)(\.git)?$' => 'gitweb_url3 #{$1} #{commit}'
+          })
     end
 
     it "should return the display value containing the short identifier and the full identifier and the leader_uri as tooltips" do
@@ -117,16 +122,22 @@ describe ApplicationHelper do
           "<span title='build_identifier verwaltet von leader_uri'>build_id</span>"
     end
 
-    it "should link to gitweb if project has a gitweb_base_url" do
-      @project.stub!(:gitweb_base_url).and_return "gitweb_base_url"
+    it "should link to configured gitweb url if any matches" do
+      @project.stub!(:url).and_return "git@machine:the_project.git"
       helper.build_display_value(@build).should =~
-          %r|<a href='gitweb_base_url\?p=git-project;a=commit;h=commit_hash'>.*</a>|
-    end
+          %r|<a href='gitweb_url1 the_project commit_hash'>.*</a>|
 
-    it "should link to github if project has a github clone url" do
-      @project.stub!(:url).and_return "git://github.com/path/to/my/project.git"
+      @project.stub!(:url).and_return "git@machine:the_project"
       helper.build_display_value(@build).should =~
-          %r|<a href='http://github.com/path/to/my/project/commit/commit_hash'>.*</a>|
+          %r|<a href='gitweb_url1 the_project commit_hash'>.*</a>|
+
+      @project.stub!(:url).and_return "git://github.com/my/project.git"
+      helper.build_display_value(@build).should =~
+          %r|<a href='gitweb_url3 my/project commit_hash'>.*</a>|
+
+      @project.stub!(:url).and_return "git://github.com/my/project"
+      helper.build_display_value(@build).should =~
+          %r|<a href='gitweb_url3 my/project commit_hash'>.*</a>|
     end
   end
 

@@ -116,7 +116,6 @@ describe Project do
               send_notifications_to "to@me.de"
               depends_upon.project "dependency"
               before_all.performs_rake_tasks 'before_all'
-              set_gitweb_base_url "gitweb-url"
 
               buckets "default" do
                 before_all.performs_rake_tasks 'before_all_2'
@@ -143,10 +142,6 @@ describe Project do
               "default:two" => ["2"],
               "extra:three" => ["3a", "3b"]
             }
-      end
-
-      it "should provide the gitweb base url" do
-        @project.gitweb_base_url.should == "gitweb-url"
       end
 
       describe "when providing the before_all tasks" do
@@ -470,28 +465,6 @@ describe Project do
       @project.should_receive(:update_dependencies).ordered
       @project.should_receive(:dependencies).ordered
       @project.wants_build?
-    end
-  end
-
-  describe "when providing git_project" do
-    it "should deliver the git_project for ssh urls" do
-      @project.stub!(:url).and_return("login@machine:project_name.git")
-      @project.git_project.should == "project_name.git"
-    end
-
-    it "should append .git to ssh url's project name if missing" do
-      @project.stub!(:url).and_return("login@machine:project_name")
-      @project.git_project.should == "project_name.git"
-    end
-
-    it "should deliver the git_project for git+ssh urls" do
-      @project.stub!(:url).and_return("git+ssh://machine/project_name.git")
-      @project.git_project.should == "project_name.git"
-    end
-
-    it "should append .git to git+ssh url's project name if missing" do
-      @project.stub!(:url).and_return("git+ssh://machine/project_name")
-      @project.git_project.should == "project_name.git"
     end
   end
 end
