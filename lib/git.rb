@@ -22,7 +22,7 @@ class Git
 
   def path
     # FIXME: Tests
-    "/tmp/dcc/#{@name}/#{sub_path}"
+    "/var/tmp/dcc/#{@name}/#{sub_path}"
   end
 
   def checkout
