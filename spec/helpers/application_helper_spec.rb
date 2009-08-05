@@ -107,12 +107,20 @@ describe ApplicationHelper do
 
   describe 'build_display_value' do
     before do
-      @build = mock('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri')
+      @project = mock('project', :gitweb_base_url => nil, :git_project => 'git-project')
+      @build = mock('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri',
+          :project => @project, :commit => 'commit_hash')
     end
 
     it "should return the display value containing the short identifier and the full identifier and the leader_uri as tooltips" do
       helper.build_display_value(@build).should ==
           "<span title='build_identifier verwaltet von leader_uri'>build_id</span>"
+    end
+
+    it "should link to gitweb if project has a gitweb_base_url" do
+      @project.stub!(:gitweb_base_url).and_return "gitweb_base_url"
+      helper.build_display_value(@build).should =~
+          %r|<a href='gitweb_base_url\?p=git-project;a=commit;h=commit_hash'>.*</a>|
     end
   end
 

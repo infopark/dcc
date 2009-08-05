@@ -42,6 +42,17 @@ class Project < ActiveRecord::Base
     @e_mail_receivers || []
   end
 
+  def gitweb_base_url
+    read_config
+    @gitweb_base_url
+  end
+
+  def git_project
+    m = url.match(/^.*@.*:(.*?)(\.git)?$/)
+    m = url.match(%r|git\+ssh://.*/(.*?)(\.git)?$|) unless m
+    m && "#{m[1]}.git"
+  end
+
   def update_dependencies
     @logged_deps = {}
     read_config
@@ -179,6 +190,10 @@ private
     end.new(self)
     dependency_logger.instance_eval(&block) if block_given?
     dependency_logger
+  end
+
+  def set_gitweb_base_url(url)
+    @gitweb_base_url = url
   end
 
   def buckets(name, &block)
