@@ -47,8 +47,8 @@ class Project < ActiveRecord::Base
     read_config
     Dependency.find_all_by_project_id(id).each do |d|
       if @logged_deps.include?(d.url)
-        if d.branch != @logged_deps[d.url]
-          d.branch = @logged_deps[d.url]
+        if [d.branch, d.fallback_branch] != @logged_deps[d.url]
+          d.branch, d.fallback_branch = @logged_deps[d.url]
           d.save
         end
       else
@@ -56,8 +56,8 @@ class Project < ActiveRecord::Base
       end
       @logged_deps.delete(d.url)
     end
-    @logged_deps.each do |url, branch|
-      dependencies.create(:url => url, :branch => branch)
+    @logged_deps.each do |url, branches|
+      dependencies.create(:url => url, :branch => branches[0], :fallback_branch => branches[1])
     end
   end
 
@@ -100,8 +100,8 @@ class Project < ActiveRecord::Base
     _after_bucket_tasks[bucket_group_name] = rake_tasks
   end
 
-  def log_dependency(url, branch)
-    (@logged_deps || {})[url] = branch
+  def log_dependency(url, branch, fallback_branch)
+    (@logged_deps || {})[url] = [branch, fallback_branch]
   end
 
   def update_state
@@ -174,7 +174,7 @@ private
   def depends_upon(&block)
     dependency_logger = Class.new(@@inner_class) do
       def project(url, options = {})
-        @project.log_dependency(url, options[:branch] || @project.branch)
+        @project.log_dependency(url, options[:branch] || @project.branch, options[:fallback_branch])
       end
     end.new(self)
     dependency_logger.instance_eval(&block) if block_given?

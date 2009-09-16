@@ -19,6 +19,11 @@ describe Dependency do
     @dependency.branch.should == "branch1"
   end
 
+  it "may have a fallback branch" do
+    @dependency.fallback_branch.should be_nil
+    Dependency.find(2).fallback_branch.should == "branch3"
+  end
+
   it "should have a last_commit" do
     @dependency.last_commit.should == "old"
   end
@@ -26,13 +31,13 @@ end
 
 describe Dependency do
   before do
-    @dependency = Dependency.new(:url => "url", :branch => "branch")
+    @dependency = Dependency.new(:url => "url", :branch => "b", :fallback_branch => "fb")
     @dependency.stub!(:project).and_return mock('project', :name => "project's name")
   end
 
   describe "when providing git" do
-    it "should create a new dependency git using url, branch and project's name" do
-      Git.should_receive(:new).with("project's name", "url", "branch", true).and_return "the git"
+    it "should create a new dependency git using url, branch, fallback_branch and project's name" do
+      Git.should_receive(:new).with("project's name", "url", "b", "fb", true).and_return "the git"
       @dependency.git.should == "the git"
     end
 

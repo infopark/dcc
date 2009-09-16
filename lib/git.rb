@@ -4,17 +4,18 @@ require "digest/md5"
 class Git
   include CommandLine
 
-  def initialize(name, url, branch, is_dependency = false)
+  def initialize(name, url, branch, fallback_branch = nil, is_dependency = false)
     # FIXME: Tests
     @name = "#{name.gsub(/[^-_a-zA-Z0-9]/, '_')}_#{Digest::MD5.hexdigest(name)}"
     @branch = branch
+    @fallback_branch = fallback_branch
     @url = url
     @is_dependency = is_dependency
     checkout
     #FIXME
   end
 
-  attr_reader :url, :branch
+  attr_reader :url, :branch, :fallback_branch
 
   def dependency?
     @is_dependency
@@ -34,8 +35,7 @@ class Git
     # FIXME: Tests
     FileUtils.rm_rf(path) if File.exists?(path)
     git("clone", url, path, :do_not_chdir => true)
-    git("checkout", *(git("name-rev", "--name-only", branch).include?(branch) ? branch :
-        %W(-t -b #{branch} origin/#{branch})))
+    git("checkout", remote_branch)
     git("submodule", "update", "--init")
   end
 
@@ -48,8 +48,8 @@ class Git
     # FIXME: Tests
     fetch
     Dir.chdir(path) do
-      git("checkout", branch)
-      git("reset", "--hard", "origin/#{branch}")
+      git("checkout", remote_branch)
+      git("reset", "--hard")
       git("submodule", 'update', "--init")
       git("clean", "-f", "-d")
     end
@@ -58,10 +58,21 @@ class Git
   def current_commit
     # FIXME: Tests
     update
-    git("log", '--pretty=format:%H', '-n', '1', branch)[0]
+    git("log", '--pretty=format:%H', '-n', '1', remote_branch)[0]
+  end
+
+  def remote_branch
+    rb = nil
+    return rb if branch_exists?(rb = "origin/#{branch}")
+    return rb if branch_exists?(rb = "origin/#{fallback_branch}")
+    raise "neither branch '#{branch}' nor fallback branch '#{fallback_branch}' exist at #{url}"
   end
 
   private
+
+  def branch_exists?(branch)
+    git("branch", "-r").map {|l| l.strip}.include?(branch)
+  end
 
   def git(operation, *args)
     # FIXME: Tests

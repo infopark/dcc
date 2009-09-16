@@ -345,16 +345,31 @@ describe Project do
           @project.dependencies.map {|d| d.branch}.should == %w(current current)
         end
 
+        it "should set the fallback branch into the dependencies if given" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                depends_upon.project "url1", :fallback_branch => "branch1"
+                depends_upon do
+                  project "url2", :fallback_branch => "branch2"
+                end
+              |)
+          @project.update_dependencies
+          @project.dependencies.map {|d| d.fallback_branch}.should == %w(branch1 branch2)
+        end
+
         it "should update changed dependencies" do
+          @project.stub!(:branch).and_return "current"
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1"
+                depends_upon.project "url2", :fallback_branch => "branch1"
               |)
           @project.update_dependencies
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch2"
+                depends_upon.project "url2", :fallback_branch => "branch2"
               |)
           @project.update_dependencies
-          @project.dependencies.map {|d| d.branch}.should == %w(branch2)
+          @project.dependencies.map {|d| d.branch}.should == %w(branch2 current)
+          @project.dependencies.map {|d| d.fallback_branch}.should == [nil, "branch2"]
         end
 
         it "should delete removed dependencies" do
@@ -371,14 +386,15 @@ describe Project do
 
         it "should keep untouched dependencies" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
-                depends_upon.project "url1", :branch => "branch1"
+                depends_upon.project "url1", :branch => "branch1", :fallback_branch => "branch2"
               |)
           @project.update_dependencies
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
-                depends_upon.project "url1", :branch => "branch1"
+                depends_upon.project "url1", :branch => "branch1", :fallback_branch => "branch2"
               |)
           @project.update_dependencies
           @project.dependencies.map {|d| d.branch}.should == %w(branch1)
+          @project.dependencies.map {|d| d.fallback_branch}.should == %w(branch2)
           @project.dependencies.map {|d| d.url}.should == %w(url1)
         end
       end

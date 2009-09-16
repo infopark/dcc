@@ -11,3 +11,4 @@ two:
   url: "url2"
   last_commit: "new"
   branch: 'branch2'
+  fallback_branch: 'branch3'
