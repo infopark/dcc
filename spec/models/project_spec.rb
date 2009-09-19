@@ -39,6 +39,11 @@ describe Project do
     @project.dependencies.should be_empty
     Project.find(3).dependencies.should_not be_empty
   end
+
+  it "may have a last_system_error" do
+    @project.last_system_error.should be_nil
+    Project.find(3).last_system_error.should == "project's last system error"
+  end
 end
 
 describe Project, "when creating a new one" do

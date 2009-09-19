@@ -29,17 +29,11 @@ class DCCWorker
 
   def run
     log.debug "running"
-    send_general_error_mail_on_failure("running worker failed") do
+    log_general_error_on_failure("running worker failed") do
       process_bucket do |bucket_id|
         bucket = Bucket.find(bucket_id)
-        send_bucket_error_mail_on_failure(bucket, "processing bucket failed") do
-          begin
-            perform_task bucket
-          rescue => e
-            bucket.status = 35
-            bucket.save
-            raise e
-          end
+        log_bucket_error_on_failure(bucket, "processing bucket failed") do
+          perform_task bucket
         end
       end
     end
@@ -148,7 +142,7 @@ class DCCWorker
   def read_buckets(project)
     buckets = []
     log.debug "reading buckets for project #{project}"
-    send_project_error_mail_on_failure(project, "reading buckets failed") do
+    log_project_error_on_failure(project, "reading buckets failed") do
       if project.wants_build?
         build_number = project.next_build_number
         build = project.builds.create(:commit => project.current_commit,
@@ -159,6 +153,8 @@ class DCCWorker
         end
         project.update_state
       end
+      project.last_system_error = nil
+      project.save
     end
     log.debug "read buckets #{buckets.inspect}"
     buckets
@@ -176,22 +172,22 @@ class DCCWorker
     bucket_spec
   end
 
-  def send_bucket_error_mail_on_failure(bucket, subject, &block)
-    send_error_mail_on_failure(:deliver_bucket_message, subject, bucket, &block)
+  def log_bucket_error_on_failure(bucket, subject, &block)
+    log_error_on_failure(subject, :bucket => bucket, &block)
   end
 
-  def send_project_error_mail_on_failure(project, subject, &block)
-    send_error_mail_on_failure(:deliver_project_message, subject, project, &block)
+  def log_project_error_on_failure(project, subject, &block)
+    log_error_on_failure(subject, :project => project, &block)
   end
 
-  def send_general_error_mail_on_failure(subject, &block)
-    send_error_mail_on_failure(:deliver_message, subject, &block)
+  def log_general_error_on_failure(subject, &block)
+    log_error_on_failure(subject, :email_address => admin_e_mail_address, &block)
   end
 
 private
 
   @@pbl = 0
-  def send_error_mail_on_failure(deliver_method, subject, *args, &block)
+  def log_error_on_failure(subject, options = {})
     begin
       log.debug "entering protected block (->#{@@pbl += 1})"
       yield
@@ -199,13 +195,17 @@ private
     rescue => e
       log.debug "error occurred in protected block (->#{@@pbl -= 1})"
       msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
-      log.error msg
-      if admin_e_mail_address
-        deliver_args = Array.new(args)
-        deliver_args << admin_e_mail_address
-        deliver_args << subject
-        deliver_args << msg
-        Mailer.send deliver_method, *deliver_args
+      log.error "#{subject}\n#{msg}"
+      if bucket = options[:bucket]
+        bucket.status = 35
+        bucket.log += "\n\n------ Processing failed ------\n\n#{subject}\n\n#{msg}"
+        bucket.save
+      elsif project = options[:project]
+        project.last_system_error = "#{subject}\n\n#{msg}"
+        project.save
+      end
+      if options[:email_address]
+        Mailer.deliver_message options[:email_address], subject, msg
       end
     end
   end

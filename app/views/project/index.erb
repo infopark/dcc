@@ -3,7 +3,7 @@
   <tr class="<%= status_css_class(project_status(project)) %>">
     <td class='name'><%= link_to project_display_value(project), :action => "show", :id => project %></td>
     <td><%= project_display_status(project) %></td>
-    </td>
+    <td><pre><%= project.last_system_error %></pre></td>
     <td>
     <% form_for :project, :url => {:action => :build, :id => project} do |f| -%>
       <%= submit_tag 'Bauen' %>

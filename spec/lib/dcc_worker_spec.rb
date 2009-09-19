@@ -71,7 +71,7 @@ describe DCCWorker, "when running as follower" do
 
     it "should send an email to the admin" do
       @worker.stub!(:admin_e_mail_address).and_return('admin-e-mail')
-      Mailer.should_receive(:send).with(:deliver_message,
+      Mailer.should_receive(:deliver_message).with(
           'admin-e-mail', 'running worker failed', /an error/)
       @worker.run
     end
@@ -80,7 +80,8 @@ describe DCCWorker, "when running as follower" do
   describe 'when perform_task fails' do
     before do
       @worker.stub!(:loop?).and_return false
-      Bucket.stub!(:find).and_return(@bucket = mock('bucket', :status= => nil, :save => nil))
+      Bucket.stub!(:find).and_return(@bucket = mock('bucket', :status= => nil, :save => nil,
+          :log= => nil, :log => 'old_log'))
       @worker.stub!(:perform_task).and_raise("an error")
     end
 
@@ -90,10 +91,9 @@ describe DCCWorker, "when running as follower" do
       @worker.run
     end
 
-    it "should send a 'bucket message' email to the admin" do
-      @worker.stub!(:admin_e_mail_address).and_return('admin-e-mail')
-      Mailer.should_receive(:send).with(:deliver_bucket_message,
-          @bucket, 'admin-e-mail', 'processing bucket failed', /an error/)
+    it "should set the error into the database" do
+      @bucket.should_receive(:log=).with(/old_log.*processing bucket failed.*an error/m).ordered
+      @bucket.should_receive(:save).ordered
       @worker.run
     end
   end
@@ -322,6 +322,8 @@ describe DCCWorker, "when running as leader" do
         :buckets_tasks => {"#{name}1" => "tasks1", "#{name}2" => "tasks2", "#{name}3" => "tasks3"})
     m.should_receive(:next_build_number).at_most(:once).and_return(next_build_number)
     m.stub!(:update_state)
+    m.stub!(:last_system_error=)
+    m.stub!(:save)
     m
   end
 
@@ -411,12 +413,33 @@ describe DCCWorker, "when running as leader" do
       @leader.read_buckets(@project1)
     end
 
-    it "should send a 'project message' email to the admin if an error occurs" do
+    it "should set the error into the database if an error occurs" do
       @leader.stub!(:leader_uri)
       @project1.stub!(:update_state).and_raise "an error"
-      @leader.stub!(:admin_e_mail_address).and_return('admin-e-mail')
-      Mailer.should_receive(:send).with(:deliver_project_message,
-          @project1, 'admin-e-mail', 'reading buckets failed', /an error/)
+
+      @project1.should_receive(:last_system_error=).with(/reading buckets failed.*an error/m).
+          ordered
+      @project1.should_receive(:save).ordered
+
+      @leader.read_buckets(@project1)
+    end
+
+    it "should unset the error in the database if no error occurs" do
+      @leader.stub!(:leader_uri)
+      @project1.stub!(:update_state)
+
+      @project1.should_receive(:last_system_error=).with(nil).ordered
+      @project1.should_receive(:save).ordered
+
+      @leader.read_buckets(@project1)
+    end
+
+    it "should not unset the error in the database if an error occurs" do
+      @leader.stub!(:leader_uri)
+      @project1.stub!(:update_state).and_raise "an error"
+
+      @project1.should_not_receive(:last_system_error=).with(nil)
+
       @leader.read_buckets(@project1)
     end
   end
