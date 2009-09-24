@@ -96,6 +96,13 @@ describe DCCWorker, "when running as follower" do
       @bucket.should_receive(:save).ordered
       @worker.run
     end
+
+    it "should set the error into the database even if no log exists" do
+      @bucket.stub!(:log).and_return nil
+      @bucket.should_receive(:log=).with(/.*processing bucket failed.*an error/m).ordered
+      @bucket.should_receive(:save).ordered
+      @worker.run
+    end
   end
 
   describe '' do

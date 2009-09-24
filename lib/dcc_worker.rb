@@ -198,7 +198,7 @@ private
       log.error "#{subject}\n#{msg}"
       if bucket = options[:bucket]
         bucket.status = 35
-        bucket.log += "\n\n------ Processing failed ------\n\n#{subject}\n\n#{msg}"
+        bucket.log = "#{bucket.log}\n\n------ Processing failed ------\n\n#{subject}\n\n#{msg}"
         bucket.save
       elsif project = options[:project]
         project.last_system_error = "#{subject}\n\n#{msg}"
