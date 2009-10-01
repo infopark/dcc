@@ -431,6 +431,16 @@ describe DCCWorker, "when running as leader" do
       @leader.read_buckets(@project1)
     end
 
+    it "should set the error into the database even if a LoadError error occurs" do
+      @leader.stub!(:leader_uri)
+      @project1.stub!(:update_state).and_raise LoadError.new('nix da')
+
+      @project1.should_receive(:last_system_error=).with(/reading buckets failed.*nix da/m).ordered
+      @project1.should_receive(:save).ordered
+
+      @leader.read_buckets(@project1)
+    end
+
     it "should unset the error in the database if no error occurs" do
       @leader.stub!(:leader_uri)
       @project1.stub!(:update_state)
