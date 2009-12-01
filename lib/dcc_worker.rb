@@ -53,7 +53,7 @@ class DCCWorker
     end
     if succeeded
       succeeded &&= perform_rake_tasks(git.path, project.before_bucket_tasks(bucket.name), logs)
-      succeeded &&= perform_rake_tasks(git.path, project.buckets_tasks[bucket.name], logs)
+      succeeded &&= perform_rake_tasks(git.path, project.bucket_tasks(bucket.name), logs)
       succeeded = perform_rake_tasks(git.path, project.after_bucket_tasks(bucket.name), logs) &&
           succeeded
     end

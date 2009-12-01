@@ -108,9 +108,10 @@ describe DCCWorker, "when running as follower" do
   describe '' do
     before do
       @git = mock('git', :path => 'git path', :update => nil)
-      @project = mock('project', :name => "project's name", :before_all_tasks => [],
-          :buckets_tasks => {"t1" => ["rt1"], "t2" => ["rt21", "rt22"]}, :git => @git,
+      @project = mock('project', :name => "project's name", :before_all_tasks => [], :git => @git,
           :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [])
+      @project.stub!(:bucket_tasks).with('t1').and_return(['rt1'])
+      @project.stub!(:bucket_tasks).with('t2').and_return(['rt21', 'rt22'])
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
       @bucket = mock('bucket', :name => "t2", :log= => nil,
           :build => mock('build', :id => 123, :identifier => 'the commit.666', :project_id => '1',
@@ -288,14 +289,14 @@ describe DCCWorker, "when running as follower with fixtures" do
   before do
     @bucket = mock('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,
         :save => nil, :build => mock('build', :id => 1000, :project_id => 33,
-        :project => mock('project', :buckets_tasks => {'task' => []}, :before_all_tasks => [],
+        :project => mock('project', :bucket_tasks => [], :before_all_tasks => [],
         :before_bucket_tasks => [], :after_bucket_tasks => [],
         :git => mock('git', :update => nil, :path => nil))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 
   it "should send an email if build failed" do
-    @bucket.build.project.stub!(:buckets_tasks).and_return({'task' => ['task']})
+    @bucket.build.project.stub!(:bucket_tasks).with('task').and_return(['task'])
     @bucket.build.project.git.stub!(:path)
     @worker.stub!(:perform_rake_task).and_return false
     Mailer.should_receive(:deliver_failure_message).with(@bucket, %r(^druby://))

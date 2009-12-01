@@ -37,6 +37,10 @@ class Project < ActiveRecord::Base
     @buckets_tasks
   end
 
+  def bucket_tasks(bucket_identifier)
+    bucket_tasks[bucket_identifier] || []
+  end
+
   def e_mail_receivers
     read_config
     @e_mail_receivers
