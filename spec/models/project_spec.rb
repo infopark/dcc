@@ -105,8 +105,8 @@ describe Project do
 
   describe "with git" do
     before do
-      git = mock("git", :current_commit => "the current commit", :path => 'git_path')
-      @project.stub!(:git).and_return git
+      @git = mock("git", :current_commit => "the current commit", :path => 'git_path')
+      @project.stub!(:git).and_return @git
     end
 
     describe "when providing current commit" do
@@ -115,8 +115,25 @@ describe Project do
       end
     end
 
+    describe "when reading the config" do
+      it "should read the config only once" do
+        File.should_receive(:read).with("git_path/dcc_config.rb").once.and_return ""
+        @project.send(:read_config)
+        @project.send(:read_config)
+      end
+
+      it "should reread the config if git commit changed" do
+        @git.stub!(:current_commit).and_return('old one')
+        File.should_receive(:read).with("git_path/dcc_config.rb").twice.and_return ""
+        @project.send(:read_config)
+        @git.stub!(:current_commit).and_return('new one')
+        @project.send(:read_config)
+      end
+    end
+
     describe "when providing configured information" do
       before do
+        @git.stub!(:current_commit).and_return('current commit')
         File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
               send_notifications_to "to@me.de"
               depends_upon.project "dependency"
@@ -368,6 +385,7 @@ describe Project do
                 depends_upon.project "url2", :fallback_branch => "branch1"
               |)
           @project.update_dependencies
+          @git.stub!(:current_commit).and_return('new commit')
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch2"
                 depends_upon.project "url2", :fallback_branch => "branch2"
@@ -382,6 +400,7 @@ describe Project do
                 depends_upon.project "url1", :branch => "branch1"
               |)
           @project.update_dependencies
+          @git.stub!(:current_commit).and_return('new commit')
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url2", :branch => "branch1"
               |)
@@ -394,6 +413,7 @@ describe Project do
                 depends_upon.project "url1", :branch => "branch1", :fallback_branch => "branch2"
               |)
           @project.update_dependencies
+          @git.stub!(:current_commit).and_return('new commit')
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1", :fallback_branch => "branch2"
               |)

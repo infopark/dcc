@@ -39,11 +39,10 @@ class Project < ActiveRecord::Base
 
   def e_mail_receivers
     read_config
-    @e_mail_receivers || []
+    @e_mail_receivers
   end
 
   def update_dependencies
-    @logged_deps = {}
     read_config
     Dependency.find_all_by_project_id(id).each do |d|
       if @logged_deps.include?(d.url)
@@ -69,39 +68,40 @@ class Project < ActiveRecord::Base
 
   def before_all_tasks(bucket_identifier)
     read_config
-    (@before_all_tasks || []) + (_before_all_tasks[buckets_groups[bucket_identifier]] || [])
+    @before_all_tasks +
+        (@before_all_tasks_of_bucket_group[@buckets_groups[bucket_identifier]] || [])
   end
 
   def before_bucket_tasks(bucket_identifier)
     read_config
-    _before_bucket_tasks[buckets_groups[bucket_identifier]] || []
+    @before_bucket_tasks[@buckets_groups[bucket_identifier]] || []
   end
 
   def after_bucket_tasks(bucket_identifier)
     read_config
-    _after_bucket_tasks[buckets_groups[bucket_identifier]] || []
+    @after_bucket_tasks[@buckets_groups[bucket_identifier]] || []
   end
 
   def set_rake_tasks(bucket_name, bucket_group_name, rake_tasks)
     bucket_identifier = "#{bucket_group_name}:#{bucket_name}"
-    (@buckets_tasks ||= {})[bucket_identifier] = rake_tasks
-    buckets_groups[bucket_identifier] = bucket_group_name
+    @buckets_tasks[bucket_identifier] = rake_tasks
+    @buckets_groups[bucket_identifier] = bucket_group_name
   end
 
   def set_before_all_rake_tasks(bucket_group_name, rake_tasks)
-    _before_all_tasks[bucket_group_name] = rake_tasks
+    @before_all_tasks_of_bucket_group[bucket_group_name] = rake_tasks
   end
 
   def set_before_each_rake_tasks(bucket_group_name, rake_tasks)
-    _before_bucket_tasks[bucket_group_name] = rake_tasks
+    @before_bucket_tasks[bucket_group_name] = rake_tasks
   end
 
   def set_after_each_rake_tasks(bucket_group_name, rake_tasks)
-    _after_bucket_tasks[bucket_group_name] = rake_tasks
+    @after_bucket_tasks[bucket_group_name] = rake_tasks
   end
 
   def log_dependency(url, branch, fallback_branch)
-    (@logged_deps || {})[url] = [branch, fallback_branch]
+    @logged_deps[url] = [branch, fallback_branch]
   end
 
   def update_state
@@ -136,22 +136,6 @@ class Project < ActiveRecord::Base
   end
 
 private
-
-  def buckets_groups
-    @buckets_groups ||= {}
-  end
-
-  def _before_all_tasks
-    @before_all_tasks_of_bucket_group ||= {}
-  end
-
-  def _before_bucket_tasks
-    @before_bucket_tasks ||= {}
-  end
-
-  def _after_bucket_tasks
-    @after_bucket_tasks ||= {}
-  end
 
   @@inner_class = Class.new do
     def initialize(project)
@@ -234,9 +218,23 @@ private
     end.new(self, name).instance_eval(&block)
   end
 
+  def config_file
+    @config_file ||= "#{git.path}/dcc_config.rb"
+  end
+
   def read_config
-    config_file = "#{git.path}/dcc_config.rb"
-    raise "missing config in '#{config_file}'" unless config = File.read(config_file)
-    self.instance_eval(config)
+    unless @config && git.current_commit == @config_commit
+      @buckets_tasks = {}
+      @e_mail_receivers = []
+      @logged_deps = {}
+      @before_all_tasks = []
+      @buckets_groups = {}
+      @before_all_tasks_of_bucket_group = {}
+      @before_bucket_tasks = {}
+      @after_bucket_tasks = {}
+      raise "missing config in '#{config_file}'" unless @config = File.read(config_file)
+      self.instance_eval(@config)
+      @config_commit = git.current_commit
+    end
   end
 end
