@@ -148,7 +148,7 @@ describe Project do
               end
 
               buckets "extra" do
-                bucket(:three).performs_rake_tasks %w(3a 3b)
+                bucket(:three).performs_rake_tasks('3a', '3b')
               end
             |)
       end

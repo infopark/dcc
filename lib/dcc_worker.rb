@@ -78,6 +78,7 @@ class DCCWorker
   end
 
   def perform_rake_task(path, task, logs)
+    log.debug "performing rake task #{task}"
     rake = Rake.new(path)
     old_connections = ActiveRecord::Base.connection_pool
     old_connections.disconnect!
@@ -212,6 +213,7 @@ private
 
   def perform_rake_tasks(path, tasks, logs)
     succeeded = true
+    log.debug "performing rake tasks #{tasks}"
     tasks.each {|task| succeeded = perform_rake_task(path, task, logs) && succeeded}
     succeeded
   end

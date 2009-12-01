@@ -34,10 +34,12 @@ class Project < ActiveRecord::Base
 
   def buckets_tasks
     read_config
+    log.debug "providing buckets_tasks: #{@buckets_tasks}"
     @buckets_tasks
   end
 
   def bucket_tasks(bucket_identifier)
+    log.debug "providing bucket_tasks for #{bucket_identifier}: #{buckets_tasks[bucket_identifier]}"
     buckets_tasks[bucket_identifier] || []
   end
 
