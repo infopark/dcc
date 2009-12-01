@@ -166,6 +166,11 @@ describe Project do
             }
       end
 
+      it "should provide the configured tasks for a given bucket" do
+        @project.bucket_tasks('default:one').should == ["1a", "1b", "1c"]
+        @project.bucket_tasks('huh?').should == []
+      end
+
       describe "when providing the before_all tasks" do
         it "should return an empty array if no before_all tasks are configured" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("")

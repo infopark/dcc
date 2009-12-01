@@ -38,7 +38,7 @@ class Project < ActiveRecord::Base
   end
 
   def bucket_tasks(bucket_identifier)
-    bucket_tasks[bucket_identifier] || []
+    buckets_tasks[bucket_identifier] || []
   end
 
   def e_mail_receivers
