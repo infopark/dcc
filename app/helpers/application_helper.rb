@@ -16,7 +16,7 @@ module ApplicationHelper
   def build_display_value(build)
     value = "<span title='#{build.identifier} " +
         "verwaltet von #{build.leader_uri}'>#{build.identifier[0..7]}</span>"
-    dummy, url_code = gitweb_url_map.find {|pattern, code| build.project.url =~ Regexp.new(pattern)}
+    dummy, url_code = gitweb_url_map.find {|pattern, code| (build.project ? build.project.url : "--nixda--") =~ Regexp.new(pattern)}
     href = if url_code
       commit = build.commit
       eval %Q|"#{url_code}"|
