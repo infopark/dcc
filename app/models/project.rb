@@ -34,12 +34,13 @@ class Project < ActiveRecord::Base
 
   def buckets_tasks
     read_config
-    log.debug "providing buckets_tasks: #{@buckets_tasks}"
+    log.debug "providing buckets_tasks: #{@buckets_tasks.inspect}"
     @buckets_tasks
   end
 
   def bucket_tasks(bucket_identifier)
-    log.debug "providing bucket_tasks for #{bucket_identifier}: #{buckets_tasks[bucket_identifier]}"
+    log.debug "providing bucket_tasks for #{bucket_identifier}:\
+        #{buckets_tasks[bucket_identifier].inspect}"
     buckets_tasks[bucket_identifier] || []
   end
 
@@ -230,6 +231,8 @@ private
 
   def read_config
     unless @config && git.current_commit == @config_commit
+      log.debug "reading config (was empty: #{@config == nil};\
+          commit changed: #{git.current_commit != @config_commit})"
       @buckets_tasks = {}
       @e_mail_receivers = []
       @logged_deps = {}
@@ -239,6 +242,7 @@ private
       @before_bucket_tasks = {}
       @after_bucket_tasks = {}
       raise "missing config in '#{config_file}'" unless @config = File.read(config_file)
+      log.debug "config read: #{@config}"
       self.instance_eval(@config)
       @config_commit = git.current_commit
     end
