@@ -26,31 +26,54 @@ describe ApplicationHelper do
   describe 'build_display_status' do
     before do
       @build = Build.new
+      helper.stub!(:build_status).with(@build).and_return 10
+      helper.stub!(:detailed_build_status).with(@build).and_return({})
     end
 
     it "should return 'pending' if build is pending" do
       helper.stub!(:build_status).with(@build).and_return 20
-      helper.build_display_status(@build).should == 'pending'
+      helper.build_display_status(@build).should =~ /^pending/
     end
 
     it "should return 'in work' if build is in work" do
       helper.stub!(:build_status).with(@build).and_return 30
-      helper.build_display_status(@build).should == 'in work'
+      helper.build_display_status(@build).should =~ /^in work/
     end
 
     it "should return 'done' if build was successfully done" do
       helper.stub!(:build_status).with(@build).and_return 10
-      helper.build_display_status(@build).should == 'done'
+      helper.build_display_status(@build).should =~ /^done/
     end
 
     it "should return 'processing failed' if build processing has failed" do
       helper.stub!(:build_status).with(@build).and_return 35
-      helper.build_display_status(@build).should == 'processing failed'
+      helper.build_display_status(@build).should =~ /^processing failed/
     end
 
     it "should return 'failed' if build has failed" do
       helper.stub!(:build_status).with(@build).and_return 40
-      helper.build_display_status(@build).should == 'failed'
+      helper.build_display_status(@build).should =~ /^failed/
+    end
+
+    it "should contain summary information on bucket states" do
+      helper.stub!(:detailed_build_status).with(@build).and_return({
+        10 => 3,
+        20 => 5,
+        30 => 2,
+        35 => 7,
+        40 => 1
+      })
+      helper.build_display_status(@build).should =~
+          /\(1 failed, 7 processing failed, 2 in work, 5 pending, 3 done\)/
+    end
+
+    it "should contain no summary information on states where no bucket is in" do
+      helper.stub!(:detailed_build_status).with(@build).and_return({
+        10 => 0,
+        20 => 5,
+        35 => 7
+      })
+      helper.build_display_status(@build).should =~ /\(7 processing failed, 5 pending\)/
     end
   end
 
@@ -90,6 +113,26 @@ describe ApplicationHelper do
       @build.stub!(:buckets => [@succeeded_bucket, @failed_bucket, @pending_bucket, @inwork_bucket,
           @processing_failed_bucket])
       helper.build_status(@build).should == 40
+    end
+  end
+
+  describe 'detailed_build_status' do
+    before do
+      @succeeded_bucket = mock('bucket', :status => 10)
+      @pending_bucket = mock('bucket', :status => 20)
+      @inwork_bucket = mock('bucket', :status => 30)
+      @processing_failed_bucket = mock('bucket', :status => 35)
+      @failed_bucket = mock('bucket', :status => 40)
+      @build = Build.new
+    end
+
+    it "should return summary information on bucket states" do
+      @build.stub!(:buckets =>
+          [@succeeded_bucket, @pending_bucket, @succeeded_bucket, @pending_bucket])
+      helper.detailed_build_status(@build).should == {10 => 2, 20 => 2}
+      @build.stub!(:buckets => [@succeeded_bucket, @pending_bucket, @inwork_bucket,
+          @processing_failed_bucket, @failed_bucket])
+      helper.detailed_build_status(@build).should == {10 => 1, 20 => 1, 30 => 1, 35 => 1, 40 => 1}
     end
   end
 

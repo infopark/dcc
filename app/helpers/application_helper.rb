@@ -33,7 +33,11 @@ module ApplicationHelper
   end
 
   def build_display_status(build)
-    display_status(build_status(build))
+    "#{display_status(build_status(build))} (#{
+      detailed_build_status(build).select {|s, count| count > 0}.map do |status, count|
+        "#{count} #{display_status(status)}"
+      end.join ", "
+    })"
   end
 
   def display_status(status)
@@ -55,6 +59,12 @@ module ApplicationHelper
 
   def build_status(build)
     build.buckets.map {|b| b.status}.sort.last
+  end
+
+  def detailed_build_status(build)
+    result = {}
+    build.buckets.each {|b| result[b.status] = (result[b.status] ||= 0) + 1}
+    result
   end
 
   def status_css_class(status)
