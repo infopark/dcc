@@ -14,6 +14,7 @@ class Dependency < ActiveRecord::Base
   end
 
   def has_changed?
+    git.update
     has_changed = last_commit != current_commit
     log.debug "#{self} has changed -> #{has_changed}"
     has_changed

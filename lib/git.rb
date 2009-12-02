@@ -44,11 +44,11 @@ class Git
     git("fetch")
   end
 
-  def update
+  def update(commit = nil)
     # FIXME: Tests
     fetch
     Dir.chdir(path) do
-      git("checkout", remote_branch)
+      git("checkout", commit || remote_branch)
       git("reset", "--hard")
       git("submodule", 'update', "--init")
       git("clean", "-f", "-d")
@@ -57,8 +57,7 @@ class Git
 
   def current_commit
     # FIXME: Tests
-    update
-    git("log", '--pretty=format:%H', '-n', '1', remote_branch)[0]
+    git("log", '--pretty=format:%H', '-n', '1')[0]
   end
 
   def remote_branch

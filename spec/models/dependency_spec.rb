@@ -60,21 +60,27 @@ describe Dependency do
         @dependency.current_commit.should == "the current commit"
       end
     end
-  end
 
-  describe "when asked 'has_changed?'" do
-    before do
-      @dependency.stub!(:current_commit).and_return 'old'
-      @dependency.stub!(:last_commit).and_return 'old'
-    end
+    describe "when asked 'has_changed?'" do
+      before do
+        @dependency.stub!(:last_commit).and_return 'the current commit'
+        @dependency.git.stub!(:update)
+      end
 
-    it "should answer 'true' if current commit has changed" do
-      @dependency.stub!(:current_commit).and_return 'new'
-      @dependency.has_changed?.should be_true
-    end
+      it "should answer 'true' if current commit has changed" do
+        @dependency.stub!(:current_commit).and_return 'new'
+        @dependency.has_changed?.should be_true
+      end
 
-    it "should answer 'false' if current commit has not changed" do
-      @dependency.has_changed?.should be_false
+      it "should answer 'false' if current commit has not changed" do
+        @dependency.has_changed?.should be_false
+      end
+
+      it "should update the repository prior to asking for the current commit" do
+        @dependency.git.should_receive(:update).ordered
+        @dependency.git.should_receive(:current_commit).ordered
+        @dependency.has_changed?
+      end
     end
   end
 

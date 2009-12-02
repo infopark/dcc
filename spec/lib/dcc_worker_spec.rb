@@ -146,7 +146,6 @@ describe DCCWorker, "when running as follower" do
         end
 
         it "should perform the before_all rake tasks prior to the task's rake tasks" do
-          @git.should_receive(:update).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_2', @logs).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bt_1', @logs).ordered
@@ -177,7 +176,7 @@ describe DCCWorker, "when running as follower" do
       end
 
       it "should perform all the rake tasks for the task one by one on the updated git path" do
-        @git.should_receive(:update).ordered
+        @git.should_receive(:update).with('the commit').ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'bt_1', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'bt_2', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'rt21', @logs).ordered
@@ -288,7 +287,7 @@ describe DCCWorker, "when running as follower with fixtures" do
 
   before do
     @bucket = mock('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,
-        :save => nil, :build => mock('build', :id => 1000, :project_id => 33,
+        :save => nil, :build => mock('build', :id => 1000, :project_id => 33, :commit => 'commit',
         :project => mock('project', :bucket_tasks => [], :before_all_tasks => [],
         :before_bucket_tasks => [], :after_bucket_tasks => [],
         :git => mock('git', :update => nil, :path => nil))))

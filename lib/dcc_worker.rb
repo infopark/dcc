@@ -45,7 +45,7 @@ class DCCWorker
     build = bucket.build
     project = build.project
     git = project.git
-    git.update
+    git.update build.commit
     succeeded = true
     if last_handled_build != build.id
       succeeded = perform_rake_tasks(git.path, project.before_all_tasks(bucket.name), logs)

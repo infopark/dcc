@@ -131,6 +131,50 @@ describe Project do
       end
     end
 
+    describe "when being asked if wants_build?" do
+      before do
+        @project.stub!(:build_requested?).and_return false
+        @project.stub!(:last_commit).and_return 'the current commit'
+        @project.stub!(:dependencies).and_return [
+              @dep1 = mock('', :has_changed? => false),
+              @dep2 = mock('', :has_changed? => false)
+            ]
+        @project.stub!(:update_dependencies)
+        @git.stub!(:update)
+      end
+
+      it "should say 'true' if the current commit has changed" do
+        @project.stub!(:current_commit).and_return 'new'
+        @project.wants_build?.should be_true
+      end
+
+      it "should say 'true' if the 'build_requested' flag is set" do
+        @project.stub!(:build_requested?).and_return true
+        @project.wants_build?.should be_true
+      end
+
+      it "should say 'true' if a dependency has changed" do
+        @dep2.stub!(:has_changed?).and_return true
+        @project.wants_build?.should be_true
+      end
+
+      it "should say 'false' else" do
+        @project.wants_build?.should be_false
+      end
+
+      it "should update the dependencies prior to getting them" do
+        @project.should_receive(:update_dependencies).ordered
+        @project.should_receive(:dependencies).ordered
+        @project.wants_build?
+      end
+
+      it "should update the repository prior to getting the current commit" do
+        @git.should_receive(:update).ordered
+        @git.should_receive(:current_commit).ordered
+        @project.wants_build?
+      end
+    end
+
     describe "when providing configured information" do
       before do
         @git.stub!(:current_commit).and_return('current commit')
@@ -473,44 +517,6 @@ describe Project do
       dep1.should_receive(:update_state)
       dep2.should_receive(:update_state)
       @project.update_state
-    end
-  end
-
-  describe "when being asked if wants_build?" do
-    before do
-      @project.stub!(:build_requested?).and_return false
-      @project.stub!(:current_commit).and_return 'old'
-      @project.stub!(:last_commit).and_return 'old'
-      @project.stub!(:dependencies).and_return [
-            @dep1 = mock('', :has_changed? => false),
-            @dep2 = mock('', :has_changed? => false)
-          ]
-      @project.stub!(:update_dependencies)
-    end
-
-    it "should say 'true' if the current commit has changed" do
-      @project.stub!(:current_commit).and_return 'new'
-      @project.wants_build?.should be_true
-    end
-
-    it "should say 'true' if the 'build_requested' flag is set" do
-      @project.stub!(:build_requested?).and_return true
-      @project.wants_build?.should be_true
-    end
-
-    it "should say 'true' if a dependency has changed" do
-      @dep2.stub!(:has_changed?).and_return true
-      @project.wants_build?.should be_true
-    end
-
-    it "should say 'false' else" do
-      @project.wants_build?.should be_false
-    end
-
-    it "should update the dependencies prior to getting them" do
-      @project.should_receive(:update_dependencies).ordered
-      @project.should_receive(:dependencies).ordered
-      @project.wants_build?
     end
   end
 end
