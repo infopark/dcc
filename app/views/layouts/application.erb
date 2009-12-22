@@ -6,7 +6,16 @@
     <link rel="icon" href="/images/diccr-favicon-medium.ico" type="image/x-icon">
   </head>
   <body>
-    <div class='logo'><img src='/images/diccr-logo.png'></div>
-    <%= yield %>
+    <div id="container">
+      <%= link_to image_tag('/images/logo.png', :class => 'logo'), :action => 'index' %>
+      <div id="mainContent">
+        <%= yield %>
+      </div>
+      <% unless (extra_content = yield(:extra_content)).blank? -%>
+        <div id="extraContent">
+          <%= extra_content %>
+        </div>
+      <% end -%>
+    </div>
   </body>
 </html>

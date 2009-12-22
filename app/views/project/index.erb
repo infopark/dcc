@@ -1,25 +1,27 @@
-<table class='projects'>
 <% @projects.sort_by {|p| p.name.downcase}.each do |project| -%>
-  <tr class="<%= status_css_class(project_status(project)) %>">
-    <td class='name'><%= link_to project_display_value(project), :action => "show", :id => project %></td>
-    <td><%= project_display_status(project) %></td>
-    <td><pre><%= project.last_system_error %></pre></td>
-    <td>
-    <% form_for :project, :url => {:action => :build, :id => project} do |f| -%>
-      <%= submit_tag 'Bauen' %>
+  <div class="box">
+    <% link_to({:action => "show", :id => project}, :class => 'link') do -%>
+      <span title="URL: <%= project.url %>; Branch: <%= project.branch %>"><%= project.name %></span>
     <% end -%>
-    </td>
-    <td>
-    <% form_for :project, :url => {:action => :delete, :id => project} do |f| -%>
-      <%= submit_tag 'Löschen' %>
-    <% end -%>
-    </td>
-  </tr>
+    <span class="<%= status_css_class(project_status(project)) %>"><%#"vimrepair%>
+      <%= project_display_status(project) %>
+    </span>
+    <div class="buttons">
+      <% form_for :project, :url => {:action => :delete, :id => project} do |f| -%>
+        <%= submit_tag 'Löschen', :class => 'red' %>
+      <% end -%>
+      <% form_for :project, :url => {:action => :build, :id => project} do |f| -%>
+        <%= submit_tag 'Bauen', :class => 'green' %>
+      <% end -%>
+    </div>
+  </div>
 <% end -%>
-</table>
-<% form_for :project, :url => {:action => :create} do |f| -%>
-  Name: <%= f.text_field :name %>
-  URL: <%= f.text_field :url %>
-  Branch: <%= f.text_field :branch %>
-  <%= submit_tag 'Anlegen' %>
+
+<% content_for :extra_content do -%>
+  <% form_for :project, :url => {:action => :create} do |f| -%>
+    Name: <%= f.text_field :name %>
+    URL: <%= f.text_field :url %>
+    Branch: <%= f.text_field :branch %>
+    <%= submit_tag 'Anlegen' %>
+  <% end -%>
 <% end -%>

@@ -1,15 +1,135 @@
-.success {
-  background-color: lightGreen;
+body {
+  font: 100% Verdana, Arial, Helvetica, sans-serif;
+  background: #666 url(../images/bg_blue.png) fixed 0 0;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  color: #000000;
 }
 
-.failure {
-  background-color: pink;
+img.logo {
+  padding: 10px 0 0 35px;
+  border: none;
 }
 
-.pending {
-  background-color: lightGrey;
+#container {
+  width: 90%;
+  margin: 0 auto;
+  text-align: left;
+  overflow: hidden;
 }
 
-.processing {
-  background-color: lightBlue;
+h1 {
+  margin: 0 0 10px 0;
+  font-size: 25px;
+}
+
+#mainContent {
+  background: #e7e7e7;
+  width: 96%;
+  margin: 5px auto;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border: 1px solid #333;
+  padding:10px 10px 5px 10px;
+  overflow: hidden;
+}
+
+#extraContent {
+  background: #7a8faa;
+  width: 96%;
+  margin: 5px auto;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border: 1px solid #333;
+  padding: 10px 10px 5px 10px;
+  overflow: hidden;
+}
+
+form {
+  font-size: 14px;
+  margin: 0;
+}
+
+input[type="text"] {
+  font-size: 11px;
+  width: 20%;
+}
+
+.box {
+  background: #f9f9f9;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border: 1px solid #e1e1e1;
+  padding: 5px;
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+
+a.link {
+  display: inline-block;
+  text-decoration: none;
+  color: #444;
+  font-weight: bold;
+  font-size: 18px;
+  margin: 2px 0 0 0;
+}
+
+span.failure {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 15px;
+  -moz-border-radius: 15px;
+  -webkit-border-radius: 15px;
+  background: #cf2222;
+  color: #fff;
+}
+
+span.success {i
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 15px;
+  -moz-border-radius: 15px;
+  -webkit-border-radius: 15px;
+  background: #27771f;
+  color: #fff;
+}
+
+span.in_progress {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 15px;
+  -moz-border-radius: 15px;
+  -webkit-border-radius: 15px;
+  background: #3c88c8;
+  color: #fff;
+}
+
+div.buttons {
+  width: 200px;
+  display: inline-block;
+  float: right;
+  padding-top: 3px;
+}
+
+input[type="submit"] {
+  background: #666;
+  padding: 2px 5px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  text-shadow: 0 1px 1px #222;
+  border: 1px solid #999;
+  float:right;
+}
+
+input[type="submit"].green {
+  background: #748dad;
+  margin-right:7px;
+}
+
+input[type="submit"].red {
+  background: #929292;
 }

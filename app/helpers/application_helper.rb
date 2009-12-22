@@ -1,9 +1,5 @@
 # Methods added to this helper will be available to all templates in the application.
 module ApplicationHelper
-  def project_display_value(project)
-    "<span title='URL: #{project.url}; Branch: #{project.branch}'>#{project.name}</span>"
-  end
-
   def gitweb_url_map
     @@gitweb_url_map ||=
         begin
@@ -13,19 +9,24 @@ module ApplicationHelper
         end
   end
 
-  def build_display_value(build)
-    value = "<span title='#{build.identifier} " +
-        "verwaltet von #{build.leader_uri}'>#{build.identifier[0..7]}</span>"
-    dummy, url_code = gitweb_url_map.find {|pattern, code| (build.project ? build.project.url : "--nixda--") =~ Regexp.new(pattern)}
+  def build_gitweb_url(build)
+    dummy, url_code = gitweb_url_map.find {|pattern, code| build.project.url =~ Regexp.new(pattern)}
     href = if url_code
       commit = build.commit
       eval %Q|"#{url_code}"|
     end
-    href ? "#{value} (<a href='#{href}'>Commit anschauen</a>)" : value
   end
 
-  def bucket_display_value(bucket)
-    "<span title='#{"auf #{bucket.worker_uri}" if bucket.worker_uri}'>#{bucket.name}</span>"
+  def build_display_identifier(build)
+    build.identifier[0..7]
+  end
+
+  def build_display_details(build)
+    "#{build.identifier} verwaltet von #{build.leader_uri}"
+  end
+
+  def bucket_display_details(bucket)
+    "auf #{bucket.worker_uri}" if bucket.worker_uri
   end
 
   def bucket_display_status(bucket)
@@ -72,9 +73,9 @@ module ApplicationHelper
     when 10
       'success'
     when 20
-      'pending'
+      'in_progress'
     when 30
-      'processing'
+      'in_progress'
     when 35
       'failure'
     when 40

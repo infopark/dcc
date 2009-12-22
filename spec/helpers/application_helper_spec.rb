@@ -136,19 +136,7 @@ describe ApplicationHelper do
     end
   end
 
-  describe 'project_display_value' do
-    before do
-      @project = mock('project', :name => 'project name', :url => 'project url',
-          :branch => 'project branch')
-    end
-
-    it "should return the name as display value containing the url and the branch as tooltip" do
-      helper.project_display_value(@project).should ==
-          "<span title='URL: project url; Branch: project branch'>project name</span>"
-    end
-  end
-
-  describe 'build_display_value' do
+  describe 'build_gitweb_url' do
     before do
       @project = mock('project', :url => '')
       @build = mock('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri',
@@ -160,41 +148,58 @@ describe ApplicationHelper do
           })
     end
 
-    it "should return the display value containing the short identifier and the full identifier and the leader_uri as tooltips" do
-      helper.build_display_value(@build).should ==
-          "<span title='build_identifier verwaltet von leader_uri'>build_id</span>"
-    end
-
-    it "should link to configured gitweb url if any matches" do
+    it "should return the gitweb url for the project" do
       @project.stub!(:url).and_return "git@machine:the_project.git"
-      helper.build_display_value(@build).should =~
-          %r|<a href='gitweb_url1 the_project commit_hash'>.*</a>|
+      helper.build_gitweb_url(@build).should == 'gitweb_url1 the_project commit_hash'
 
       @project.stub!(:url).and_return "git@machine:the_project"
-      helper.build_display_value(@build).should =~
-          %r|<a href='gitweb_url1 the_project commit_hash'>.*</a>|
+      helper.build_gitweb_url(@build).should == 'gitweb_url1 the_project commit_hash'
 
       @project.stub!(:url).and_return "git://github.com/my/project.git"
-      helper.build_display_value(@build).should =~
-          %r|<a href='gitweb_url3 my/project commit_hash'>.*</a>|
+      helper.build_gitweb_url(@build).should == 'gitweb_url3 my/project commit_hash'
 
       @project.stub!(:url).and_return "git://github.com/my/project"
-      helper.build_display_value(@build).should =~
-          %r|<a href='gitweb_url3 my/project commit_hash'>.*</a>|
+      helper.build_gitweb_url(@build).should == 'gitweb_url3 my/project commit_hash'
+    end
+
+    it "should return nil if no gitweb url is configured" do
+      @project.stub!(:url).and_return "nix configured"
+      helper.build_gitweb_url(@build).should be_nil
     end
   end
 
-  describe 'bucket_display_value' do
+  describe 'build_display_identifier' do
+    before do
+      @build = Build.new
+    end
+
+    it "should return a short version of the build identifier" do
+      @build.stub(:identifier).and_return("ziemlich lang datt ding")
+      helper.build_display_identifier(@build).should == "ziemlich"
+
+      @build.stub(:identifier).and_return("kurz!")
+      helper.build_display_identifier(@build).should == "kurz!"
+    end
+  end
+
+  describe 'build_display_details' do
+    before do
+      @build = mock('build', :identifier => "ziemlich lang das ding", :leader_uri => "leader's uri")
+    end
+
+    it "should return info containing the full identifier and the leader uri" do
+      helper.build_display_details(@build).should =~ /ziemlich lang das ding/
+      helper.build_display_details(@build).should =~ /leader's uri/
+    end
+  end
+
+  describe 'bucket_display_details' do
     before do
       @bucket = mock('bucket', :name => 'bucket_name', :worker_uri => 'worker_uri')
     end
 
-    it "should return the display value containing the name" do
-      helper.bucket_display_value(@bucket).should =~ /bucket_name/
-    end
-
-    it "should return the worker_uri as tooltip" do
-      helper.bucket_display_value(@bucket).should =~ /title='auf worker_uri'/
+    it "should return info containing the worker uri" do
+      helper.bucket_display_details(@bucket).should =~ /worker_uri/
     end
   end
 
@@ -208,12 +213,9 @@ describe ApplicationHelper do
       helper.status_css_class(40).should == "failure"
     end
 
-    it "should return 'pending' if the status is pending" do
-      helper.status_css_class(20).should == "pending"
-    end
-
-    it "should return 'processing' if the status is in work" do
-      helper.status_css_class(30).should == "processing"
+    it "should return 'in_progress' if the status is pending or in work" do
+      helper.status_css_class(20).should == "in_progress"
+      helper.status_css_class(30).should == "in_progress"
     end
   end
 end

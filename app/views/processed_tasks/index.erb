@@ -1,9 +1,7 @@
-<ul>
 <% @buckets.each do |bucket| -%>
-  <li>
-  <% form_for :bucket, :url => {:action => :failed, :id => bucket} do -%>
-    <%= bucket.build.project.name if bucket.build.project %> - <%= build_display_value(bucket.build) %> - <%= bucket_display_value(bucket) %>&nbsp;&nbsp;&nbsp;<%= submit_tag 'Manuell auf "failed" setzen' %>
-  <% end -%>
-  </li>
+  <div class="box">
+    <% form_for :bucket, :url => {:action => :failed, :id => bucket} do -%>
+      <%= bucket.build.project.name if bucket.build.project %> - <%= build_display_identifier(bucket.build) %> - <%= bucket.name %>&nbsp;&nbsp;&nbsp;<%= submit_tag 'Manuell auf "failed" setzen' %>
+    <% end -%>
+  </div>
 <% end -%>
-</ul>

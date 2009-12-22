@@ -1,22 +1,28 @@
-<%= link_to 'Übersicht', :action => 'index' %>
-<h1>Project <%= project_display_value(@project) %></h1>
-<table class='builds'>
-<% builds = @project.builds.sort_by {|b| b.id}.reverse
-builds[0..2].each do |build| -%>
-  <tr>
-    <td class='name'><%= link_to build_display_value(build), :action => "show_build", :id => build %></td>
-    <td><%= build_display_status(build) %></td>
-  </tr>
+<h1>Projekt <%= @project.name %></h1>
+
+<% (builds = @project.builds.sort_by {|b| b.id}.reverse)[0..5].each do |build| -%>
+  <div class="box">
+    <%= link_to build_display_identifier(build), {:action => "show_build", :id => build},
+        :title => build_display_details(build), :class => 'link' %>
+    <% if (href = build_gitweb_url(build)) -%>
+      | <%= link_to "Commit anschauen", href, :class => "link" %>
+    <% end -%>
+    <span class="<%= status_css_class(build_status(build)) %>"><%#"vimrepair%>
+      <%= build_display_status(build) %>
+    </span>
+  </div>
 <% end -%>
-<% unless builds.size < 4 -%>
-  <tr>
-    <td>
-      <select>
-      <% builds[3..-1].each do |build| -%>
-        <option><%= build_display_value(build) %></option>
-      <% end -%>
-      </select>
-    </td>
-  </tr>
+
+<% content_for :extra_content do -%>
+  <% unless builds.size < 6 -%>
+    <tr>
+      <td>
+        <select>
+        <% builds[6..-1].each do |build| -%>
+          <option><%= build_display_identifier(build) %></option>
+        <% end -%>
+        </select>
+      </td>
+    </tr>
+  <% end -%>
 <% end -%>
-</table>

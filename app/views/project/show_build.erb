@@ -1,12 +1,17 @@
-<%= link_to 'Übersicht', :action => 'index' %>
-<h1>Project <%= link_to project_display_value(@build.project), :action => 'show', :id => @build.project %>,
-    Build <%= build_display_value(@build) %></h1>
-<table class='buckets'>
-<% buckets = @build.buckets
-buckets.each do |bucket| -%>
-  <tr>
-    <td class='name'><%= link_to bucket_display_value(bucket), :action => "show_bucket", :id => bucket %></td>
-    <td><%= bucket_display_status(bucket) %></td>
-  </tr>
+<h1>
+  Projekt <%= link_to @build.project.name, :action => 'show', :id => @build.project %>,
+  Build <%= build_display_identifier(@build) %>
+  <% if (href = build_gitweb_url(@build)) -%>
+    (<%= link_to "Commit anschauen", href, :class => "link" %>)
+  <% end -%>
+</h1>
+<% @build.buckets.each do |bucket| -%>
+  <div class="box">
+    <% link_to({:action => "show_bucket", :id => bucket}, :class => 'link') do -%>
+      <span title="<%= bucket_display_details(bucket) %>"><%= bucket.name %></span>
+    <% end -%>
+    <span class="<%= status_css_class(bucket.status) %>"><%#"vimrepair%>
+      <%= display_status(bucket.status) %>
+    </span>
+  </div>
 <% end -%>
-</table>

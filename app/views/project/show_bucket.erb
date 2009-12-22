@@ -1,16 +1,19 @@
-<%= link_to 'Übersicht', :action => 'index' %>
 <% build = @bucket.build -%>
 <% project = build.project -%>
-<h1>Project <%= link_to project_display_value(project), :action => 'show', :id => project %>,
-    Build <%= link_to build_display_value(build), :action => 'show_build', :id => build %>,
-    Task <%= bucket_display_value(@bucket) %></h1>
+<h1>
+  Projekt <%= link_to project.name, :action => 'show', :id => project %>,
+  Build <%= link_to build_display_identifier(build), :action => 'show_build', :id => build %>
+  <% if (href = build_gitweb_url(build)) -%>
+    (<%= link_to "Commit anschauen", href, :class => "link" %>)
+  <% end -%>,
+  Task <%= @bucket.name %></h1>
+</h1>
 <pre><%= @bucket.log ? @bucket.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %></pre>
-<hr/>
-<table class='logs'>
-<% @bucket.logs.each do |log| -%>
-  <tr>
-    <td><pre><%= log.log ? log.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %></pre></td>
-  </tr>
-<% end -%>
-</table>
 
+<% content_for :extra_content do -%>
+  <% unless @bucket.logs.blank? -%>
+<pre>
+<% @bucket.logs.each do |log| -%><%= log.log ? log.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %><% end -%>
+</pre>
+  <% end -%>
+<% end -%>
