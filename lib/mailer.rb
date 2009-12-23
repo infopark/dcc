@@ -18,6 +18,8 @@ class Mailer < ActionMailer::Base
     body "\n#{message}\n-- \nSent to you by diccr - the distributed cruise control app.\n"
   end
 
+private
+
   def project_message(project, receivers, subject, message)
     message(receivers, "[#{project.name}] #{subject}", "Projekt: #{project.name}\n#{message}")
   end
@@ -28,10 +30,8 @@ class Mailer < ActionMailer::Base
         "Build: #{build.identifier}\nTask: #{bucket.name}\n#{message}")
   end
 
-private
-
   def bucket_state_message(bucket, host, state)
-    bucket_message(bucket, bucket.build.project.e_mail_receivers,
+    bucket_message(bucket, bucket.build.project.e_mail_receivers(bucket.name),
         "'#{bucket.name}' #{state} auf #{host}", "\nLog:\n\n#{bucket.log}")
   end
 end

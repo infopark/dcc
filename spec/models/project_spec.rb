@@ -192,6 +192,7 @@ describe Project do
               end
 
               buckets "extra" do
+                send_notifications_to "to@you.com"
                 bucket(:three).performs_rake_tasks('3a', '3b')
               end
             |)
@@ -336,25 +337,33 @@ describe Project do
 
       describe "when providing the E-Mail addresses" do
         it "should return a single address in an array" do
-          @project.e_mail_receivers.should == ['to@me.de']
+          @project.e_mail_receivers('default:one').should == ['to@me.de']
         end
 
         it "should return an empty array if no address were specified" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.e_mail_receivers.should == []
+          @project.e_mail_receivers('default:one').should == []
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("send_notifications_to")
-          @project.e_mail_receivers.should == []
+          @project.e_mail_receivers('default:one').should == []
         end
 
         it "should return the specified addresses" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 send_notifications_to "to@me.de", "to@me.too"
               |)
-          @project.e_mail_receivers.should == ['to@me.de', 'to@me.too']
+          @project.e_mail_receivers('default:one').should == ['to@me.de', 'to@me.too']
           File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 send_notifications_to %w(to@me.de to@me.too)
               |)
-          @project.e_mail_receivers.should == ['to@me.de', 'to@me.too']
+          @project.e_mail_receivers('default:one').should == ['to@me.de', 'to@me.too']
+        end
+
+        it "should user global addresses for buckets if no buckets addresses are given" do
+          @project.e_mail_receivers('default:one').should == ['to@me.de']
+        end
+
+        it "should use buckets addresses instead of global ones if given" do
+          @project.e_mail_receivers('extra:three').should == ['to@you.com']
         end
       end
 

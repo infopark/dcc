@@ -44,9 +44,9 @@ class Project < ActiveRecord::Base
     buckets_tasks[bucket_identifier] || []
   end
 
-  def e_mail_receivers
+  def e_mail_receivers(bucket_identifier)
     read_config
-    @e_mail_receivers
+    @e_mail_receivers[@buckets_groups[bucket_identifier]] || @e_mail_receivers[nil] || []
   end
 
   def update_dependencies
@@ -87,6 +87,10 @@ class Project < ActiveRecord::Base
   def after_bucket_tasks(bucket_identifier)
     read_config
     @after_bucket_tasks[@buckets_groups[bucket_identifier]] || []
+  end
+
+  def set_e_mail_receivers(bucket_group_name, receivers)
+    @e_mail_receivers[bucket_group_name] = receivers
   end
 
   def set_rake_tasks(bucket_name, bucket_group_name, rake_tasks)
@@ -150,7 +154,7 @@ private
   end
 
   def send_notifications_to(*args)
-    @e_mail_receivers = args.flatten
+    set_e_mail_receivers(nil, args.flatten)
   end
 
   def before_all
@@ -183,6 +187,10 @@ private
       def initialize(project, name)
         @name = name.to_s
         super project
+      end
+
+      def send_notifications_to(*args)
+        @project.set_e_mail_receivers(@name, args.flatten)
       end
 
       def before_all
@@ -233,7 +241,7 @@ private
       log.debug "reading config (was empty: #{@config == nil};\
           commit changed: #{git.current_commit != @config_commit})"
       @buckets_tasks = {}
-      @e_mail_receivers = []
+      @e_mail_receivers = {}
       @logged_deps = {}
       @before_all_tasks = []
       @buckets_groups = {}
