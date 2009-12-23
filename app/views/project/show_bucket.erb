@@ -3,7 +3,7 @@
 <h1>
   Projekt <%= link_to project.name, :action => 'show', :id => project %>,
   Build <%= link_to build_display_identifier(build), :action => 'show_build', :id => build %>
-  <%= if (href = build_gitweb_url(build)); link_to("Commit anschauen", href); end %>
+  <%= if (href = build_gitweb_url(build)); "(#{link_to "Commit anschauen", href})"; end %>
   Task <%= @bucket.name %></h1>
 </h1>
 <pre><%= @bucket.log ? @bucket.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %></pre>

@@ -66,10 +66,13 @@ input[type="text"] {
   overflow: hidden;
 }
 
-a.link {
-  display: inline-block;
+a {
   text-decoration: none;
   color: #444;
+}
+
+a.link {
+  display: inline-block;
   font-weight: bold;
   font-size: 18px;
   margin: 2px 0 0 0;
