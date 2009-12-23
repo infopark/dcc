@@ -180,6 +180,11 @@ describe ApplicationHelper do
       @build.stub(:identifier).and_return("kurz!")
       helper.build_display_identifier(@build).should == "kurz!"
     end
+
+    it "should preserve the build number in the identifier" do
+      @build.stub(:identifier).and_return("ziemlich lang datt ding.build number")
+      helper.build_display_identifier(@build).should == "ziemlich.build number"
+    end
   end
 
   describe 'build_display_details' do

@@ -18,7 +18,8 @@ module ApplicationHelper
   end
 
   def build_display_identifier(build)
-    build.identifier[0..7]
+    identifier, build_number = build.identifier.split('.')
+    "#{identifier[0..7]}#{".#{build_number}" if build_number}"
   end
 
   def build_display_details(build)
