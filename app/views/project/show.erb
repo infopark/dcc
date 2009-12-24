@@ -10,6 +10,9 @@
     <span class="<%= status_css_class(build_status(build)) %>"><%#"vimrepair%>
       <%= build_display_status(build) %>
     </span>
+    <% build.buckets.select {|b| bucket_failed?(b)}.each do |bucket| -%>
+      <%= render :partial => "bucket", :locals => {:bucket => bucket} %>
+    <% end -%>
   </div>
 <% end -%>
 

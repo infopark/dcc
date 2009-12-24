@@ -39,3 +39,11 @@ succeeded_other_project:
   commit_hash: '300'
   build_number: 1
   leader_uri: ""
+
+failed_four:
+  id: 41
+  project_id: 4
+  commit_hash: 'failed'
+  build_number: 1
+  leader_uri: ""
+

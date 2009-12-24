@@ -83,4 +83,8 @@ module ApplicationHelper
       'failure'
     end
   end
+
+  def bucket_failed?(bucket)
+    bucket.status > 30
+  end
 end

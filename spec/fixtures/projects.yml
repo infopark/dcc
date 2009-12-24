@@ -19,3 +19,10 @@ three:
   branch: "project branch"
   build_requested: false
   last_system_error: "project's last system error"
+
+four:
+  id: 4
+  name: "project name 4"
+  url: "project url"
+  branch: "project branch"
+  build_requested: false

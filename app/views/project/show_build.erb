@@ -4,12 +4,5 @@
   <%= if (href = build_gitweb_url(@build)); "(#{link_to "Commit anschauen", href})"; end %>
 </h1>
 <% @build.buckets.each do |bucket| -%>
-  <div class="box">
-    <% link_to({:action => "show_bucket", :id => bucket}, :class => 'link') do -%>
-      <span title="<%= bucket_display_details(bucket) %>"><%= bucket.name %></span>
-    <% end -%>
-    <span class="<%= status_css_class(bucket.status) %>"><%#"vimrepair%>
-      <%= display_status(bucket.status) %>
-    </span>
-  </div>
+  <%= render :partial => "bucket", :locals => {:bucket => bucket} %>
 <% end -%>

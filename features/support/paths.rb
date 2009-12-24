@@ -9,6 +9,8 @@ module NavigationHelpers
     case page_name
     when /the (home|start)\s?page/
       '/'
+    when /the project\s?page/
+      "/project/show/#{@project_id}"
 
     # Add more mappings here.
     # Here is an example that pulls values out of the Regexp:

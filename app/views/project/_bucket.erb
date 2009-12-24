@@ -1,0 +1,8 @@
+<div class="box">
+  <% link_to({:action => "show_bucket", :id => bucket}, :class => 'link') do -%>
+    <span title="<%= bucket_display_details(bucket) %>"><%= bucket.name %></span>
+  <% end -%>
+  <span class="<%= status_css_class(bucket.status) %>"><%#"vimrepair%>
+    <%= display_status(bucket.status) %>
+  </span>
+</div>

@@ -40,3 +40,38 @@ succeeded_other_project:
   build_id: 300
   log: "bucket's log"
 
+failed_four_one:
+  id: 411
+  name: 'failed:one'
+  status: 40
+  build_id: 41
+  log: "bucket's log"
+
+failed_four_two:
+  id: 412
+  name: 'failed:two'
+  status: 35
+  build_id: 41
+  log: "bucket's log"
+
+succeeded_four:
+  id: 413
+  name: 'succeeded:one'
+  status: 10
+  build_id: 41
+  log: "bucket's log"
+
+pending_four:
+  id: 414
+  name: 'pending:one'
+  status: 20
+  build_id: 41
+  log: "bucket's log"
+
+in_work_four:
+  id: 415
+  name: 'in_work:one'
+  status: 30
+  build_id: 41
+  log: "bucket's log"
+

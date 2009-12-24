@@ -223,4 +223,26 @@ describe ApplicationHelper do
       helper.status_css_class(30).should == "in_progress"
     end
   end
+
+  describe 'bucket_failed?' do
+    before do
+      @bucket = mock('bucket')
+    end
+
+    it "should return 'true' if the bucket or the processing for it failed" do
+      @bucket.stub!(:status).and_return(35)
+      helper.bucket_failed?(@bucket).should be_true
+      @bucket.stub!(:status).and_return(40)
+      helper.bucket_failed?(@bucket).should be_true
+    end
+
+    it "should return 'false' otherwise" do
+      @bucket.stub!(:status).and_return(10)
+      helper.bucket_failed?(@bucket).should be_false
+      @bucket.stub!(:status).and_return(20)
+      helper.bucket_failed?(@bucket).should be_false
+      @bucket.stub!(:status).and_return(30)
+      helper.bucket_failed?(@bucket).should be_false
+    end
+  end
 end
