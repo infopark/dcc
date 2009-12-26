@@ -63,6 +63,7 @@ class DCCWorker
     end
     bucket.log = whole_log
     bucket.status = succeeded ? 10 : 40
+    bucket.finished_at = Time.now
     bucket.save
     logs.clear
     if !succeeded
@@ -167,6 +168,7 @@ class DCCWorker
       bucket = Bucket.find(bucket_id)
       bucket.worker_uri = requestor_uri
       bucket.status = 30
+      bucket.started_at = Time.now
       bucket.save
       log.debug "deliver bucket #{bucket} to #{requestor_uri}"
       unless (build = bucket.build).started_at

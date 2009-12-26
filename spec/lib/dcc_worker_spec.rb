@@ -113,7 +113,7 @@ describe DCCWorker, "when running as follower" do
       @project.stub!(:bucket_tasks).with('t1').and_return(['rt1'])
       @project.stub!(:bucket_tasks).with('t2').and_return(['rt21', 'rt22'])
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
-      @bucket = mock('bucket', :name => "t2", :log= => nil,
+      @bucket = mock('bucket', :name => "t2", :log= => nil, :finished_at= => nil,
           :build => mock('build', :id => 123, :identifier => 'the commit.666', :project_id => '1',
           :project => @project, :commit => 'the commit', :build_number => 666),
           :save => nil, :logs => @logs, :status= => nil, :log => "nothing to say here")
@@ -234,6 +234,14 @@ describe DCCWorker, "when running as follower" do
         @bucket.should_receive(:save).ordered
         @worker.perform_task(@bucket)
       end
+
+      it "should store the current time into bucket's finished_at when processing has finished" do
+        now = Time.now
+        Time.stub!(:now).and_return now
+        @bucket.should_receive(:finished_at=).with(now).ordered
+        @bucket.should_receive(:save).ordered
+        @worker.perform_task(@bucket)
+      end
     end
 
     describe "when performing rake task" do
@@ -287,9 +295,9 @@ describe DCCWorker, "when running as follower with fixtures" do
 
   before do
     @bucket = mock('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,
-        :save => nil, :build => mock('build', :id => 1000, :project_id => 33, :commit => 'commit',
-        :project => mock('project', :bucket_tasks => [], :before_all_tasks => [],
-        :before_bucket_tasks => [], :after_bucket_tasks => [],
+        :finished_at= => nil, :save => nil, :build => mock('build', :id => 1000, :project_id => 33,
+        :commit => 'commit', :project => mock('project', :bucket_tasks => [],
+        :before_all_tasks => [], :before_bucket_tasks => [], :after_bucket_tasks => [],
         :git => mock('git', :update => nil, :path => nil))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
@@ -464,6 +472,7 @@ describe DCCWorker, "when running as leader" do
   describe "when delivering buckets" do
     before do
       @bucket = mock('bucket', :worker_uri= => nil, :status= => nil, :save => nil, :id => 123,
+          :started_at= => nil,
           :build => mock('build', :started_at => nil, :started_at= => nil, :save => nil))
       Bucket.stub!(:find).with(123).and_return(@bucket)
       @leader.buckets.stub!(:next_bucket).and_return(123)
@@ -486,6 +495,14 @@ describe DCCWorker, "when running as leader" do
 
     it "should store the status 'in work' into the bucket" do
       @bucket.should_receive(:status=).with(30).ordered
+      @bucket.should_receive(:save).ordered
+      @leader.next_bucket("requestor")
+    end
+
+    it "should store the current time for started_at into the bucket" do
+      started_at = Time.now
+      Time.stub!(:now).and_return(started_at)
+      @bucket.should_receive(:started_at=).with(started_at).ordered
       @bucket.should_receive(:save).ordered
       @leader.next_bucket("requestor")
     end
