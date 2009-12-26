@@ -409,7 +409,7 @@ describe DCCWorker, "when running as leader" do
       @leader.read_buckets(@project2)
     end
 
-    it "creates the buckets in the db" do
+    it "creates the build and the buckets in the db" do
       @project1.builds.should_receive(:create).
           with(:commit => "12", :build_number => 2, :leader_uri => "leader's uri").
           and_return(build = mock('', :buckets => mock('')))
@@ -463,7 +463,8 @@ describe DCCWorker, "when running as leader" do
 
   describe "when delivering buckets" do
     before do
-      @bucket = mock('bucket', :worker_uri= => nil, :status= => nil, :save => nil, :id => 123)
+      @bucket = mock('bucket', :worker_uri= => nil, :status= => nil, :save => nil, :id => 123,
+          :build => mock('build', :started_at => nil, :started_at= => nil, :save => nil))
       Bucket.stub!(:find).with(123).and_return(@bucket)
       @leader.buckets.stub!(:next_bucket).and_return(123)
       @leader.stub!(:sleep_until_next_bucket_time).and_return(0)
@@ -488,6 +489,19 @@ describe DCCWorker, "when running as leader" do
       @bucket.should_receive(:save).ordered
       @leader.next_bucket("requestor")
     end
+
+    it "should store the current time for started_at into the build iff it's the first bucket" do
+      @bucket.stub!(:build).and_return(build = mock('build', :started_at => nil))
+      started_at = Time.now
+      Time.stub!(:now).and_return(started_at)
+      build.should_receive(:started_at=).with(started_at).ordered
+      build.should_receive(:save).ordered
+      @leader.next_bucket("requestor")
+      build.stub!(:started_at).and_return started_at
+      @leader.next_bucket("requestor")
+    end
+
+    it "should store the current time for finished_at into the build iff the last bucket finished"
 
     describe "when no buckets are left" do
       before do

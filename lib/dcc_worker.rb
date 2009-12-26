@@ -169,6 +169,10 @@ class DCCWorker
       bucket.status = 30
       bucket.save
       log.debug "deliver bucket #{bucket} to #{requestor_uri}"
+      unless (build = bucket.build).started_at
+        build.started_at = Time.now
+        build.save
+      end
     end
     bucket_spec
   end
