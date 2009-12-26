@@ -2,24 +2,50 @@ require File.dirname(__FILE__) + '/../spec_helper'
 
 describe ApplicationHelper do
   describe 'bucket_display_status' do
+    before do
+      @bucket = mock('bucket', :started_at => nil, :finished_at => nil, :status => 10)
+    end
+
     it "should return 'pending' if bucket is pending" do
-      helper.bucket_display_status(mock('bucket', :status => 20)).should == 'pending'
+      @bucket.stub!(:status).and_return 20
+      helper.bucket_display_status(@bucket).should == 'pending'
     end
 
     it "should return 'in work' if bucket is in work" do
-      helper.bucket_display_status(mock('bucket', :status => 30)).should == 'in work'
+      @bucket.stub!(:status).and_return 30
+      helper.bucket_display_status(@bucket).should == 'in work'
     end
 
     it "should return 'done' if bucket was successfully done" do
-      helper.bucket_display_status(mock('bucket', :status => 10)).should == 'done'
+      @bucket.stub!(:status).and_return 10
+      helper.bucket_display_status(@bucket).should == 'done'
     end
 
     it "should return 'processing failed' if bucket processing has failed" do
-      helper.bucket_display_status(mock('bucket', :status => 35)).should == 'processing failed'
+      @bucket.stub!(:status).and_return 35
+      helper.bucket_display_status(@bucket).should == 'processing failed'
     end
 
     it "should return 'failed' if bucket has failed" do
-      helper.bucket_display_status(mock('bucket', :status => 40)).should == 'failed'
+      @bucket.stub!(:status).and_return 40
+      helper.bucket_display_status(@bucket).should == 'failed'
+    end
+
+    it "should contain 'since …' if the bucket is in progress" do
+      now = Time.now
+      @bucket.stub!(:started_at).and_return now
+      helper.bucket_display_status(@bucket).should =~ /since #{now.to_formatted_s(:db)}/
+    end
+
+    it "should contain 'in …' if the bucket is finished" do
+      start = Time.now
+      finish = start + 6666
+      @bucket.stub!(:started_at).and_return start
+      @bucket.stub!(:finished_at).and_return finish
+      helper.bucket_display_status(@bucket).should =~ /in 1 hour 51 minutes 6 seconds/
+      finish = start + 36061
+      @bucket.stub!(:finished_at).and_return finish
+      helper.bucket_display_status(@bucket).should =~ /in 10 hours 1 minute 1 second/
     end
   end
 

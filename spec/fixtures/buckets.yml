@@ -62,6 +62,8 @@ succeeded_four:
   status: 10
   build_id: 41
   log: "bucket's log"
+  started_at: 2006-08-30 07:45
+  finished_at: 2006-08-30 09:23:46
 
 pending_four:
   id: 414
@@ -76,4 +78,5 @@ in_work_four:
   status: 30
   build_id: 41
   log: "bucket's log"
+  started_at: 2006-08-30 07:45
 

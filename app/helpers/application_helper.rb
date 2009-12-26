@@ -31,7 +31,15 @@ module ApplicationHelper
   end
 
   def bucket_display_status(bucket)
-    display_status(bucket.status)
+    "#{display_status(bucket.status)}#{
+      if bucket.started_at
+        if bucket.finished_at
+          " in #{format_duration(bucket.finished_at - bucket.started_at)}"
+        else
+          " since #{bucket.started_at.to_formatted_s(:db)}"
+        end
+      end
+    }"
   end
 
   def build_display_status(build)
@@ -40,23 +48,6 @@ module ApplicationHelper
         "#{count} #{display_status(status)}"
       end.join ", "
     })"
-  end
-
-  def display_status(status)
-    case status
-    when 10
-      'done'
-    when 20
-      'pending'
-    when 30
-      'in work'
-    when 35
-      'processing failed'
-    when 40
-      'failed'
-    else
-      "unknown status #{status}"
-    end
   end
 
   def build_status(build)
@@ -86,5 +77,37 @@ module ApplicationHelper
 
   def bucket_failed?(bucket)
     bucket.status > 30
+  end
+
+private
+
+  def display_status(status)
+    case status
+    when 10
+      'done'
+    when 20
+      'pending'
+    when 30
+      'in work'
+    when 35
+      'processing failed'
+    when 40
+      'failed'
+    else
+      "unknown status #{status}"
+    end
+  end
+
+  def format_duration(duration)
+    duration = duration.to_i
+    seconds = duration % 60
+    minutes = duration / 60 % 60
+    hours = duration / 3600
+    [format_duration_part(hours, "hour"), format_duration_part(minutes, "minute"),
+        format_duration_part(seconds, "second")].join(" ")
+  end
+
+  def format_duration_part(value, name)
+    "#{value} #{name}#{"s" if value > 1}" if value
   end
 end

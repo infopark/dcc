@@ -11,6 +11,8 @@ module NavigationHelpers
       '/'
     when /the project\s?page/
       "/project/show/#{@project_id}"
+    when /it's bucket page/
+      "/project/show_bucket/#{@bucket_id}"
 
     # Add more mappings here.
     # Here is an example that pulls values out of the Regexp:

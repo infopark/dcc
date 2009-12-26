@@ -2,7 +2,5 @@
   <% link_to({:action => "show_bucket", :id => bucket}, :class => 'link') do -%>
     <span title="<%= bucket_display_details(bucket) %>"><%= bucket.name %></span>
   <% end -%>
-  <span class="<%= status_css_class(bucket.status) %>"><%#"vimrepair%>
-    <%= display_status(bucket.status) %>
-  </span>
+  <%= render :partial => "bucket_status", :locals => {:bucket => bucket} %>
 </div>
