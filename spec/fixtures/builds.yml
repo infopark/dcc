@@ -11,6 +11,8 @@ three:
   commit_hash: "3"
   build_number: 1
   leader_uri: ""
+  started_at: 2006-08-30T07:45:00+00:00
+  finished_at: 2006-08-30T08:45:00+00:00
 
 succeeded:
   id: 330

@@ -33,4 +33,14 @@ describe Bucket do
     @bucket.logs.should be_empty
     Bucket.find(2).logs.should_not be_empty
   end
+
+  it "may have a start time" do
+    @bucket.started_at.should be_nil
+    Bucket.find(2).started_at.should be_a(Time)
+  end
+
+  it "may have an end time" do
+    @bucket.finished_at.should be_nil
+    Bucket.find(2).finished_at.should be_a(Time)
+  end
 end

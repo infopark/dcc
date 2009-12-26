@@ -283,7 +283,7 @@ describe DCCWorker, "when running as follower" do
 end
 
 describe DCCWorker, "when running as follower with fixtures" do
-  fixtures :buckets
+  fixtures :buckets, :builds
 
   before do
     @bucket = mock('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,

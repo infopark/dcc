@@ -11,6 +11,8 @@ two:
   build_id: 3
   worker_uri: "worker's uri"
   log: "bucket's log"
+  started_at: 2006-08-30T07:45:00+00:00
+  finished_at: 2006-08-30T08:45:00+00:00
 
 succeeded:
   id: 31

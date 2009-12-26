@@ -31,5 +31,15 @@ describe Build do
   it "has an identifier consisting of commit and build_number" do
     @build.identifier.should == "c1.6"
   end
+
+  it "may have a start time" do
+    @build.started_at.should be_nil
+    Build.find(3).started_at.should be_a(Time)
+  end
+
+  it "may have an end time" do
+    @build.finished_at.should be_nil
+    Build.find(3).finished_at.should be_a(Time)
+  end
 end
 
