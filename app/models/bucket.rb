@@ -5,4 +5,8 @@ class Bucket < ActiveRecord::Base
   def to_s
     "#<Bucket; ID: #{id}, Task: #{name}, Build: #{build.identifier}, Project: #{build.project.name}>"
   end
+
+  def <=>(other)
+    name <=> other.name if other.is_a? Bucket
+  end
 end
