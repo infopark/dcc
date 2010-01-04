@@ -91,12 +91,12 @@ describe Project do
 
   describe "when providing git" do
     it "should create a new git using name, url and branch" do
-      Git.should_receive(:new).with("name", "url", "branch").and_return "the git"
+      DCC::Git.should_receive(:new).with("name", "url", "branch").and_return "the git"
       @project.git.should == "the git"
     end
 
     it "should reuse an already created git" do
-      Git.should_receive(:new).once.and_return "the git"
+      DCC::Git.should_receive(:new).once.and_return "the git"
       @project.git.should == "the git"
       @project.git.should == "the git"
       @project.git.should == "the git"

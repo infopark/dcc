@@ -37,12 +37,12 @@ describe Dependency do
 
   describe "when providing git" do
     it "should create a new dependency git using url, branch, fallback_branch and project's name" do
-      Git.should_receive(:new).with("project's name", "url", "b", "fb", true).and_return "the git"
+      DCC::Git.should_receive(:new).with("project's name", "url", "b", "fb", true).and_return "the git"
       @dependency.git.should == "the git"
     end
 
     it "should reuse an already created git" do
-      Git.should_receive(:new).once.and_return "the git"
+      DCC::Git.should_receive(:new).once.and_return "the git"
       @dependency.git.should == "the git"
       @dependency.git.should == "the git"
       @dependency.git.should == "the git"

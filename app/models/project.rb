@@ -1,11 +1,11 @@
 require 'forwardable'
-require 'lib/git'
+require 'lib/dcc/git'
 require 'lib/mailer'
-require 'lib/dcc_logger'
+require 'lib/dcc/logger'
 require 'app/models/dependency'
 
 class Project < ActiveRecord::Base
-  include DccLogger
+  include DCC::Logger
 
   has_many :builds, :dependent => :destroy
   has_many :dependencies, :dependent => :destroy
@@ -29,7 +29,7 @@ class Project < ActiveRecord::Base
   end
 
   def git
-    @git ||= Git.new(name, url, branch)
+    @git ||= DCC::Git.new(name, url, branch)
   end
 
   def buckets_tasks

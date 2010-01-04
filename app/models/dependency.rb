@@ -1,8 +1,8 @@
 require 'forwardable'
-require 'lib/dcc_logger'
+require 'lib/dcc/logger'
 
 class Dependency < ActiveRecord::Base
-  include DccLogger
+  include DCC::Logger
 
   belongs_to :project
 
@@ -10,7 +10,7 @@ class Dependency < ActiveRecord::Base
   def_delegators :git, :current_commit
 
   def git
-    @git ||= Git.new(project.name, url, branch, fallback_branch, true)
+    @git ||= DCC::Git.new(project.name, url, branch, fallback_branch, true)
   end
 
   def has_changed?
