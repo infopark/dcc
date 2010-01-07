@@ -6,6 +6,9 @@ class DCCWorker
   attr_accessor :buckets
   attr_reader :memcache_client
 
+  def cleanup
+  end
+
   def log_polling_intervall
     return 0.1
   end
@@ -367,14 +370,17 @@ describe DCCWorker, "when running as leader" do
   end
 
   describe "when updating the buckets" do
-    it "should read and set for every project which is not actually build" do
+    before do
       @leader.buckets.buckets['p1'] = 'old_p1_buckets'
       @leader.buckets.buckets['p2'] = []
       @leader.buckets.buckets['p3'] = 'old_p3_buckets'
+    end
 
+    it "should read and set for every project which is not actually build" do
       @leader.should_receive(:read_buckets).exactly(2).times.and_return do |p|
         "#{p.name}_buckets"
       end
+
       @leader.update_buckets
 
       @leader.buckets.buckets['p1'].should == 'old_p1_buckets'
