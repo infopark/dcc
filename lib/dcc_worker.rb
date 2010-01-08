@@ -69,13 +69,17 @@ class DCCWorker
     if !succeeded
       Mailer.deliver_failure_message(bucket, uri)
     else
-      last_build = Build.find_last_by_project_id(bucket.build.project_id,
-          :conditions => "id < #{bucket.build.id}")
+      last_build = last_build_for_project(project, :before_build => build)
       if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
             last_bucket.status != 10
         Mailer.deliver_fixed_message(bucket, uri)
       end
     end
+  end
+
+  def last_build_for_project(project, options = {})
+    conditions = options[:before_build] ? "id < #{options[:before_build].id}" : nil
+    Build.find_last_by_project_id(project.id, :conditions => conditions)
   end
 
   def perform_rake_task(path, task, logs)
@@ -132,13 +136,34 @@ class DCCWorker
   def update_buckets
     log.debug "updating buckets"
     Project.find(:all).each do |project|
-      if !@buckets.buckets[project.name] || @buckets.buckets[project.name].empty?
+      if !project_in_build?(project)
+        build = last_build_for_project(project)
+        if build && !build.finished_at
+          build.finished_at = Time.now
+          build.save
+        end
         buckets = read_buckets(project)
         synchronize do
           @buckets.buckets[project.name] = buckets
         end
       end
     end
+  end
+
+  def project_in_build?(project)
+    @buckets.buckets[project.name] && !@buckets.buckets[project.name].empty? ||
+        (
+          build = last_build_for_project(project)
+          build && !build.buckets.select do |b|
+            (b.status == 20 || b.status == 30) && (
+              (DRbObject.new(nil, b.worker_uri).alive? rescue false) || (
+                b.status = 35
+                b.save
+                false
+              )
+            )
+          end.empty?
+        )
   end
 
   def read_buckets(project)
