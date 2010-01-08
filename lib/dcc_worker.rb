@@ -138,7 +138,9 @@ class DCCWorker
     Project.find(:all).each do |project|
       if !project_in_build?(project)
         build = last_build_for_project(project)
+        log.debug "finished?: checking build #{build || '<nil>'} (#{build && build.finished_at || '<nil>'})"
         if build && !build.finished_at
+          log.debug "marking project #{project.name}'s build #{build.identifier} as finished"
           build.finished_at = Time.now
           build.save
         end

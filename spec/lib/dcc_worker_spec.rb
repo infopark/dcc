@@ -419,7 +419,8 @@ describe DCCWorker, "when running as leader" do
     describe "when a project is not in build" do
       before do
         Project.stub!(:find).with(:all).and_return [@project1]
-        @leader.stub(:last_build_for_project).with(@project1).and_return(@last_build = mock('b'))
+        @leader.stub(:last_build_for_project).with(@project1).
+            and_return(@last_build = mock('b', :identifier => 'nix'))
         @leader.stub(:project_in_build?).with(@project1).and_return false
       end
 
