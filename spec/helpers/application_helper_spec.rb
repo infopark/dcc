@@ -43,9 +43,26 @@ describe ApplicationHelper do
       @bucket.stub!(:started_at).and_return start
       @bucket.stub!(:finished_at).and_return finish
       helper.bucket_display_status(@bucket).should =~ /in 1 hour 51 minutes 6 seconds/
+
       finish = start + 36061
       @bucket.stub!(:finished_at).and_return finish
       helper.bucket_display_status(@bucket).should =~ /in 10 hours 1 minute 1 second/
+
+      finish = start + 3600
+      @bucket.stub!(:finished_at).and_return finish
+      helper.bucket_display_status(@bucket).should =~ /in 1 hour/
+
+      finish = start + 3606
+      @bucket.stub!(:finished_at).and_return finish
+      helper.bucket_display_status(@bucket).should =~ /in 1 hour 6 seconds/
+
+      finish = start + 120
+      @bucket.stub!(:finished_at).and_return finish
+      helper.bucket_display_status(@bucket).should =~ /in 2 minutes/
+
+      finish = start + 12
+      @bucket.stub!(:finished_at).and_return finish
+      helper.bucket_display_status(@bucket).should =~ /in 12 seconds/
     end
   end
 

@@ -104,10 +104,10 @@ private
     minutes = duration / 60 % 60
     hours = duration / 3600
     [format_duration_part(hours, "hour"), format_duration_part(minutes, "minute"),
-        format_duration_part(seconds, "second")].join(" ")
+        format_duration_part(seconds, "second")].select {|x| x}.join(" ")
   end
 
   def format_duration_part(value, name)
-    "#{value} #{name}#{"s" if value > 1}" if value
+    "#{value} #{name}#{"s" if value > 1}" if value > 0
   end
 end
