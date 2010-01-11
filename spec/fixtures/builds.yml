@@ -48,4 +48,20 @@ failed_four:
   commit_hash: 'failed'
   build_number: 1
   leader_uri: ""
+  started_at: 2006-08-30 00:15
 
+finished:
+  id: 42
+  project_id: 4
+  commit_hash: "finished"
+  build_number: 1
+  leader_uri: ""
+  started_at: 2006-08-30T07:31:14+00:00
+  finished_at: 2006-08-30T08:45:00+00:00
+
+unprocessed:
+  id: 43
+  project_id: 4
+  commit_hash: "unprocessed"
+  build_number: 1
+  leader_uri: ""

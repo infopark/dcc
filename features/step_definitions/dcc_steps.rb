@@ -30,31 +30,34 @@ Then /^I should be able to reach the bucket pages of the failed buckets$/ do
   end
 end
 
-Given /^there is a bucket under process$/ do
+Given /^there is a (build|bucket) under process$/ do |dummy|
   @bucket_id = 415
+  @build_id = 41
 end
 
-Then /^I should (not )?see it's start time$/ do |should_not|
+Then /^I should (not )?see the (build|bucket)'s start time$/ do |should_not, type|
   if should_not
     response.should_not contain("since")
   else
-    response.should contain("since 2006-08-30 07:45")
+    response.should contain("since 2006-08-30 0#{type == 'build' ? '0:1' : '7:4'}5")
   end
 end
 
-Then /^I should (not )?see it's duration$/ do |should_not|
+Then /^I should (not )?see the (build|bucket)'s duration$/ do |should_not, type|
   if should_not
     response.should_not contain("\<in\>")
   else
-    response.should contain("in 1 hour 38 minutes 46 seconds")
+    response.should contain("in 1 hour #{type == 'build' ? '13' : '38'} minutes 46 seconds")
   end
 end
 
-Given /^there is a finished bucket$/ do
+Given /^there is a finished (build|bucket)$/ do |dummy|
   @bucket_id = 413
+  @build_id = 42
 end
 
-Given /^there is an unprocessed bucket$/ do
+Given /^there is an unprocessed (build|bucket)$/ do |dummy|
   @bucket_id = 414
+  @build_id = 43
 end
 

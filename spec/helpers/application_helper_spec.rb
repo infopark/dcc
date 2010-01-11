@@ -118,6 +118,40 @@ describe ApplicationHelper do
       })
       helper.build_display_status(@build).should =~ /\(7 processing failed, 5 pending\)/
     end
+
+    it "should contain 'since …' if the build is in progress" do
+      now = Time.now
+      @build.stub!(:started_at).and_return now
+      helper.build_display_status(@build).should =~ /since #{now.to_formatted_s(:db)}/
+    end
+
+    it "should contain 'in …' if the build is finished" do
+      start = Time.now
+      finish = start + 6666
+      @build.stub!(:started_at).and_return start
+      @build.stub!(:finished_at).and_return finish
+      helper.build_display_status(@build).should =~ /in 1 hour 51 minutes 6 seconds/
+
+      finish = start + 36061
+      @build.stub!(:finished_at).and_return finish
+      helper.build_display_status(@build).should =~ /in 10 hours 1 minute 1 second/
+
+      finish = start + 3600
+      @build.stub!(:finished_at).and_return finish
+      helper.build_display_status(@build).should =~ /in 1 hour/
+
+      finish = start + 3606
+      @build.stub!(:finished_at).and_return finish
+      helper.build_display_status(@build).should =~ /in 1 hour 6 seconds/
+
+      finish = start + 120
+      @build.stub!(:finished_at).and_return finish
+      helper.build_display_status(@build).should =~ /in 2 minutes/
+
+      finish = start + 12
+      @build.stub!(:finished_at).and_return finish
+      helper.build_display_status(@build).should =~ /in 12 seconds/
+    end
   end
 
   describe 'build_status' do

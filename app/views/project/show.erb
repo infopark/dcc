@@ -7,9 +7,7 @@
     <% if (href = build_gitweb_url(build)) -%>
       | <%= link_to "Commit anschauen", href, :class => "link" %>
     <% end -%>
-    <span class="<%= status_css_class(build_status(build)) %>"><%#"vimrepair%>
-      <%= build_display_status(build) %>
-    </span>
+    <%= render :partial => "build_status", :locals => {:build => build} %>
     <% build.buckets.select {|b| bucket_failed?(b)}.sort.each do |bucket| -%>
       <%= render :partial => "bucket", :locals => {:bucket => bucket} %>
     <% end -%>

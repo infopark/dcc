@@ -31,15 +31,7 @@ module ApplicationHelper
   end
 
   def bucket_display_status(bucket)
-    "#{display_status(bucket.status)}#{
-      if bucket.started_at
-        if bucket.finished_at
-          " in #{format_duration(bucket.finished_at - bucket.started_at)}"
-        else
-          " since #{bucket.started_at.to_formatted_s(:db)}"
-        end
-      end
-    }"
+    "#{display_status(bucket.status)}#{display_duration(bucket)}"
   end
 
   def build_display_status(build)
@@ -47,7 +39,7 @@ module ApplicationHelper
       detailed_build_status(build).select {|s, count| count > 0}.map do |status, count|
         "#{count} #{display_status(status)}"
       end.join ", "
-    })"
+    })#{display_duration(build)}"
   end
 
   def build_status(build)
@@ -95,6 +87,16 @@ private
       'failed'
     else
       "unknown status #{status}"
+    end
+  end
+
+  def display_duration(period)
+    if period.started_at
+      if period.finished_at
+        " in #{format_duration(period.finished_at - period.started_at)}"
+      else
+        " since #{period.started_at.to_formatted_s(:db)}"
+      end
     end
   end
 

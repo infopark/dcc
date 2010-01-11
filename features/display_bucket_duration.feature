@@ -6,18 +6,18 @@ Feature: Display bucket duration
   Scenario: Bucket is currently being processed
     Given there is a bucket under process
     When I go to it's bucket page
-    Then I should see it's start time
-    And I should not see it's duration
+    Then I should see the bucket's start time
+    And I should not see the bucket's duration
 
   Scenario: Bucket is finished
     Given there is a finished bucket
     When I go to it's bucket page
-    Then I should see it's duration
-    And I should not see it's start time
+    Then I should see the bucket's duration
+    And I should not see the bucket's start time
 
   Scenario: Bucket not yet processed
     Given there is an unprocessed bucket
     When I go to it's bucket page
-    Then I should not see it's start time
-    And I should not see it's duration
+    Then I should not see the bucket's start time
+    And I should not see the bucket's duration
 

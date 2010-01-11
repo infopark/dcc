@@ -13,6 +13,8 @@ module NavigationHelpers
       "/project/show/#{@project_id}"
     when /it's bucket page/
       "/project/show_bucket/#{@bucket_id}"
+    when /it's build page/
+      "/project/show_build/#{@build_id}"
 
     # Add more mappings here.
     # Here is an example that pulls values out of the Regexp:
