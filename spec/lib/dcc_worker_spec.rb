@@ -379,35 +379,67 @@ describe DCCWorker, "when running as leader" do
   end
 
   shared_examples_for "finishing build" do
-    before do
-      Project.stub!(:find).with(:all).and_return [@project1]
-      @leader.stub(:last_build_for_project).with(@project1).
-          and_return(@last_build = mock('b', :identifier => 'nix'))
-    end
+    describe "when finishing the last build" do
+      before do
+        Project.stub!(:find).with(:all).and_return [@project1]
+        @leader.stub(:last_build_for_project).with(@project1).and_return(
+            @last_build = mock('b', :finished_at => Time.now))
+      end
 
-    it "should set the last build's finished_at to now when it's empty" do
-      @last_build.stub(:finished_at)
-      now = Time.now
-      Time.stub!(:now).and_return now
-      @last_build.should_receive(:finished_at=).with(now).ordered
-      @last_build.should_receive(:save).ordered
-      @leader.send(@method_under_test)
-    end
+      it "should clean up dead buckets by calling 'project_in_build?'" do
+        @leader.should_receive(:project_in_build?).with(@project1)
+        @leader.send(@method_under_test)
+      end
 
-    it "should not change the last build's finished_at when it's already set" do
-      @last_build.stub(:finished_at).and_return Time.now
-      @last_build.should_not_receive(:finished_at=)
-      @last_build.should_not_receive(:save)
-      @leader.send(@method_under_test)
-    end
+      describe "when a project is not in build" do
+        before do
+          @last_build.stub(:identifier).and_return 'nix'
+          @leader.stub(:project_in_build?).with(@project1).and_return false
+        end
 
-    it "should not fail if project was never built" do
-      @leader.stub(:last_build_for_project).with(@project1).and_return nil
-      @leader.send(@method_under_test)
+        it "should set the last build's finished_at to now when it's empty" do
+          @last_build.stub(:finished_at).and_return nil
+          now = Time.now
+          Time.stub!(:now).and_return now
+          @last_build.should_receive(:finished_at=).with(now).ordered
+          @last_build.should_receive(:save).ordered
+          @leader.send(@method_under_test)
+        end
+
+        it "should not change the last build's finished_at when it's already set" do
+          @last_build.stub(:finished_at).and_return Time.now
+          @last_build.should_not_receive(:finished_at=)
+          @last_build.should_not_receive(:save)
+          @leader.send(@method_under_test)
+        end
+
+        it "should not fail if project was never built" do
+          @leader.stub(:last_build_for_project).with(@project1).and_return nil
+          @leader.send(@method_under_test)
+        end
+      end
+
+      describe "when a project is in build" do
+        before do
+          @leader.stub(:project_in_build?).with(@project1).and_return true
+        end
+
+        it "should not change the last build's finished_at regardless of it's state" do
+          @last_build.should_not_receive(:finished_at=)
+          @last_build.should_not_receive(:save)
+          @leader.update_buckets
+        end
+      end
     end
   end
 
   describe "when initializing the buckets" do
+    before do
+      @method_under_test = :initialize_buckets
+    end
+
+    it_should_behave_like "finishing build"
+
     it "should read and set the buckets for every project" do
       @leader.should_receive(:read_buckets).exactly(4).times.and_return do |p|
         "#{p.name}_buckets"
@@ -420,23 +452,18 @@ describe DCCWorker, "when running as leader" do
             'p4' => 'p4_buckets'
           }
     end
-
-    describe "" do
-      before do
-        @method_under_test = :initialize_buckets
-      end
-
-      it_should_behave_like "finishing build"
-    end
   end
 
   describe "when updating the buckets" do
     before do
+      @method_under_test = :update_buckets
       @leader.buckets.buckets['p1'] = 'p1_buckets'
       @leader.buckets.buckets['p2'] = 'p2_buckets'
       @leader.buckets.buckets['p3'] = 'p3_buckets'
       @leader.buckets.buckets['p4'] = 'p4_buckets'
     end
+
+    it_should_behave_like "finishing build"
 
     it "should read and set for every project which is not actually build" do
       @leader.stub(:project_in_build?).and_return {|p| p.name =~ /p[13]/}
@@ -451,32 +478,6 @@ describe DCCWorker, "when running as leader" do
       @leader.buckets.buckets['p2'].should == 'new_p2_buckets'
       @leader.buckets.buckets['p3'].should == 'p3_buckets'
       @leader.buckets.buckets['p4'].should == 'new_p4_buckets'
-    end
-
-    describe "when a project is not in build" do
-      before do
-        @method_under_test = :update_buckets
-      end
-
-      it_should_behave_like "finishing build"
-
-      before do
-        @leader.stub(:project_in_build?).with(@project1).and_return false
-      end
-    end
-
-    describe "when a project is in build" do
-      before do
-        Project.stub!(:find).with(:all).and_return [@project1]
-        @leader.stub(:last_build_for_project).with(@project1).and_return(@last_build = mock('b'))
-        @leader.stub(:project_in_build?).with(@project1).and_return true
-      end
-
-      it "should not change the last build's finished_at regardless of it's state" do
-        @last_build.should_not_receive(:finished_at=)
-        @last_build.should_not_receive(:save)
-        @leader.update_buckets
-      end
     end
   end
 
@@ -519,29 +520,39 @@ describe DCCWorker, "when running as leader" do
         @leader.should_not be_project_in_build(@project)
       end
 
-      shared_examples_for "buckets are unprocessed" do
+      shared_examples_for "dead or unreachable workers" do
         before do
-          @leader.stub(:last_build_for_project).with(@project).and_return(mock('b', :buckets => [
-            @bucket = mock('b1', :worker_uri => "worker's uri")
-          ]))
-          DRbObject.stub(:new).with(nil, "worker's uri").and_return(@worker = mock('w'))
+          @bucket.stub(:status=)
+          @bucket.stub(:save)
         end
 
-        shared_examples_for "dead or unreachable workers" do
-          before do
-            @bucket.stub(:status=)
-            @bucket.stub(:save)
-          end
+        it "should say no" do
+          @leader.should_not be_project_in_build(@project)
+        end
 
-          it "should say no" do
-            @leader.should_not be_project_in_build(@project)
-          end
+        it "should set the bucket's status to 'processing_failed'" do
+          @bucket.should_receive(:status=).with(35).ordered
+          @bucket.should_receive(:save).ordered
+          @leader.project_in_build?(@project)
+        end
+      end
 
-          it "should set the bucket's status to 'processing_failed'" do
-            @bucket.should_receive(:status=).with(35).ordered
-            @bucket.should_receive(:save).ordered
-            @leader.project_in_build?(@project)
-          end
+      describe "when buckets are pending" do
+        before do
+          @leader.stub(:last_build_for_project).with(@project).and_return(mock('b', :buckets => [
+            @bucket = mock('b1', :status => 20)
+          ]))
+        end
+
+        it_should_behave_like "dead or unreachable workers"
+      end
+
+      describe "when a bucket is in work" do
+        before do
+          @leader.stub(:last_build_for_project).with(@project).and_return(mock('b', :buckets => [
+            @bucket = mock('b1', :worker_uri => "worker's uri", :status => 30)
+          ]))
+          DRbObject.stub(:new).with(nil, "worker's uri").and_return(@worker = mock('w'))
         end
 
         describe "when the worker is alive" do
@@ -568,22 +579,6 @@ describe DCCWorker, "when running as leader" do
           end
 
           it_should_behave_like "dead or unreachable workers"
-        end
-      end
-
-      describe "when a pending bucket is assigned to a worker" do
-        it_should_behave_like "buckets are unprocessed"
-
-        before do
-          @bucket.stub(:status).and_return 20
-        end
-      end
-
-      describe "when a bucket is in work" do
-        it_should_behave_like "buckets are unprocessed"
-
-        before do
-          @bucket.stub(:status).and_return 30
         end
       end
     end

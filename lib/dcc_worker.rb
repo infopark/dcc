@@ -125,9 +125,7 @@ class DCCWorker
 
   def initialize_buckets
     log.debug "initializing buckets"
-    Project.find(:all).each do |project|
-      compute_buckets_and_finish_last_build_if_necessary(project)
-    end
+    update_buckets
   end
 
   def update_buckets
@@ -144,8 +142,8 @@ class DCCWorker
         (
           build = last_build_for_project(project)
           build && !build.buckets.select do |b|
-            (b.status == 20 || b.status == 30) && (
-              (DRbObject.new(nil, b.worker_uri).alive? rescue false) || (
+            (b.status == 30 && (DRbObject.new(nil, b.worker_uri).alive? rescue false)) || (
+              (b.status == 20 || b.status == 30) && (
                 b.status = 35
                 b.save
                 false
