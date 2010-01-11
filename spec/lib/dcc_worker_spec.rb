@@ -378,6 +378,35 @@ describe DCCWorker, "when running as leader" do
     @leader = DCCWorker.new('dcc_test', nil, :log_level => Logger::FATAL)
   end
 
+  shared_examples_for "finishing build" do
+    before do
+      Project.stub!(:find).with(:all).and_return [@project1]
+      @leader.stub(:last_build_for_project).with(@project1).
+          and_return(@last_build = mock('b', :identifier => 'nix'))
+    end
+
+    it "should set the last build's finished_at to now when it's empty" do
+      @last_build.stub(:finished_at)
+      now = Time.now
+      Time.stub!(:now).and_return now
+      @last_build.should_receive(:finished_at=).with(now).ordered
+      @last_build.should_receive(:save).ordered
+      @leader.send(@method_under_test)
+    end
+
+    it "should not change the last build's finished_at when it's already set" do
+      @last_build.stub(:finished_at).and_return Time.now
+      @last_build.should_not_receive(:finished_at=)
+      @last_build.should_not_receive(:save)
+      @leader.send(@method_under_test)
+    end
+
+    it "should not fail if project was never built" do
+      @leader.stub(:last_build_for_project).with(@project1).and_return nil
+      @leader.send(@method_under_test)
+    end
+  end
+
   describe "when initializing the buckets" do
     it "should read and set the buckets for every project" do
       @leader.should_receive(:read_buckets).exactly(4).times.and_return do |p|
@@ -390,6 +419,14 @@ describe DCCWorker, "when running as leader" do
             'p3' => 'p3_buckets',
             'p4' => 'p4_buckets'
           }
+    end
+
+    describe "" do
+      before do
+        @method_under_test = :initialize_buckets
+      end
+
+      it_should_behave_like "finishing build"
     end
   end
 
@@ -418,31 +455,13 @@ describe DCCWorker, "when running as leader" do
 
     describe "when a project is not in build" do
       before do
-        Project.stub!(:find).with(:all).and_return [@project1]
-        @leader.stub(:last_build_for_project).with(@project1).
-            and_return(@last_build = mock('b', :identifier => 'nix'))
+        @method_under_test = :update_buckets
+      end
+
+      it_should_behave_like "finishing build"
+
+      before do
         @leader.stub(:project_in_build?).with(@project1).and_return false
-      end
-
-      it "should set the last build's finished_at to now when it's empty" do
-        @last_build.stub(:finished_at)
-        now = Time.now
-        Time.stub!(:now).and_return now
-        @last_build.should_receive(:finished_at=).with(now).ordered
-        @last_build.should_receive(:save).ordered
-        @leader.update_buckets
-      end
-
-      it "should not change the last build's finished_at when it's already set" do
-        @last_build.stub(:finished_at).and_return Time.now
-        @last_build.should_not_receive(:finished_at=)
-        @last_build.should_not_receive(:save)
-        @leader.update_buckets
-      end
-
-      it "should not fail if project was never built" do
-        @leader.stub(:last_build_for_project).with(@project1).and_return nil
-        @leader.update_buckets
       end
     end
 

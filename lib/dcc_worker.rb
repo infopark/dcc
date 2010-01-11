@@ -126,10 +126,7 @@ class DCCWorker
   def initialize_buckets
     log.debug "initializing buckets"
     Project.find(:all).each do |project|
-      buckets = read_buckets(project)
-      synchronize do
-        @buckets.buckets[project.name] = buckets
-      end
+      compute_buckets_and_finish_last_build_if_necessary(project)
     end
   end
 
@@ -137,17 +134,7 @@ class DCCWorker
     log.debug "updating buckets"
     Project.find(:all).each do |project|
       if !project_in_build?(project)
-        build = last_build_for_project(project)
-        log.debug "finished?: checking build #{build || '<nil>'} (#{build && build.finished_at || '<nil>'})"
-        if build && !build.finished_at
-          log.debug "marking project #{project.name}'s build #{build.identifier} as finished"
-          build.finished_at = Time.now
-          build.save
-        end
-        buckets = read_buckets(project)
-        synchronize do
-          @buckets.buckets[project.name] = buckets
-        end
+        compute_buckets_and_finish_last_build_if_necessary(project)
       end
     end
   end
@@ -249,5 +236,20 @@ private
     log.debug "performing rake tasks #{tasks}"
     tasks.each {|task| succeeded = perform_rake_task(path, task, logs) && succeeded}
     succeeded
+  end
+
+  def compute_buckets_and_finish_last_build_if_necessary(project)
+    build = last_build_for_project(project)
+    log.debug "finished?: checking build #{build || '<nil>'} (#{
+        build && build.finished_at || '<nil>'})"
+    if build && !build.finished_at
+      log.debug "marking project #{project.name}'s build #{build.identifier} as finished"
+      build.finished_at = Time.now
+      build.save
+    end
+    buckets = read_buckets(project)
+    synchronize do
+      @buckets.buckets[project.name] = buckets
+    end
   end
 end
