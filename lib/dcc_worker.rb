@@ -208,9 +208,20 @@ private
   @@pbl = 0
   def log_error_on_failure(subject, options = {})
     begin
-      log.debug "entering protected block (->#{@@pbl += 1})"
-      yield
-      log.debug "leaving protected block (->#{@@pbl -= 1})"
+      begin
+        log.debug "entering protected block (->#{@@pbl += 1})"
+        yield
+        log.debug "leaving protected block (->#{@@pbl -= 1})"
+      rescue ActiveRecord::StatementInvalid => e
+        if e.message =~ /MySQL server has gone away/
+          log.debug "MySQL server has gone away … retry with new connection"
+          ActiveRecord::Base.establish_connection(ActiveRecord::Base.connection_pool.spec.config)
+          yield
+          log.debug "retry with new connection succeeded"
+        else
+          raise e
+        end
+      end
     rescue Exception => e
       log.debug "error occurred in protected block (->#{@@pbl -= 1})"
       msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
