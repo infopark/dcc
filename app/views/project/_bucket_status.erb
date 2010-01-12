@@ -1,3 +1,4 @@
-<span class="<%= status_css_class(bucket.status) %>"><%#"vimrepair%>
-  <%= bucket_display_status(bucket) %>
-</span>
+<%= render :partial => "status", :locals => {
+  :status => bucket.status,
+  :display_status => bucket_display_status(bucket)
+} %>

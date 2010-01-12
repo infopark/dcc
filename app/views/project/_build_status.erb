@@ -1,3 +1,4 @@
-<span class="<%= status_css_class(build_status(build)) %>"><%#"vimrepair%>
-  <%= build_display_status(build) %>
-</span>
+<%= render :partial => "status", :locals => {
+  :status => build_status(build),
+  :display_status => build_display_status(build)
+} %>

@@ -78,34 +78,26 @@ a.link {
   margin: 2px 0 0 0;
 }
 
-span.failure {
+span.status {
   display: inline-block;
   font-size: 11px;
   padding: 3px 15px;
   -moz-border-radius: 15px;
   -webkit-border-radius: 15px;
-  background: #cf2222;
   color: #fff;
+  margin-bottom: 5px;
 }
 
-span.success {i
-  display: inline-block;
-  font-size: 11px;
-  padding: 3px 15px;
-  -moz-border-radius: 15px;
-  -webkit-border-radius: 15px;
+span.failure {
+  background: #cf2222;
+}
+
+span.success {
   background: #27771f;
-  color: #fff;
 }
 
 span.in_progress {
-  display: inline-block;
-  font-size: 11px;
-  padding: 3px 15px;
-  -moz-border-radius: 15px;
-  -webkit-border-radius: 15px;
   background: #3c88c8;
-  color: #fff;
 }
 
 div.buttons {

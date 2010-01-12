@@ -3,9 +3,8 @@
     <% link_to({:action => "show", :id => project}, :class => 'link') do -%>
       <span title="URL: <%= project.url %>; Branch: <%= project.branch %>"><%= project.name %></span>
     <% end -%>
-    <span class="<%= status_css_class(project_status(project)) %>"><%#"vimrepair%>
-      <%= project_display_status(project) %>
-    </span>
+    <%= render :partial => "status", :locals => {:status => project_status(project),
+        :display_status => project_display_status(project)} %>
     <div class="buttons">
       <% form_for :project, :url => {:action => :delete, :id => project} do |f| -%>
         <%= submit_tag 'Löschen', :class => 'red' %>
