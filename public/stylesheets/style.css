@@ -66,6 +66,14 @@ input[type="text"] {
   overflow: hidden;
 }
 
+.box .box:nth-child(odd) {
+  background: #bbb;
+}
+
+.box .box:nth-child(even) {
+  background: #ddd;
+}
+
 a {
   text-decoration: none;
   color: #444;
