@@ -37,7 +37,7 @@ module DCC
       FileUtils.rm_rf(path) if File.exists?(path)
       git("clone", url, path, :do_not_chdir => true)
       git("checkout", remote_branch)
-      git("submodule", "update", "--init")
+      git("submodule", "update", "--init", "--recursive")
     end
 
     def fetch
@@ -51,7 +51,7 @@ module DCC
       Dir.chdir(path) do
         git("checkout", commit || remote_branch)
         git("reset", "--hard")
-        git("submodule", 'update', "--init")
+        git("submodule", 'update', "--init", "--recursive")
         git("clean", "-f", "-d")
       end
     end
