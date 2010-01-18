@@ -250,7 +250,7 @@ private
       @after_bucket_tasks = {}
       raise "missing config in '#{config_file}'" unless @config = File.read(config_file)
       log.debug "config read: #{@config}"
-      self.instance_eval(@config)
+      self.instance_eval(@config, config_file)
       @config_commit = git.current_commit
     end
   end
