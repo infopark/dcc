@@ -47,9 +47,9 @@ class DCCWorker
     git = project.git
     git.update build.commit
     succeeded = true
-    before_all_tasks = project.before_all_tasks(bucket.name)
-    before_all_tasks -= @succeeded_before_all_tasks if @last_handled_build == build.id
-    if !before_all_tasks.empty? #FIXME
+    @succeeded_before_all_tasks = [] if @last_handled_build != build.id
+    before_all_tasks = project.before_all_tasks(bucket.name) - @succeeded_before_all_tasks
+    if !before_all_tasks.empty?
       succeeded = perform_rake_tasks(git.path, before_all_tasks, logs)
       @succeeded_before_all_tasks += succeeded ? before_all_tasks : []
       @last_handled_build = build.id

@@ -156,6 +156,10 @@ describe DCCWorker, "when running as follower" do
 
       describe "of already handled build" do
         before do
+          @project.stub(:before_all_tasks).with("t2").and_return %w(bb_2 bb_3 bb_4)
+          @worker.perform_task(@bucket)
+          @bucket.build.stub(:id).and_return 321
+          @project.stub(:before_all_tasks).with("t2").and_return %w(bb_1 bb_2)
           @worker.perform_task(@bucket)
         end
 
