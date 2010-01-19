@@ -144,7 +144,6 @@ describe DCCWorker, "when running as follower" do
           :build => mock('build', :id => 123, :identifier => 'the commit.666',
           :project => @project, :commit => 'the commit', :build_number => 666),
           :save => nil, :logs => @logs, :status= => nil, :log => "nothing to say here")
-      @worker.stub!(:last_handled_build).and_return(123)
     end
 
     describe "when performing task" do
@@ -157,7 +156,7 @@ describe DCCWorker, "when running as follower" do
 
       describe "of already handled build" do
         before do
-          @worker.stub!(:last_handled_build).and_return(123)
+          @worker.perform_task(@bucket)
         end
 
         it "should not perform the before_all rake tasks" do
@@ -165,11 +164,33 @@ describe DCCWorker, "when running as follower" do
           @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_2', @logs)
           @worker.perform_task(@bucket)
         end
+
+        describe "in not yet handled bucket group" do
+          it "should perform additional before_all rake tasks of this bucket group" do
+            @project.stub(:before_all_tasks).with("t2").and_return %w(bb_2 bb_3 bb_4)
+            @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_2', @logs)
+            @worker.should_receive(:perform_rake_task).with('git path', 'bb_3', @logs)
+            @worker.should_receive(:perform_rake_task).with('git path', 'bb_4', @logs)
+            @worker.perform_task(@bucket)
+          end
+        end
+
+        describe "in already handled bucket group" do
+          it "should not perform before_all rake tasks" do
+            @project.stub(:before_all_tasks).with("t2").and_return %w(bb_2 bb_3 bb_4)
+            @worker.perform_task(@bucket)
+            @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_2', @logs)
+            @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_3', @logs)
+            @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_4', @logs)
+            @worker.perform_task(@bucket)
+          end
+        end
       end
 
       describe "of build which is handled for the first time" do
         before do
-          @worker.stub!(:last_handled_build).and_return(321)
+          @worker.perform_task(@bucket)
+          @bucket.build.stub(:id).and_return 321
         end
 
         it "should perform the before_all rake tasks prior to the task's rake tasks" do
@@ -184,12 +205,6 @@ describe DCCWorker, "when running as follower" do
               and_return(false)
           @bucket.should_receive(:status=).with(40).ordered
           @bucket.should_receive(:save).ordered
-          @worker.perform_task(@bucket)
-        end
-
-        it "should set the last build to the current build's id" do
-          @bucket.build.stub!(:id).and_return(666)
-          @worker.should_receive(:last_handled_build=).with(666)
           @worker.perform_task(@bucket)
         end
 

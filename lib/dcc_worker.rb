@@ -13,7 +13,6 @@ class DCCWorker
   include Politics::StaticQueueWorker
   include MonitorMixin
 
-  attr_accessor :last_handled_build
   attr_reader :admin_e_mail_address
 
   def initialize(group_name, memcached_servers, options = {})
@@ -25,6 +24,7 @@ class DCCWorker
     register_worker group_name, 0, options
     @buckets = BucketStore.new
     @admin_e_mail_address = options[:admin_e_mail_address]
+    @succeeded_before_all_tasks = []
   end
 
   def run
@@ -47,9 +47,12 @@ class DCCWorker
     git = project.git
     git.update build.commit
     succeeded = true
-    if last_handled_build != build.id
-      succeeded = perform_rake_tasks(git.path, project.before_all_tasks(bucket.name), logs)
-      self.last_handled_build = build.id
+    before_all_tasks = project.before_all_tasks(bucket.name)
+    before_all_tasks -= @succeeded_before_all_tasks if @last_handled_build == build.id
+    if !before_all_tasks.empty? #FIXME
+      succeeded = perform_rake_tasks(git.path, before_all_tasks, logs)
+      @succeeded_before_all_tasks += succeeded ? before_all_tasks : []
+      @last_handled_build = build.id
     end
     if succeeded
       succeeded &&= perform_rake_tasks(git.path, project.before_bucket_tasks(bucket.name), logs)
