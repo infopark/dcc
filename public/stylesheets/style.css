@@ -136,3 +136,7 @@ input[type="submit"].green {
 input[type="submit"].red {
   background: #929292;
 }
+
+pre {
+    overflow: auto;
+}
