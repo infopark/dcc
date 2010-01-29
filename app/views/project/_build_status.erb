@@ -2,3 +2,8 @@
   :status => build_status(build),
   :display_status => build_display_status(build)
 } %>
+<% undone_count = build.buckets.select {|b| b.status == 20 || b.status == 30}.size -%>
+<% in_work_count = build.buckets.select {|b| b.status == 30}.size -%>
+<% if undone_count > 0 -%>
+  <span class="progress_indicator"><%= "#{'0' if in_work_count < 10}#{in_work_count}" %></span>
+<% end -%>
