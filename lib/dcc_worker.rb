@@ -222,11 +222,12 @@ private
           yield
           log.debug "retry with new connection succeeded"
         else
+          log.debug "ActiveRecord::StatementInvalid occurred #{e.message}"
           raise e
         end
       end
     rescue Exception => e
-      log.debug "error occurred in protected block (->#{@@pbl -= 1})"
+      log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
       msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
       log.error "#{subject}\n#{msg}"
       if bucket = options[:bucket]
