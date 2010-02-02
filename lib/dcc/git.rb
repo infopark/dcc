@@ -86,9 +86,18 @@ module DCC
       FileUtils.touch(error_log)
       options[:stderr] = error_log
       options[:dir] = path unless options[:do_not_chdir]
-      execute(command, options) do |io|
-        io.readlines.collect {|line| line.chomp}
+      e = nil
+      (1..10).each do
+        e = nil
+        begin
+          execute(command, options) do |io|
+            io.readlines.collect {|line| line.chomp}
+          end
+          break
+        rescue Exception => e
+        end
       end
+      raise e if e
     end
 
     def sub_path
