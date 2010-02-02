@@ -87,10 +87,11 @@ module DCC
       options[:stderr] = error_log
       options[:dir] = path unless options[:do_not_chdir]
       e = nil
+      result = nil
       (1..10).each do
         e = nil
         begin
-          execute(command, options) do |io|
+          result = execute(command, options) do |io|
             io.readlines.collect {|line| line.chomp}
           end
           break
@@ -98,6 +99,7 @@ module DCC
         end
       end
       raise e if e
+      result
     end
 
     def sub_path
