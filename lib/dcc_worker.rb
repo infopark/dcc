@@ -25,13 +25,15 @@ class DCCWorker
     @buckets = BucketStore.new
     @admin_e_mail_address = options[:admin_e_mail_address]
     @succeeded_before_all_tasks = []
+    @currently_processed_bucket_id = nil
   end
 
   def run
     log.debug "running"
     log_general_error_on_failure("running worker failed") do
       process_bucket do |bucket_id|
-        bucket = Bucket.find(bucket_id)
+        @currently_processed_bucket_id = bucket_id
+        bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
         log_bucket_error_on_failure(bucket, "processing bucket failed") do
           perform_task bucket
         end
@@ -145,7 +147,8 @@ class DCCWorker
         (
           build = last_build_for_project(project)
           build && !build.buckets.select do |b|
-            (b.status == 30 && (DRbObject.new(nil, b.worker_uri).alive? rescue false)) || (
+            (b.status == 30 && (DRbObject.new(nil, b.worker_uri).processing?(b.id) rescue false)) ||
+            (
               (b.status == 20 || b.status == 30) && (
                 b.status = 35
                 b.save
@@ -154,6 +157,10 @@ class DCCWorker
             )
           end.empty?
         )
+  end
+
+  def processing?(bucket_id)
+    @currently_processed_bucket_id == bucket_id
   end
 
   def read_buckets(project)
@@ -208,23 +215,27 @@ class DCCWorker
 
 private
 
+  def retry_on_mysql_failure
+    yield
+  rescue ActiveRecord::StatementInvalid => e
+    if e.message =~ /MySQL server has gone away/
+      log.debug "MySQL server has gone away … retry with new connection"
+      ActiveRecord::Base.establish_connection(ActiveRecord::Base.connection_pool.spec.config)
+      yield
+      log.debug "retry with new connection succeeded"
+    else
+      log.debug "ActiveRecord::StatementInvalid occurred #{e.message}"
+      raise e
+    end
+  end
+
   @@pbl = 0
   def log_error_on_failure(subject, options = {})
     begin
-      begin
+      retry_on_mysql_failure do
         log.debug "entering protected block (->#{@@pbl += 1})"
         yield
         log.debug "leaving protected block (->#{@@pbl -= 1})"
-      rescue ActiveRecord::StatementInvalid => e
-        if e.message =~ /MySQL server has gone away/
-          log.debug "MySQL server has gone away … retry with new connection"
-          ActiveRecord::Base.establish_connection(ActiveRecord::Base.connection_pool.spec.config)
-          yield
-          log.debug "retry with new connection succeeded"
-        else
-          log.debug "ActiveRecord::StatementInvalid occurred #{e.message}"
-          raise e
-        end
       end
     rescue Exception => e
       log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"

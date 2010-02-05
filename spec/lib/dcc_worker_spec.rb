@@ -91,6 +91,31 @@ describe DCCWorker, "when running as follower" do
     @worker.run
   end
 
+  describe 'when determining if it is processing a specific bucket' do
+    before do
+      @worker.stub!(:perform_task)
+      @worker.stub!(:loop?).and_return false
+    end
+
+    it "should say no if no bucket is being processed" do
+      @worker.leader.stub!(:bucket_request).and_return [nil, 1]
+      @worker.run
+      @worker.should_not be_processing('b_id1')
+    end
+
+    it "should say no if another bucket is being processed" do
+      @worker.leader.stub!(:bucket_request).and_return ['b_id2', 1], [nil, 1]
+      @worker.run
+      @worker.should_not be_processing('b_id1')
+    end
+
+    it "should say yes if the bucket is being processed" do
+      @worker.leader.stub!(:bucket_request).and_return ['b_id1', 1], [nil, 1]
+      @worker.run
+      @worker.should be_processing('b_id1')
+    end
+  end
+
   describe 'when even the basic things (process_bucket) fail' do
     before do
       @worker.stub!(:process_bucket).and_raise("an error")
@@ -569,14 +594,14 @@ describe DCCWorker, "when running as leader" do
       describe "when a bucket is in work" do
         before do
           @leader.stub(:last_build_for_project).with(@project).and_return(mock('b', :buckets => [
-            @bucket = mock('b1', :worker_uri => "worker's uri", :status => 30)
+            @bucket = mock('b1', :worker_uri => "worker's uri", :status => 30, :id => 666)
           ]))
           DRbObject.stub(:new).with(nil, "worker's uri").and_return(@worker = mock('w'))
         end
 
-        describe "when the worker is alive" do
+        describe "when the worker is alive and processing the bucket in question" do
           before do
-            @worker.stub(:alive?).and_return true
+            @worker.stub(:processing?).with(666).and_return true
           end
 
           it "should say yes" do
@@ -584,9 +609,9 @@ describe DCCWorker, "when running as leader" do
           end
         end
 
-        describe "when the worker is dead" do
+        describe "when the worker is alive but does not process the bucket in question" do
           before do
-            @worker.stub(:alive?).and_return false
+            @worker.stub(:processing?).with(666).and_return false
           end
 
           it_should_behave_like "dead or unreachable workers"
@@ -594,7 +619,7 @@ describe DCCWorker, "when running as leader" do
 
         describe "when the worker is not reachable" do
           before do
-            @worker.stub(:alive?).and_raise DRb::DRbConnError.new('nix da')
+            @worker.stub(:processing?).with(666).and_raise DRb::DRbConnError.new('nix da')
           end
 
           it_should_behave_like "dead or unreachable workers"
