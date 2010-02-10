@@ -221,6 +221,7 @@ private
     if e.message =~ /MySQL server has gone away/
       log.debug "MySQL server has gone away … retry with new connection"
       ActiveRecord::Base.establish_connection(ActiveRecord::Base.connection_pool.spec.config)
+      sleep 3
       yield
       log.debug "retry with new connection succeeded"
     else
@@ -231,27 +232,32 @@ private
 
   @@pbl = 0
   def log_error_on_failure(subject, options = {})
+    log.debug "entering protected block (->#{@@pbl += 1})"
     begin
       retry_on_mysql_failure do
-        log.debug "entering protected block (->#{@@pbl += 1})"
-        yield
-        log.debug "leaving protected block (->#{@@pbl -= 1})"
+        retry_on_mysql_failure do
+          yield
+        end
       end
-    rescue Exception => e
-      log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
-      msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
-      log.error "#{subject}\n#{msg}"
-      if bucket = options[:bucket]
-        bucket.status = 35
-        bucket.log = "#{bucket.log}\n\n------ Processing failed ------\n\n#{subject}\n\n#{msg}"
-        bucket.save
-      elsif project = options[:project]
-        project.last_system_error = "#{subject}\n\n#{msg}"
-        project.save
-      end
-      if options[:email_address]
-        Mailer.deliver_message options[:email_address], subject, msg
-      end
+    rescue ActiveRecord::StatementInvalid => e
+      log.debug "retrying with new MySQL connection failed for three times"
+      raise e
+    end
+    log.debug "leaving protected block (->#{@@pbl -= 1})"
+  rescue Exception => e
+    log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
+    msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
+    log.error "#{subject}\n#{msg}"
+    if bucket = options[:bucket]
+      bucket.status = 35
+      bucket.log = "#{bucket.log}\n\n------ Processing failed ------\n\n#{subject}\n\n#{msg}"
+      bucket.save
+    elsif project = options[:project]
+      project.last_system_error = "#{subject}\n\n#{msg}"
+      project.save
+    end
+    if options[:email_address]
+      Mailer.deliver_message options[:email_address], subject, msg
     end
   end
 
