@@ -222,8 +222,9 @@ private
       log.debug "MySQL server has gone away … retry with new connection"
       ActiveRecord::Base.establish_connection(ActiveRecord::Base.connection_pool.spec.config)
       sleep 3
-      yield
+      result = yield
       log.debug "retry with new connection succeeded"
+      result
     else
       log.debug "ActiveRecord::StatementInvalid occurred #{e.message}"
       raise e

@@ -66,6 +66,25 @@ describe DCCWorker do
       @worker.last_build_for_project(@project).should == 'last action hero'
     end
   end
+
+  describe "when performing operation protected against MySQL failures" do
+    it "should return the block's result if MySQL did not fail" do
+      @worker.send(:retry_on_mysql_failure) do
+        "das ergebnis"
+      end.should == "das ergebnis"
+    end
+
+    it "should return the block's result if MySQL fails once and succeeds afterwards" do
+      failed = false
+      @worker.send(:retry_on_mysql_failure) do
+        unless failed
+          failed = true
+          raise ActiveRecord::StatementInvalid.new("MySQL server has gone away")
+        end
+        "das ergebnis"
+      end.should == "das ergebnis"
+    end
+  end
 end
 
 describe DCCWorker, "when running as follower" do
