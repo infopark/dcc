@@ -1,0 +1,10 @@
+environment: development
+group_name: dcc_dev
+memcache_servers:
+- "memcacheserver:11211"
+# Level from logger.rb: Logger::DEBUG == 0
+log_level: 0
+domain: domain
+iteration_length: 60
+dictatorship_length: 1800
+admin_e_mail_address: me@domain

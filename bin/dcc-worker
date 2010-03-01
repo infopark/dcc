@@ -9,18 +9,12 @@ require 'fileutils'
 FileUtils.chdir("#{File.dirname($0[0..0] == '/' ? $0 : "#{FileUtils.pwd}/#{$0}")}/..") do
   require 'lib/dcc_worker'
   #require 'lib/ruby_backtracer/backtrace_nothing_swallowed'
-  # FIXME: Konfig aus Datei lesen
-  # -> memcached-Server(s)
-  # -> DB-Verbindung
-  # -> Log-Level
-  # -> Gruppen-Bezeichnung
 
+  config = YAML::load(File.read('config/worker.yml')).symbolize_keys
   ActiveRecord::Base.establish_connection(
-      YAML::load(File.read('config/database.yml'))[ARGV[0] ? 'development' : 'production'])
+      YAML::load(File.read('config/database.yml'))[config[:environment]])
 
   ActionMailer::Base.delivery_method = :sendmail
 
-  DCCWorker.new(ARGV[0] || 'dcc', ['master-of-disaster.infopark:11211'],
-      :log_level => Logger::DEBUG, :domain => 'infopark', :iteration_length => 10,
-      :dictatorship_length => 600, :admin_e_mail_address => 'dcc-admin@infopark.de').run
+  DCCWorker.new(config[:group_name], config[:memcache_servers], config).run
 end
