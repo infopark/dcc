@@ -199,7 +199,7 @@ describe Project do
       end
 
       it "should read the config" do
-        File.should_receive(:read).with("git_path/dcc_config.rb")
+        File.should_receive(:read).with("git_path/dcc_config.rb").and_return("")
         @project.buckets_tasks
       end
 
