@@ -107,18 +107,21 @@ class DCCWorker
       log_length += read_log_into_db(rake.log_file, log_length, logs)
       sleep log_polling_intervall
     end
+    log.debug "process terminated? #{$?.exited?} with status #{$?.inspect} → #{$?.exitstatus}"
     read_log_into_db(rake.log_file, log_length, logs)
     $?.exitstatus == 0
   end
 
   def read_log_into_db(log_file, log_length, logs)
-    log = File.exists?(log_file) ? File.open(log_file) do |f|
+    log.debug "read #{log_file} from position #{log_length} into DB"
+    log_content = File.exists?(log_file) ? File.open(log_file) do |f|
       f.seek log_length
       f.read
-    end : nil
-    if log && !log.empty?
-      logs.create(:log => log)
-      log.length
+    end : ""
+    log.debug "read log (length: #{log_content.length}): #{log_content}"
+    if !log_content.empty?
+      logs.create(:log => log_content)
+      log_content.length
     else
       0
     end
