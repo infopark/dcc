@@ -88,6 +88,18 @@ class DCCWorker
   end
 
   def perform_rake_task(path, task, logs)
+    process_state = _perform_rake_task(path, task, logs)
+    log.debug "process terminated? #{process_state.exited?} with status #{process_state.inspect}"
+    if (process_state.signaled? && process_state.termsig == 6)
+      log.debug "rake aborted - retry it once"
+      logs.create(:log => "\n\n#{80 * "-"}\n\nrake aborted - retry it once\n\n#{80 * "-"}\n\n")
+      process_state = _perform_rake_task(path, task, logs)
+      log.debug "process terminated? #{process_state.exited?} with status #{process_state.inspect}"
+    end
+    process_state.exitstatus == 0
+  end
+
+  def _perform_rake_task(path, task, logs)
     log.debug "performing rake task #{task}"
     rake = Rake.new(path)
     old_connections = ActiveRecord::Base.connection_pool
@@ -107,9 +119,8 @@ class DCCWorker
       log_length += read_log_into_db(rake.log_file, log_length, logs)
       sleep log_polling_intervall
     end
-    log.debug "process terminated? #{$?.exited?} with status #{$?.inspect} → #{$?.exitstatus}"
     read_log_into_db(rake.log_file, log_length, logs)
-    $?.exitstatus == 0
+    $?
   end
 
   def read_log_into_db(log_file, log_length, logs)
