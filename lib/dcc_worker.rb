@@ -92,7 +92,7 @@ class DCCWorker
     log.debug "process terminated? #{process_state.exited?} with status #{process_state.inspect}"
     if (process_state.signaled? && process_state.termsig == 6)
       log.debug "rake aborted - retry it once"
-      logs.create(:log => "\n\n#{80 * "-"}\n\nrake aborted - retry it once\n\n#{80 * "-"}\n\n")
+      logs.create(:log => "\n\n#{"-" * 80}\n\nrake aborted - retry it once\n\n#{"-" * 80}\n\n")
       process_state = _perform_rake_task(path, task, logs)
       log.debug "process terminated? #{process_state.exited?} with status #{process_state.inspect}"
     end
