@@ -8,7 +8,6 @@ require 'fileutils'
 
 FileUtils.chdir("#{File.dirname($0[0..0] == '/' ? $0 : "#{FileUtils.pwd}/#{$0}")}/..") do
   require 'lib/dcc_worker'
-  #require 'lib/ruby_backtracer/backtrace_nothing_swallowed'
 
   config = YAML::load(File.read('config/worker.yml')).symbolize_keys
   ActiveRecord::Base.establish_connection(
