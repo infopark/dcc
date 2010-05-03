@@ -125,11 +125,16 @@ class DCCWorker
 
   def read_log_into_db(log_file, log_length, logs)
     log.debug "read #{log_file} from position #{log_length} into DB"
-    log_content = File.exists?(log_file) ? File.open(log_file) do |f|
-      f.seek log_length
-      f.read
-    end : ""
-    log.debug "read log (length: #{log_content.length}): #{log_content}"
+    log_content = ""
+    begin
+      log_content = File.open(log_file) do |f|
+        f.seek log_length
+        f.read
+      end
+      log.debug "read log (length: #{log_content.length}): #{log_content}"
+    rescue Exception => e
+      log.debug "could not read #{log_file}: #{e}"
+    end
     if !log_content.empty?
       logs.create(:log => log_content)
       log_content.length
