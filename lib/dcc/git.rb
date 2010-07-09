@@ -49,8 +49,8 @@ module DCC
       # FIXME: Tests
       fetch
       Dir.chdir(path) do
-        git("checkout", commit || remote_branch)
         git("reset", "--hard")
+        git("checkout", commit || remote_branch)
         git("submodule", 'update', "--init", "--recursive")
         git("clean", "-f", "-d")
       end
