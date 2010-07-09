@@ -37,7 +37,7 @@ module DCC
       FileUtils.rm_rf(path) if File.exists?(path)
       git("clone", url, path, :do_not_chdir => true)
       git("checkout", remote_branch)
-      git("submodule", "update", "--init", "--recursive")
+      update_submodules
     end
 
     def fetch
@@ -48,12 +48,10 @@ module DCC
     def update(commit = nil)
       # FIXME: Tests
       fetch
-      Dir.chdir(path) do
-        git("reset", "--hard")
-        git("checkout", commit || remote_branch)
-        git("submodule", 'update', "--init", "--recursive")
-        git("clean", "-f", "-d")
-      end
+      git("reset", "--hard")
+      git("checkout", commit || remote_branch)
+      update_submodules
+      git("clean", "-f", "-d")
     end
 
     def current_commit
@@ -73,6 +71,18 @@ module DCC
     def branch_exists?(branch)
       git("branch", "-r").map {|l| l.strip}.include?(branch)
     end
+
+    def update_submodules
+      git("submodule", 'update', "--init", "--recursive")
+      # Submodules may break when communication with git server fails.
+      # → Repair all submodules.
+      git("submodule", 'status', '--recursive').map {|line| line.split(" ")[1]}.each do |submodule|
+        Dir.chdir(submodule) do
+          git("reset", "--hard", :do_not_chdir => true)
+        end
+      end
+    end
+
 
     def git(operation, *args)
       # FIXME: Tests
