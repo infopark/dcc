@@ -169,6 +169,14 @@ class DCCWorker
             (b.status == 30 && (DRbObject.new(nil, b.worker_uri).processing?(b.id) rescue false)) ||
             (
               (b.status == 20 || b.status == 30) && (
+                log.debug "setting bucket #{b} to „processing failed“: status = #{b.status}, " +
+                    "answer from worker (#{b.worker_uri}): #{
+                      begin
+                        DRbObject.new(nil, b.worker_uri).processing?(b.id)
+                      rescue Exception => e
+                        "failure: #{e.message}\n\n#{e.backtrace.join("\n")}"
+                      end
+                    }"
                 b.status = 35
                 b.save
                 false
@@ -179,6 +187,8 @@ class DCCWorker
   end
 
   def processing?(bucket_id)
+    log.debug "answering on processing?(#{bucket_id}): #{
+        @currently_processed_bucket_id == bucket_id} for #{@currently_processed_bucket_id}"
     @currently_processed_bucket_id == bucket_id
   end
 

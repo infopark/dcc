@@ -587,6 +587,7 @@ describe DCCWorker, "when running as leader" do
         before do
           @bucket.stub(:status=)
           @bucket.stub(:save)
+          @bucket.stub(:worker_uri).and_return "worker's uri"
         end
 
         it "should say no" do
@@ -613,13 +614,14 @@ describe DCCWorker, "when running as leader" do
       describe "when a bucket is in work" do
         before do
           @leader.stub(:last_build_for_project).with(@project).and_return(mock('b', :buckets => [
-            @bucket = mock('b1', :worker_uri => "worker's uri", :status => 30, :id => 666)
+            @bucket = mock('b1', :status => 30, :id => 666)
           ]))
           DRbObject.stub(:new).with(nil, "worker's uri").and_return(@worker = mock('w'))
         end
 
         describe "when the worker is alive and processing the bucket in question" do
           before do
+            @bucket.stub(:worker_uri).and_return "worker's uri"
             @worker.stub(:processing?).with(666).and_return true
           end
 
