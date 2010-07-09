@@ -77,8 +77,10 @@ module DCC
       # Submodules may break when communication with git server fails.
       # → Repair all submodules.
       git("submodule", 'status', '--recursive').map {|line| line.split(" ")[1]}.each do |submodule|
-        Dir.chdir(submodule) do
-          git("reset", "--hard", :do_not_chdir => true)
+        Dir.chdir(path) do
+          Dir.chdir(submodule) do
+            git("reset", "--hard", :do_not_chdir => true)
+          end
         end
       end
     end
