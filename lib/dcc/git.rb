@@ -51,7 +51,7 @@ module DCC
       git("reset", "--hard")
       git("checkout", commit || remote_branch)
       update_submodules
-      git("clean", "-f", "-d")
+      git("clean", "-f", "-d", "-x")
     end
 
     def current_commit
