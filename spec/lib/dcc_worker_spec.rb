@@ -266,7 +266,7 @@ describe DCCWorker, "when running as follower" do
       end
 
       it "should perform all the rake tasks for the task one by one on the updated git path" do
-        @git.should_receive(:update).with('the commit').ordered
+        @git.should_receive(:update).with(:commit => 'the commit').ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'bt_1', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'bt_2', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'rt21', @logs).ordered

@@ -45,13 +45,13 @@ module DCC
       git("fetch")
     end
 
-    def update(commit = nil)
+    def update(options = {})
       # FIXME: Tests
       fetch
       git("reset", "--hard")
-      git("checkout", commit || remote_branch)
+      git("checkout", options[:commit] || remote_branch)
       update_submodules
-      git("clean", "-f", "-d", "-x")
+      git("clean", *["-f", "-d", ("-x" if options[:clean])].compact)
     end
 
     def current_commit

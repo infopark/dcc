@@ -47,7 +47,7 @@ class DCCWorker
     build = bucket.build
     project = build.project
     git = project.git
-    git.update build.commit
+    git.update :commit => build.commit
     succeeded = true
     @succeeded_before_all_tasks = [] if @last_handled_build != build.id
     before_all_tasks = project.before_all_tasks(bucket.name) - @succeeded_before_all_tasks
