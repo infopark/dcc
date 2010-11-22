@@ -26,6 +26,16 @@ class DCCWorker
     @admin_e_mail_address = options[:admin_e_mail_address]
     @succeeded_before_all_tasks = []
     @currently_processed_bucket_id = nil
+    if options[:tyrant]
+      log.debug { "become tyrant for at least #{1000000000} seconds" }
+      instance_eval do
+        alias :original_seize_leadership :seize_leadership
+        def seize_leadership
+          original_seize_leadership(1000000000)
+        end
+      end
+      seize_leadership
+    end
   end
 
   def run
