@@ -44,9 +44,14 @@ class Project < ActiveRecord::Base
     buckets_tasks[bucket_identifier] || []
   end
 
+  def bucket_group(bucket_identifier)
+    read_config
+    @buckets_groups[bucket_identifier]
+  end
+
   def e_mail_receivers(bucket_identifier)
     read_config
-    @e_mail_receivers[@buckets_groups[bucket_identifier]] || @e_mail_receivers[nil] || []
+    @e_mail_receivers[bucket_group(bucket_identifier)] || @e_mail_receivers[nil] || []
   end
 
   def update_dependencies
@@ -76,17 +81,22 @@ class Project < ActiveRecord::Base
   def before_all_tasks(bucket_identifier)
     read_config
     @before_all_tasks +
-        (@before_all_tasks_of_bucket_group[@buckets_groups[bucket_identifier]] || [])
+        (@before_all_tasks_of_bucket_group[bucket_group(bucket_identifier)] || [])
+  end
+
+  def before_each_bucket_group_code
+    read_config
+    @before_each_bucket_group_code
   end
 
   def before_bucket_tasks(bucket_identifier)
     read_config
-    @before_bucket_tasks[@buckets_groups[bucket_identifier]] || []
+    @before_bucket_tasks[bucket_group(bucket_identifier)] || []
   end
 
   def after_bucket_tasks(bucket_identifier)
     read_config
-    @after_bucket_tasks[@buckets_groups[bucket_identifier]] || []
+    @after_bucket_tasks[bucket_group(bucket_identifier)] || []
   end
 
   def set_e_mail_receivers(bucket_group_name, receivers)
@@ -163,6 +173,10 @@ private
         @project.before_all_tasks = args.flatten
       end
     end.new(self)
+  end
+
+  def before_each_bucket_group(&block)
+    @before_each_bucket_group_code = block
   end
 
   def depends_upon(&block)

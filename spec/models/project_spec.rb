@@ -216,6 +216,13 @@ describe Project do
         @project.bucket_tasks('huh?').should == []
       end
 
+      it "should provide the bucket group for a given bucket" do
+        @project.bucket_group('default:one').should == 'default'
+        @project.bucket_group('default:two').should == 'default'
+        @project.bucket_group('extra:three').should == 'extra'
+        @project.bucket_group('huh?').should be_nil
+      end
+
       describe "when providing the before_all tasks" do
         it "should return an empty array if no before_all tasks are configured" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
@@ -256,6 +263,23 @@ describe Project do
                 end
               |)
           @project.before_all_tasks("default:bucket").should == []
+        end
+      end
+
+      describe "when providing the before_each_bucket_group code" do
+        it "should return nil if no before_each_bucket_group code is configured" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
+          @project.before_each_bucket_group_code.should be_nil
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("before_each_bucket_group {}")
+          @project.before_each_bucket_group_code.should be_nil
+        end
+
+        it "should return the configured code" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                before_each_bucket_group {"do some thing"}
+              |)
+          @project.before_each_bucket_group_code.should be_a(Proc)
+          @project.before_each_bucket_group_code.call.should == "do some thing"
         end
       end
 

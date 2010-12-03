@@ -8,6 +8,7 @@ require 'lib/rake'
 require 'lib/mailer'
 require 'lib/bucket_store'
 require 'monitor'
+require 'set'
 
 class DCCWorker
   include Politics::StaticQueueWorker
@@ -25,6 +26,7 @@ class DCCWorker
     @buckets = BucketStore.new
     @admin_e_mail_address = options[:admin_e_mail_address]
     @succeeded_before_all_tasks = []
+    @prepared_bucket_groups = Set.new
     @currently_processed_bucket_id = nil
     if options[:tyrant]
       log.debug { "become tyrant for at least #{1000000000} seconds" }
@@ -58,6 +60,14 @@ class DCCWorker
     project = build.project
     git = project.git
     git.update :commit => build.commit
+
+    bucket_group = project.bucket_group(bucket.name)
+    @prepared_bucket_groups.clear if @last_handled_build != build.id
+    unless @prepared_bucket_groups.include?(bucket_group)
+      project.before_each_bucket_group_code.call if project.before_each_bucket_group_code
+      @prepared_bucket_groups.add(bucket_group)
+    end
+
     succeeded = true
     @succeeded_before_all_tasks = [] if @last_handled_build != build.id
     before_all_tasks = project.before_all_tasks(bucket.name) - @succeeded_before_all_tasks
