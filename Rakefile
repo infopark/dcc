@@ -11,8 +11,7 @@ begin
     gemspec.description = gemspec.summary
     gemspec.authors = ["Tilo Prütz"]
     gemspec.add_dependency 'infopark-politics', '>=0.2.9'
-    gemspec.add_dependency 'actionmailer', '>=2.2.2'
-    gemspec.add_dependency 'rails', '>=2.2.2'
+    gemspec.add_dependency 'rails', '~>2.2'
     gemspec.add_dependency 'rake'
     gemspec.files = FileList["{app,config,db/migrate,lib,public,script,vendor}/**/*"]
   end
