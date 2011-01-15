@@ -6,15 +6,31 @@ gem 'rails', '<3'
 require 'active_record'
 require 'action_mailer'
 require 'fileutils'
+require 'daemon_spawn'
 
-FileUtils.chdir("#{File.dirname($0[0..0] == '/' ? $0 : "#{FileUtils.pwd}/#{$0}")}/..") do
-  require 'lib/dcc_worker'
+class Dcc < DaemonSpawn::Base
+  def start(args)
+    require 'lib/dcc_worker'
 
-  config = YAML::load(File.read('config/worker.yml')).symbolize_keys
-  ActiveRecord::Base.establish_connection(
-      YAML::load(File.read('config/database.yml'))[config[:environment]])
+    config = YAML::load(File.read('config/worker.yml')).symbolize_keys
+    ActiveRecord::Base.establish_connection(
+        YAML::load(File.read('config/database.yml'))[config[:environment]])
 
-  ActionMailer::Base.delivery_method = :sendmail
+    ActionMailer::Base.delivery_method = :sendmail
 
-  DCCWorker.new(config[:group_name], config[:memcache_servers], config).run
+    DCCWorker.new(config[:group_name], config[:memcache_servers], config).run
+  end
+
+  def stop
+  end
 end
+
+working_dir = log_dir = tmp_dir = nil
+FileUtils.chdir("#{File.dirname(__FILE__)}/..") do
+  working_dir = FileUtils.pwd
+  FileUtils.mkdir_p(log_dir = "#{working_dir}/log")
+  FileUtils.mkdir_p(tmp_dir = "#{working_dir}/tmp")
+end
+Dcc.spawn!(:log_file => "#{log_dir}/worker.log",
+    :pid_file => "#{tmp_dir}/worker.pid",
+    :working_dir => working_dir)
