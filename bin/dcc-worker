@@ -36,4 +36,7 @@ FileUtils.chdir("#{File.dirname(__FILE__)}/..") do
     FileUtils.rm_f pid_file
   end
 end
-Dcc.spawn!(:log_file => "#{log_dir}/worker.log", :pid_file => pid_file, :working_dir => working_dir)
+Dcc.spawn!(:log_file => "#{log_dir}/worker.log",
+    :pid_file => pid_file,
+    :working_dir => working_dir,
+    :sync_log => true)
