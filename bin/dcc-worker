@@ -31,7 +31,7 @@ FileUtils.chdir("#{File.dirname(__FILE__)}/..") do
   FileUtils.mkdir_p(log_dir = "#{working_dir}/log")
   FileUtils.mkdir_p(tmp_dir = "#{working_dir}/tmp")
   pid_file = "#{tmp_dir}/worker.pid"
-  if File.exists?(pid_file) && `kill -0 \`cat #{pid_file}\` > /dev/null 2>&1` != 0
+  if File.exists?(pid_file) && !system("kill -0 #{File.read pid_file} > /dev/null 2>&1")
     puts "removing orphaned pid file"
     FileUtils.rm_f pid_file
   end
