@@ -148,6 +148,13 @@ class Project < ActiveRecord::Base
       wants_build = dependencies.any? {|d| d.has_changed?}
       log.debug "dependency has changed -> #{wants_build}"
     end
+    unless wants_build
+      read_config
+      if @rebuild_if
+        wants_build = @rebuild_if.call
+        log.debug "rebuild_if returned #{wants_build}"
+      end
+    end
     wants_build
   end
 
@@ -187,6 +194,10 @@ private
     end.new(self)
     dependency_logger.instance_eval(&block) if block_given?
     dependency_logger
+  end
+
+  def rebuild_if(&block)
+    @rebuild_if = block
   end
 
   def buckets(name, &block)

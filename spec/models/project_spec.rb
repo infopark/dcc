@@ -141,6 +141,7 @@ describe Project do
             ]
         @project.stub!(:update_dependencies)
         @git.stub!(:update)
+        File.stub(:read).with("git_path/dcc_config.rb").and_return "rebuild_if {false}"
       end
 
       it "should say 'true' if the current commit has changed" do
@@ -156,6 +157,16 @@ describe Project do
       it "should say 'true' if a dependency has changed" do
         @dep2.stub!(:has_changed?).and_return true
         @project.wants_build?.should be_true
+      end
+
+      it "should say 'true' if the 'rebuild_if' block returns 'true'" do
+        File.stub(:read).with("git_path/dcc_config.rb").and_return "rebuild_if {true}"
+        @project.wants_build?.should be_true
+      end
+
+      it "should not crash if no 'rebuild_if' block was given" do
+        File.stub(:read).with("git_path/dcc_config.rb").and_return ""
+        @project.wants_build?
       end
 
       it "should say 'false' else" do
