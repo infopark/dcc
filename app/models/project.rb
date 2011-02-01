@@ -72,6 +72,11 @@ class Project < ActiveRecord::Base
     end
   end
 
+  def last_build(options = {})
+    conditions = options[:before_build] ? "id < #{options[:before_build].id}" : nil
+    Build.find_last_by_project_id(id, :conditions => conditions)
+  end
+
   def next_build_number
     build = builds.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
         :order => "build_number DESC")

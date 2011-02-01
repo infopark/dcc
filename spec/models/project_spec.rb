@@ -89,6 +89,29 @@ describe Project do
     @project = Project.new(:name => "name", :url => "url", :branch => "branch")
   end
 
+  describe "when determining the last build" do
+    before do
+      @project.stub(:id).and_return 'p_id'
+      Build.stub(:find_last_by_project_id).and_return nil
+    end
+
+    it "should return nil if it has no builds" do
+      @project.last_build.should be_nil
+    end
+
+    it "should return the last build of the available builds" do
+      Build.stub(:find_last_by_project_id).with('p_id', :conditions => nil).
+          and_return('last action hero')
+      @project.last_build.should == 'last action hero'
+    end
+
+    it "should be able to return the last build before a specified build" do
+      Build.stub(:find_last_by_project_id).with('p_id', :conditions => "id < 12345").
+          and_return('last man standing')
+      @project.last_build(:before_build => mock(:id => 12345)).should == 'last man standing'
+    end
+  end
+
   describe "when providing git" do
     it "should create a new git using name, url and branch" do
       DCC::Git.should_receive(:new).with("name", "url", "branch").and_return "the git"

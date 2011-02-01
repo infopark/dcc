@@ -50,23 +50,6 @@ describe DCCWorker do
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 
-  describe "when determining the project's last build" do
-    before do
-      @project = mock('project', :id => 'p_id')
-    end
-
-    it "should return nil if project has no builds" do
-      Build.stub(:find_last_by_project_id).and_return nil
-      @worker.last_build_for_project(@project).should be_nil
-    end
-
-    it "should return the last build of the available builds" do
-      Build.stub(:find_last_by_project_id).with('p_id', :conditions => nil).
-          and_return('last action hero')
-      @worker.last_build_for_project(@project).should == 'last action hero'
-    end
-  end
-
   describe "when performing operation protected against MySQL failures" do
     it "should return the block's result if MySQL did not fail" do
       @worker.send(:retry_on_mysql_failure) do
@@ -180,7 +163,8 @@ describe DCCWorker, "when running as follower" do
     before do
       @git = mock('git', :path => 'git path', :update => nil)
       @project = mock('project', :name => "project's name", :before_all_tasks => [], :git => @git,
-          :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [], :id => 1)
+          :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [], :id => 1,
+          :last_build => nil)
       @project.stub!(:bucket_tasks).with('t1').and_return(['rt1'])
       @project.stub!(:bucket_tasks).with('t2').and_return(['rt21', 'rt22'])
       @logs = [mock('l1', :log => 'log1'), mock('l2', :log => 'log2')]
@@ -426,7 +410,7 @@ describe DCCWorker, "when running as follower with fixtures" do
         :finished_at= => nil, :save => nil, :build => mock('build', :id => 1000,
         :commit => 'commit', :project => mock('project', :bucket_tasks => [], :id => 33,
         :before_all_tasks => [], :before_bucket_tasks => [], :after_bucket_tasks => [],
-        :before_each_bucket_group_code => nil, :bucket_group => 'default',
+        :before_each_bucket_group_code => nil, :bucket_group => 'default', :last_build => nil,
         :git => mock('git', :update => nil, :path => nil))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
@@ -440,20 +424,24 @@ describe DCCWorker, "when running as follower with fixtures" do
   end
 
   it "should send no email if build succeeded again" do
-    @bucket.build.project.stub!(:id => 300)
+    @bucket.build.project.should_receive(:last_build).with(:before_build => @bucket.build).
+        and_return Build.find(330)
     Mailer.should_not_receive(:deliver_failure_message)
     Mailer.should_not_receive(:deliver_fixed_message)
     @worker.perform_task(@bucket)
   end
 
   it "should send no email if first build ever succeeded" do
-    @bucket.build.project.stub!(:id => 3000)
+    @bucket.build.project.should_receive(:last_build).with(:before_build => @bucket.build).
+        and_return nil
     Mailer.should_not_receive(:deliver_failure_message)
     Mailer.should_not_receive(:deliver_fixed_message)
     @worker.perform_task(@bucket)
   end
 
   it "should send an email if build was fixed" do
+    @bucket.build.project.should_receive(:last_build).with(:before_build => @bucket.build).
+        and_return Build.find(332)
     Mailer.should_receive(:deliver_fixed_message).with(@bucket, %r(^druby://))
     @worker.perform_task(@bucket)
   end
@@ -468,6 +456,7 @@ describe DCCWorker, "when running as leader" do
     m.stub!(:update_state)
     m.stub!(:last_system_error=)
     m.stub!(:save)
+    m.stub(:last_build)
     m
   end
 
@@ -484,8 +473,7 @@ describe DCCWorker, "when running as leader" do
     describe "when finishing the last build" do
       before do
         Project.stub!(:find).with(:all).and_return [@project1]
-        @leader.stub(:last_build_for_project).with(@project1).and_return(
-            @last_build = mock('b', :finished_at => Time.now))
+        @project1.stub(:last_build).and_return(@last_build = mock('b', :finished_at => Time.now))
       end
 
       it "should clean up dead buckets by calling 'project_in_build?'" do
@@ -516,7 +504,7 @@ describe DCCWorker, "when running as leader" do
         end
 
         it "should not fail if project was never built" do
-          @leader.stub(:last_build_for_project).with(@project1).and_return nil
+          @project1.stub(:last_build).and_return nil
           @leader.send(@method_under_test)
         end
       end
@@ -599,12 +587,12 @@ describe DCCWorker, "when running as leader" do
       end
 
       it "should say no when there never was a build" do
-        @leader.stub(:last_build_for_project).with(@project).and_return nil
+        @project.stub(:last_build).and_return nil
         @leader.should_not be_project_in_build(@project)
       end
 
       it "should say no when all buckets are processed" do
-        @leader.stub(:last_build_for_project).with(@project).and_return(mock('b', :buckets => [
+        @project.stub(:last_build).and_return(mock('b', :buckets => [
           mock('b1', :status => 10),
           mock('b2', :status => 35),
           mock('b3', :status => 40),
@@ -613,7 +601,7 @@ describe DCCWorker, "when running as leader" do
       end
 
       it "should not matter if the pending buckets array is nil or empty" do
-        @leader.stub(:last_build_for_project).with(@project)
+        @project.stub(:last_build)
 
         @leader.buckets.buckets['p'] = nil
         @leader.should_not be_project_in_build(@project)
@@ -642,7 +630,7 @@ describe DCCWorker, "when running as leader" do
 
       describe "when buckets are pending" do
         before do
-          @leader.stub(:last_build_for_project).with(@project).and_return(mock('b', :buckets => [
+          @project.stub(:last_build).and_return(mock('b', :buckets => [
             @bucket = mock('b1', :status => 20)
           ]))
         end
@@ -652,7 +640,7 @@ describe DCCWorker, "when running as leader" do
 
       describe "when a bucket is in work" do
         before do
-          @leader.stub(:last_build_for_project).with(@project).and_return(mock('b', :buckets => [
+          @project.stub(:last_build).and_return(mock('b', :buckets => [
             @bucket = mock('b1', :status => 30, :id => 666)
           ]))
           DRbObject.stub(:new).with(nil, "worker's uri").and_return(@worker = mock('w'))
