@@ -32,6 +32,9 @@ private
 
   def bucket_state_message(bucket, host, state)
     bucket_message(bucket, bucket.build.project.e_mail_receivers(bucket.name),
-        "'#{bucket.name}' #{state} auf #{host}", "\nLog:\n\n#{bucket.log}")
+        "'#{bucket.name}' #{state} auf #{host}",
+        "#{
+          "\nFehler:\n\n#{bucket.error_log}\n\n#{'-' * 75}" if bucket.error_log
+        }\nLog:\n\n#{bucket.log}")
   end
 end

@@ -171,7 +171,8 @@ describe DCCWorker, "when running as follower" do
       @bucket = mock('bucket', :name => "t2", :log= => nil, :finished_at= => nil,
           :build => mock('build', :id => 123, :identifier => 'the commit.666',
           :project => @project, :commit => 'the commit', :build_number => 666),
-          :save => nil, :logs => @logs, :status= => nil, :log => "nothing to say here")
+          :save => nil, :logs => @logs, :status= => nil, :log => "nothing to say here",
+          :build_error_log => nil, :error_log => nil)
     end
 
     describe "when performing task" do
@@ -415,12 +416,27 @@ describe DCCWorker, "when running as follower with fixtures" do
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end
 
-  it "should send an email if build failed" do
-    @bucket.build.project.stub!(:bucket_tasks).with('task').and_return(['task'])
-    @bucket.build.project.git.stub!(:path)
-    @worker.stub!(:perform_rake_task).and_return false
-    Mailer.should_receive(:deliver_failure_message).with(@bucket, %r(^druby://))
-    @worker.perform_task(@bucket)
+  describe "when build failed" do
+    before do
+      @bucket.build.project.stub!(:bucket_tasks).with('task').and_return(['task'])
+      @bucket.build.project.git.stub!(:path)
+      @worker.stub!(:perform_rake_task).and_return false
+      Mailer.stub(:deliver_failure_message)
+      @bucket.stub(:build_error_log)
+    end
+
+    it "should send an email if build failed" do
+      Mailer.should_receive(:deliver_failure_message).with(@bucket, %r(^druby://))
+      @worker.perform_task(@bucket)
+    end
+
+    it "should build the error log" do
+      # build_error_log braucht sowohl log als auch finished_at
+      @bucket.should_receive(:log=).ordered
+      @bucket.should_receive(:finished_at=).ordered
+      @bucket.should_receive(:build_error_log).ordered
+      @worker.perform_task(@bucket)
+    end
   end
 
   it "should send no email if build succeeded again" do

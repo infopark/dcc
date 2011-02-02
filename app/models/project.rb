@@ -167,6 +167,15 @@ class Project < ActiveRecord::Base
     "#<Project; ID: #{id}, Name: #{name}>"
   end
 
+  def for_error_log(bucket_identifier)
+    read_config
+    @for_error_log_code[bucket_group(bucket_identifier)]
+  end
+
+  def set_for_error_log_code(bucket_group_name, code)
+    @for_error_log_code[bucket_group_name] = code
+  end
+
 private
 
   @@inner_class = Class.new do
@@ -247,6 +256,10 @@ private
         end.new(@project, @name)
       end
 
+      def for_error_log(&block)
+        @project.set_for_error_log_code(@name, block)
+      end
+
       def bucket(name)
         Class.new(@@bucket_group_inner_class) do
           def initialize(project, bucket_group_name, name)
@@ -278,6 +291,7 @@ private
       @before_all_tasks_of_bucket_group = {}
       @before_bucket_tasks = {}
       @after_bucket_tasks = {}
+      @for_error_log_code = {}
       raise "missing config in '#{config_file}'" unless @config = File.read(config_file)
       log.debug "config read: #{@config}"
       self.instance_eval(@config, config_file)

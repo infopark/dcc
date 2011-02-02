@@ -92,6 +92,7 @@ class DCCWorker
     bucket.save
     logs.clear
     if !succeeded
+      bucket.build_error_log
       Mailer.deliver_failure_message(bucket, uri)
     else
       last_build = project.last_build(:before_build => build)

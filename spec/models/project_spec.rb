@@ -228,6 +228,16 @@ describe Project do
               buckets "extra" do
                 send_notifications_to "to@you.com"
                 bucket(:three).performs_rake_tasks('3a', '3b')
+                for_error_log do
+                  "extra's error log"
+                end
+              end
+
+              buckets "nix weita" do
+                bucket(:four).performs_rake_tasks('4')
+                for_error_log do
+                  "nix weita's error log"
+                end
               end
             |)
       end
@@ -241,7 +251,8 @@ describe Project do
         @project.buckets_tasks.should == {
               "default:one" => ["1a", "1b", "1c"],
               "default:two" => ["2"],
-              "extra:three" => ["3a", "3b"]
+              "extra:three" => ["3a", "3b"],
+              "nix weita:four" => ["4"]
             }
       end
 
@@ -255,6 +266,17 @@ describe Project do
         @project.bucket_group('default:two').should == 'default'
         @project.bucket_group('extra:three').should == 'extra'
         @project.bucket_group('huh?').should be_nil
+      end
+
+      describe "when providing the “for_error_log” code for a bucket" do
+        it "should return nil when there is no “for_error_log” code" do
+          @project.for_error_log("default:one").should be_nil
+        end
+
+        it "should return the “for_error_log” code of the bucket group for the bucket" do
+          @project.for_error_log("extra:three").call.should == "extra's error log"
+          @project.for_error_log("nix weita:four").call.should == "nix weita's error log"
+        end
       end
 
       describe "when providing the before_all tasks" do

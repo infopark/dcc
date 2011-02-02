@@ -44,6 +44,11 @@ describe Bucket do
     Bucket.find(2).finished_at.should be_a(Time)
   end
 
+  it "may have an error log" do
+    @bucket.error_log.should be_nil
+    Bucket.find(2).error_log.should == "bucket's error log"
+  end
+
   describe "when being sorted" do
     before do
       b1 = Bucket.new; b1.name = "bucket 1"
@@ -61,6 +66,35 @@ describe Bucket do
 
     it "should return nil when compared with non bucket" do
       @bucket.<=>("nix bucket").should be_nil
+    end
+  end
+
+  describe "when building error log" do
+    before do
+      @bucket.build.stub(:project).and_return(@project = mock('project', :name => 'p'))
+      @bucket.stub(:finished_at).and_return Time.now
+      @project.stub(:for_error_log).and_return(mock('code', :call => 'nix da'))
+      @bucket.stub(:log).and_return('the log')
+    end
+
+    it "should not do anything when project has no “for_error_log” code" do
+      @project.stub(:for_error_log).and_return nil
+      @bucket.should_not_receive(:error_log=)
+      @bucket.should_not_receive(:save)
+      @bucket.build_error_log
+    end
+
+    it "should raise an error if it has not finished yet" do
+      @bucket.stub(:finished_at).and_return nil
+      lambda {@bucket.build_error_log}.should raise_error(NotFinishedYet)
+    end
+
+    it "should store the outcome of the “for_error_log” code for the log into the database" do
+      @project.should_receive(:for_error_log).with('one').and_return(code = mock('error_log_code'))
+      code.should_receive(:call).with('the log').and_return('the errors')
+      @bucket.should_receive(:error_log=).with("the errors").ordered
+      @bucket.should_receive(:save).ordered
+      @bucket.build_error_log
     end
   end
 end
