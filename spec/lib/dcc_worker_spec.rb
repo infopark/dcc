@@ -30,16 +30,18 @@ class TestRake < Rake
 
   def rake(*args)
     File.open(log_file, mode_string="w" ) do |f|
-      f.puts "first rake output"
+      # angebissenes € am Ende
+      f.write "first rake output\342\202"
       f.flush
       sleep 0.15
-      f.puts "second rake output"
+      # € geht weiter
+      f.write "\254\nsecond rake output\342\202"
       f.flush
       sleep 0.1
-      f.puts "third rake output"
+      f.write "\254\nthird rake output\342"
       f.flush
       sleep 0.1
-      f.puts "last rake output"
+      f.write "\202\254\nlast rake output\n"
     end
   end
 end
@@ -377,10 +379,10 @@ describe DCCWorker, "when running as follower" do
 #      end
 
       it "should write the output of a task every few seconds into the db" do
-        @logs.should_receive(:create).with(:log => "first rake output\n").ordered
-        @logs.should_receive(:create).with(:log => "second rake output\n").ordered
-        @logs.should_receive(:create).with(:log => "third rake output\n").ordered
-        @logs.should_receive(:create).with(:log => "last rake output\n").ordered
+        @logs.should_receive(:create).once.with(:log => "first rake output").ordered
+        @logs.should_receive(:create).once.with(:log => "€\nsecond rake output").ordered
+        @logs.should_receive(:create).once.with(:log => "€\nthird rake output").ordered
+        @logs.should_receive(:create).once.with(:log => "€\nlast rake output\n").ordered
         @worker.perform_rake_task('path', 'task', @logs)
       end
 
