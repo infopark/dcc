@@ -9,6 +9,7 @@ require 'lib/mailer'
 require 'lib/bucket_store'
 require 'monitor'
 require 'set'
+require 'iconv'
 
 class DCCWorker
   include Politics::StaticQueueWorker
@@ -143,7 +144,8 @@ class DCCWorker
     log.debug "read #{log_file} from position #{log_length} into DB"
     log_content = ""
     begin
-      log_content = /.*/um.match(File.open(log_file) {|f| f.seek(log_length) and f.read})[0]
+      log_content = Iconv.new('UTF-8//IGNORE', 'UTF-8').
+          iconv(/.*/um.match(File.open(log_file) {|f| f.seek(log_length) and f.read})[0])
       log.debug "read log (length: #{log_content.length}): #{log_content}"
     rescue Exception => e
       log.debug "could not read #{log_file}: #{e}"
