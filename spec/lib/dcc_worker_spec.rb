@@ -552,23 +552,17 @@ describe DCCWorker, "when running as leader" do
       @leader.should_receive(:read_buckets).exactly(4).times.and_return do |p|
         "#{p.name}_buckets"
       end
+      @leader.buckets.should_receive(:set_buckets).with('p1', 'p1_buckets')
+      @leader.buckets.should_receive(:set_buckets).with('p2', 'p2_buckets')
+      @leader.buckets.should_receive(:set_buckets).with('p3', 'p3_buckets')
+      @leader.buckets.should_receive(:set_buckets).with('p4', 'p4_buckets')
       @leader.initialize_buckets
-      @leader.buckets.buckets.should == {
-            'p1' => 'p1_buckets',
-            'p2' => 'p2_buckets',
-            'p3' => 'p3_buckets',
-            'p4' => 'p4_buckets'
-          }
     end
   end
 
   describe "when updating the buckets" do
     before do
       @method_under_test = :update_buckets
-      @leader.buckets.buckets['p1'] = 'p1_buckets'
-      @leader.buckets.buckets['p2'] = 'p2_buckets'
-      @leader.buckets.buckets['p3'] = 'p3_buckets'
-      @leader.buckets.buckets['p4'] = 'p4_buckets'
     end
 
     it_should_behave_like "finishing build"
@@ -580,12 +574,10 @@ describe DCCWorker, "when running as leader" do
         "new_#{p.name}_buckets"
       end
 
-      @leader.update_buckets
+      @leader.buckets.should_receive(:set_buckets).with('p2', 'new_p2_buckets')
+      @leader.buckets.should_receive(:set_buckets).with('p4', 'new_p4_buckets')
 
-      @leader.buckets.buckets['p1'].should == 'p1_buckets'
-      @leader.buckets.buckets['p2'].should == 'new_p2_buckets'
-      @leader.buckets.buckets['p3'].should == 'p3_buckets'
-      @leader.buckets.buckets['p4'].should == 'new_p4_buckets'
+      @leader.update_buckets
     end
   end
 
@@ -595,13 +587,13 @@ describe DCCWorker, "when running as leader" do
     end
 
     it "should say yes when there are buckets pending" do
-      @leader.buckets.buckets['p'] = ['buckets']
+      @leader.buckets.set_buckets 'p', ['buckets']
       @leader.should be_project_in_build(@project)
     end
 
     describe "when there are no buckets left" do
       before do
-        @leader.buckets.buckets['p'] = []
+        @leader.buckets.set_buckets 'p', []
       end
 
       it "should say no when there never was a build" do
@@ -621,10 +613,10 @@ describe DCCWorker, "when running as leader" do
       it "should not matter if the pending buckets array is nil or empty" do
         @project.stub(:last_build)
 
-        @leader.buckets.buckets['p'] = nil
+        @leader.buckets.set_buckets 'p', nil
         @leader.should_not be_project_in_build(@project)
 
-        @leader.buckets.buckets['p'] = []
+        @leader.buckets.set_buckets 'p', []
         @leader.should_not be_project_in_build(@project)
       end
 

@@ -177,28 +177,27 @@ class DCCWorker
   end
 
   def project_in_build?(project)
-    @buckets.buckets[project.name] && !@buckets.buckets[project.name].empty? ||
+    !@buckets.empty?(project.name) || (
+      build = project.last_build
+      build && !build.buckets.select do |b|
+        (b.status == 30 && (DRbObject.new(nil, b.worker_uri).processing?(b.id) rescue false)) ||
         (
-          build = project.last_build
-          build && !build.buckets.select do |b|
-            (b.status == 30 && (DRbObject.new(nil, b.worker_uri).processing?(b.id) rescue false)) ||
-            (
-              (b.status == 20 || b.status == 30) && (
-                log.debug "setting bucket #{b} to „processing failed“: status = #{b.status}, " +
-                    "answer from worker (#{b.worker_uri}): #{
-                      begin
-                        DRbObject.new(nil, b.worker_uri).processing?(b.id)
-                      rescue Exception => e
-                        "failure: #{e.message}\n\n#{e.backtrace.join("\n")}"
-                      end
-                    }"
-                b.status = 35
-                b.save
-                false
-              )
-            )
-          end.empty?
+          (b.status == 20 || b.status == 30) && (
+            log.debug "setting bucket #{b} to „processing failed“: status = #{b.status}, " +
+                "answer from worker (#{b.worker_uri}): #{
+                  begin
+                    DRbObject.new(nil, b.worker_uri).processing?(b.id)
+                  rescue Exception => e
+                    "failure: #{e.message}\n\n#{e.backtrace.join("\n")}"
+                  end
+                }"
+            b.status = 35
+            b.save
+            false
+          )
         )
+      end.empty?
+    )
   end
 
   def processing?(bucket_id)
@@ -230,7 +229,7 @@ class DCCWorker
 
   def next_bucket(requestor_uri)
     sleep(rand(21) / 10.0)
-    bucket_spec = [@buckets.next_bucket, sleep_until_next_bucket_time]
+    bucket_spec = [@buckets.next_bucket(requestor_uri), sleep_until_next_bucket_time]
     if bucket_id = bucket_spec[0]
       bucket = Bucket.find(bucket_id)
       bucket.worker_uri = requestor_uri
@@ -325,7 +324,7 @@ private
     end
     buckets = read_buckets(project)
     synchronize do
-      @buckets.buckets[project.name] = buckets
+      @buckets.set_buckets project.name, buckets
     end
   end
 end
