@@ -12,6 +12,7 @@ class Dcc < DaemonSpawn::Base
   def start(args)
     require 'lib/dcc_worker'
 
+    File.umask(0022)
     config = YAML::load(File.read('config/worker.yml')).symbolize_keys
     ActiveRecord::Base.establish_connection(
         YAML::load(File.read('config/database.yml'))[config[:environment]])
