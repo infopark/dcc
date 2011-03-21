@@ -24,7 +24,7 @@ module DCC
 
     def path
       # FIXME: Tests
-      "/var/tmp/dcc/#{@name}/#{sub_path}"
+      "#{File.dirname(__FILE__)}/../../tmp/#{@name}/#{sub_path}"
     end
 
     def checkout
