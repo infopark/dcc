@@ -208,22 +208,24 @@ class DCCWorker
 
   def read_buckets(project)
     buckets = []
-    log.debug "reading buckets for project #{project}"
-    log_project_error_on_failure(project, "reading buckets failed") do
-      if project.wants_build?
-        build_number = project.next_build_number
-        build = project.builds.create(:commit => project.current_commit,
-            :build_number => build_number, :leader_uri => uri)
-        project.buckets_tasks.each_key do |task|
-          bucket = build.buckets.create(:name => task, :status => 20)
-          buckets << bucket.id
+    as_dictator do
+      log.debug "reading buckets for project #{project}"
+      log_project_error_on_failure(project, "reading buckets failed") do
+        if project.wants_build?
+          build_number = project.next_build_number
+          build = project.builds.create(:commit => project.current_commit,
+              :build_number => build_number, :leader_uri => uri)
+          project.buckets_tasks.each_key do |task|
+            bucket = build.buckets.create(:name => task, :status => 20)
+            buckets << bucket.id
+          end
+          project.update_state
         end
-        project.update_state
+        project.last_system_error = nil
+        project.save
       end
-      project.last_system_error = nil
-      project.save
+      log.debug "read buckets #{buckets.inspect}"
     end
-    log.debug "read buckets #{buckets.inspect}"
     buckets
   end
 

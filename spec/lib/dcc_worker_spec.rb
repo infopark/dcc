@@ -12,6 +12,10 @@ class DCCWorker
   def log_polling_intervall
     return 0.1
   end
+
+  def as_dictator
+    yield
+  end
 end
 
 class TestRake < Rake
