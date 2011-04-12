@@ -1,9 +1,12 @@
 require "lib/command_line"
+require "lib/dcc/logger"
 require "digest/md5"
 
 module DCC
   class Git
     include CommandLine
+    include Logger
+
 
     def initialize(name, url, branch, fallback_branch = nil, is_dependency = false)
       # FIXME: Tests
@@ -47,11 +50,18 @@ module DCC
 
     def update(options = {})
       # FIXME: Tests
+      log.debug("updating git repository…")
+      log.debug("→ fetching")
       fetch
+      log.debug("→ resetting")
       git("reset", "--hard")
+      log.debug("→ checking out")
       git("checkout", options[:commit] || remote_branch)
+      log.debug("→ update submodules")
       update_submodules
+      log.debug("→ cleanup")
       git("clean", *["-f", "-d", ("-x" if options[:clean])].compact)
+      log.debug("… done")
     end
 
     def current_commit
@@ -73,9 +83,14 @@ module DCC
     end
 
     def update_submodules
+      log.debug("updating git repositories submodules…")
+      log.debug("→ syncing")
+      git("submodule", "sync")
+      log.debug("→ updating")
       git("submodule", 'update', "--init", "--recursive")
       # Submodules may break when communication with git server fails.
       # → Repair all submodules.
+      log.debug("→ repairing")
       git("submodule", 'status', '--recursive').map {|line| line.split(" ")[1]}.each do |submodule|
         Dir.chdir(path) do
           Dir.chdir(submodule) do
@@ -83,6 +98,7 @@ module DCC
           end
         end
       end
+      log.debug("… done")
     end
 
 
