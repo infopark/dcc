@@ -10,7 +10,7 @@ class Dependency < ActiveRecord::Base
   def_delegators :git, :current_commit
 
   def git
-    @git ||= DCC::Git.new(project.name, url, branch, fallback_branch, true)
+    @git ||= DCC::Git.new(project.name, project.id, url, branch, fallback_branch, true)
   end
 
   def has_changed?

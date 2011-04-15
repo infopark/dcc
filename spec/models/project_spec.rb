@@ -7,6 +7,10 @@ describe Project do
     @project = Project.find(1)
   end
 
+  it "should have an id" do
+    @project.id.should == 1
+  end
+
   it "should have a name" do
     @project.name.should == "project name"
   end
@@ -113,8 +117,12 @@ describe Project do
   end
 
   describe "when providing git" do
+    before do
+      @project.stub(:id).and_return 123
+    end
+
     it "should create a new git using name, url and branch" do
-      DCC::Git.should_receive(:new).with("name", "url", "branch").and_return "the git"
+      DCC::Git.should_receive(:new).with("name", 123, "url", "branch").and_return "the git"
       @project.git.should == "the git"
     end
 

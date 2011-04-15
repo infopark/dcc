@@ -8,9 +8,9 @@ module DCC
     include Logger
 
 
-    def initialize(name, url, branch, fallback_branch = nil, is_dependency = false)
+    def initialize(name, id, url, branch, fallback_branch = nil, is_dependency = false)
       # FIXME: Tests
-      @name = "#{name.gsub(/[^-_a-zA-Z0-9]/, '_')}_#{Digest::MD5.hexdigest(name)}"
+      @name = "#{name.gsub(/[^-_a-zA-Z0-9]/, '_')}_#{id}"
       @branch = branch
       @fallback_branch = fallback_branch
       @url = url

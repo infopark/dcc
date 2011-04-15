@@ -29,7 +29,7 @@ class Project < ActiveRecord::Base
   end
 
   def git
-    @git ||= DCC::Git.new(name, url, branch)
+    @git ||= DCC::Git.new(name, id, url, branch)
   end
 
   def buckets_tasks

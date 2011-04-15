@@ -32,12 +32,13 @@ end
 describe Dependency do
   before do
     @dependency = Dependency.new(:url => "url", :branch => "b", :fallback_branch => "fb")
-    @dependency.stub!(:project).and_return mock('project', :name => "project's name")
+    @dependency.stub!(:project).and_return mock('project', :name => "project's name", :id => 123)
   end
 
   describe "when providing git" do
     it "should create a new dependency git using url, branch, fallback_branch and project's name" do
-      DCC::Git.should_receive(:new).with("project's name", "url", "b", "fb", true).and_return "the git"
+      DCC::Git.should_receive(:new).with("project's name", 123, "url", "b", "fb", true).
+          and_return "the git"
       @dependency.git.should == "the git"
     end
 
