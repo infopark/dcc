@@ -1,3 +1,4 @@
+
 send_notifications_to "tilo@infopark.de"
 
 before_all.performs_rake_tasks("db:migrate")
