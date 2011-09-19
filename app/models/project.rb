@@ -83,6 +83,11 @@ class Project < ActiveRecord::Base
     build ? build.build_number + 1 : 1
   end
 
+  def before_all_code
+    read_config
+    @before_all_code
+  end
+
   def before_all_tasks(bucket_identifier)
     read_config
     @before_all_tasks +
@@ -188,7 +193,8 @@ private
     set_e_mail_receivers(nil, args.flatten)
   end
 
-  def before_all
+  def before_all(&block)
+    @before_all_code = block
     Class.new(super_class = @@inner_class) do
       def performs_rake_tasks(*args)
         @project.before_all_tasks = args.flatten

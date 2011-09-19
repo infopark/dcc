@@ -190,6 +190,7 @@ describe DCCWorker, "when running as follower" do
         @project.stub(:before_each_bucket_group_code).and_return(
             @before_each_bucket_group_code = Proc.new {"code"})
         @project.stub(:bucket_group).with("t2").and_return 'default'
+        @project.stub(:before_all_code).and_return(@before_all_code = Proc.new {"code"})
       end
 
       describe "when before_each_bucket_group_code is not given" do
@@ -202,9 +203,14 @@ describe DCCWorker, "when running as follower" do
         end
       end
 
-      it "should perform the before_each_bucket_group_code" do
-        @before_each_bucket_group_code.should_receive(:call)
-        @worker.perform_task(@bucket)
+      describe "when before_all_code is not given" do
+        before do
+          @project.stub(:before_all_code).and_return(nil)
+        end
+
+        it "should not fail" do
+          @worker.perform_task(@bucket)
+        end
       end
 
       describe "of already handled build" do
@@ -221,6 +227,11 @@ describe DCCWorker, "when running as follower" do
         it "should not perform the before_all rake tasks" do
           @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_1', @logs)
           @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_2', @logs)
+          @worker.perform_task(@bucket)
+        end
+
+        it "should not perform the before_all_code" do
+          @before_all_code.should_not_receive(:call)
           @worker.perform_task(@bucket)
         end
 
@@ -270,10 +281,21 @@ describe DCCWorker, "when running as follower" do
           @bucket.build.stub(:id).and_return 321
         end
 
+        it "should perform the before_all_code prior to the before_all rake tasks" do
+          @before_all_code.should_receive(:call).ordered
+          @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).ordered
+          @worker.perform_task(@bucket)
+        end
+
         it "should perform the before_all rake tasks prior to the task's rake tasks" do
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_2', @logs).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bt_1', @logs).ordered
+          @worker.perform_task(@bucket)
+        end
+
+        it "should perform the before_each_bucket_group_code" do
+          @before_each_bucket_group_code.should_receive(:call)
           @worker.perform_task(@bucket)
         end
 
@@ -417,7 +439,8 @@ describe DCCWorker, "when running as follower with fixtures" do
         :finished_at= => nil, :save => nil, :build => mock('build', :id => 1000,
         :commit => 'commit', :project => mock('project', :bucket_tasks => [], :id => 33,
         :before_all_tasks => [], :before_bucket_tasks => [], :after_bucket_tasks => [],
-        :before_each_bucket_group_code => nil, :bucket_group => 'default', :last_build => nil,
+        :before_all_code => nil, :before_each_bucket_group_code => nil,
+        :bucket_group => 'default', :last_build => nil,
         :git => mock('git', :update => nil, :path => nil))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
   end

@@ -225,6 +225,14 @@ describe Project do
               depends_upon.project "dependency"
               before_all.performs_rake_tasks 'before_all'
 
+              before_all do
+                "this code is executed even before the before_all rake tasks"
+              end
+
+              before_each_bucket_group do
+                "this code is executed once for every bucket group"
+              end
+
               buckets "default" do
                 before_all.performs_rake_tasks 'before_all_2'
                 before_each_bucket.performs_rake_tasks 'before_each'
@@ -327,6 +335,25 @@ describe Project do
                 end
               |)
           @project.before_all_tasks("default:bucket").should == []
+        end
+      end
+
+      describe "when providing the before_all_code" do
+        it "should return the before_all_code" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                before_all do
+                  "before_all_code"
+                end
+              |)
+          @project.before_all_code.should be_a(Proc)
+          @project.before_all_code.call.should == "before_all_code"
+        end
+
+        it "should return nil if no before_all-block was given" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
+          @project.before_all_code.should be_nil
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return("before_all {}")
+          @project.before_all_code.should be_nil
         end
       end
 
