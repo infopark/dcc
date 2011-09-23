@@ -191,6 +191,7 @@ describe DCCWorker, "when running as follower" do
             @before_each_bucket_group_code = Proc.new {"code"})
         @project.stub(:bucket_group).with("t2").and_return 'default'
         @project.stub(:before_all_code).and_return(@before_all_code = Proc.new {"code"})
+        Dir.stub(:chdir).and_yield
       end
 
       describe "when before_each_bucket_group_code is not given" do
@@ -249,7 +250,8 @@ describe DCCWorker, "when running as follower" do
           end
 
           it "should perform the before_each_bucket_group_code" do
-            @before_each_bucket_group_code.should_receive(:call)
+            Dir.should_receive(:chdir).with('git path').ordered
+            @before_each_bucket_group_code.should_receive(:call).ordered
             @worker.perform_task(@bucket)
           end
         end
@@ -282,6 +284,7 @@ describe DCCWorker, "when running as follower" do
         end
 
         it "should perform the before_all_code prior to the before_all rake tasks" do
+          Dir.should_receive(:chdir).with('git path').ordered
           @before_all_code.should_receive(:call).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).ordered
           @worker.perform_task(@bucket)
@@ -295,7 +298,8 @@ describe DCCWorker, "when running as follower" do
         end
 
         it "should perform the before_each_bucket_group_code" do
-          @before_each_bucket_group_code.should_receive(:call)
+          Dir.should_receive(:chdir).with('git path').ordered
+          @before_each_bucket_group_code.should_receive(:call).ordered
           @worker.perform_task(@bucket)
         end
 
