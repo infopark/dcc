@@ -192,6 +192,7 @@ describe DCCWorker, "when running as follower" do
         @project.stub(:bucket_group).with("t2").and_return 'default'
         @project.stub(:before_all_code).and_return(@before_all_code = Proc.new {"code"})
         Dir.stub(:chdir).and_yield
+        @worker.stub(:execute)
       end
 
       describe "when before_each_bucket_group_code is not given" do
@@ -234,6 +235,20 @@ describe DCCWorker, "when running as follower" do
         it "should not perform the before_all_code" do
           @before_all_code.should_not_receive(:call)
           @worker.perform_task(@bucket)
+        end
+
+        describe "when project is bundled" do
+          it "should not perform bundle install" do
+            @worker.should_not_receive(:execute)
+            @worker.perform_task(@bucket)
+          end
+        end
+
+        describe "when project is not bundled" do
+          it "should not perform bundle install" do
+            @worker.should_not_receive(:execute)
+            @worker.perform_task(@bucket)
+          end
         end
 
         describe "in not yet handled bucket group" do
@@ -288,6 +303,29 @@ describe DCCWorker, "when running as follower" do
           @before_all_code.should_receive(:call).ordered
           @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).ordered
           @worker.perform_task(@bucket)
+        end
+
+        describe "when project is bundled" do
+          before do
+            File.stub(:exists?).with('git path/Gemfile').and_return true
+          end
+
+          it "should perform bundle install prior to the before_all rake tasks" do
+            @worker.should_receive(:execute).with(%w(bundle install), {:dir => 'git path'}).ordered
+            @worker.should_receive(:perform_rake_task).with('git path', 'bb_1', @logs).ordered
+            @worker.perform_task(@bucket)
+          end
+        end
+
+        describe "when project is not bundled" do
+          before do
+            File.stub(:exists?).with('git path/Gemfile').and_return false
+          end
+
+          it "should not perform bundle install" do
+            @worker.should_not_receive(:execute)
+            @worker.perform_task(@bucket)
+          end
         end
 
         it "should perform the before_all rake tasks prior to the task's rake tasks" do
@@ -399,14 +437,21 @@ describe DCCWorker, "when running as follower" do
         TestRake.cleanup
       end
 
-# FIXME 'rake.rake task' wird in einem Fork gefahren. Liegt es daran, daß der rake-Aufruf nicht
-# expected werden kann?
-#      it "should perform the rake task in the given path" do
-#        File.stub!(:read)
-#        Rake.should_receive(:new).with('path').and_return @rake
-#        @rake.should_receive(:rake).with('task')
-#        @worker.perform_rake_task('path', 'task', nil)
-#      end
+      it "should perform the rake task in the given path" do
+        # „fork“ muss stubbed werden, da die Expectations nicht über Prozessgrenzen hinaus
+        # funktionieren.
+        @worker.stub(:fork).and_yield.and_return(-13)
+        @worker.stub(:exit)
+        Process.stub(:waitpid).with(-13, Process::WNOHANG).and_return do
+          fork {exit 0}
+          Process.wait
+        end
+        File.stub!(:read)
+
+        Rake.should_receive(:new).with('path').and_return @rake
+        @rake.should_receive(:rake).with('task')
+        @worker.perform_rake_task('path', 'task', nil)
+      end
 
       it "should write the output of a task every few seconds into the db" do
         @logs.should_receive(:create).once.with(:log => "first fÃ¼nf rake output\n").ordered
@@ -445,14 +490,14 @@ describe DCCWorker, "when running as follower with fixtures" do
         :before_all_tasks => [], :before_bucket_tasks => [], :after_bucket_tasks => [],
         :before_all_code => nil, :before_each_bucket_group_code => nil,
         :bucket_group => 'default', :last_build => nil,
-        :git => mock('git', :update => nil, :path => nil))))
+        :git => mock('git', :update => nil, :path => '/nix'))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
+    @worker.stub(:execute)
   end
 
   describe "when build failed" do
     before do
       @bucket.build.project.stub!(:bucket_tasks).with('task').and_return(['task'])
-      @bucket.build.project.git.stub!(:path)
       @worker.stub!(:perform_rake_task).and_return false
       Mailer.stub(:deliver_failure_message)
       @bucket.stub(:build_error_log)

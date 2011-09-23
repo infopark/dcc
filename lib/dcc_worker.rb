@@ -4,6 +4,7 @@ require 'app/models/project'
 require 'app/models/build'
 require 'app/models/bucket'
 require 'app/models/log'
+require "lib/command_line"
 require 'lib/rake'
 require 'lib/mailer'
 require 'lib/bucket_store'
@@ -14,6 +15,7 @@ require 'iconv'
 class DCCWorker
   include Politics::StaticQueueWorker
   include MonitorMixin
+  include CommandLine
 
   attr_reader :admin_e_mail_address
 
@@ -62,8 +64,11 @@ class DCCWorker
     git = project.git
     git.update :commit => build.commit
 
-    if (code = project.before_all_code) && @last_handled_build != build.id
-      Dir.chdir(git.path) {code.call}
+    if @last_handled_build != build.id
+      if (code = project.before_all_code)
+        Dir.chdir(git.path) {code.call}
+      end
+      execute(%w(bundle install), :dir => git.path) if File.exists?(File.join(git.path, "Gemfile"))
     end
 
     bucket_group = project.bucket_group(bucket.name)

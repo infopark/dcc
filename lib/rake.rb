@@ -17,7 +17,12 @@ class Rake
     FileUtils.rm_f(log_file)
     FileUtils.mkdir_p(File.dirname(log_file))
     FileUtils.touch(log_file)
-    command = ['rake']
+    command = []
+    if File.exists?(File.join(@path, 'Gemfile'))
+      command << 'bundle'
+      command << 'exec'
+    end
+    command << 'rake'
     command << task
     execute(command, options)
   end
