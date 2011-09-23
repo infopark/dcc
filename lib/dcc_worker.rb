@@ -62,15 +62,15 @@ class DCCWorker
     git = project.git
     git.update :commit => build.commit
 
-    if project.before_all_code && @last_handled_build != build.id
-      Dir.chdir(git.path) {project.before_all_code.call}
+    if (code = project.before_all_code) && @last_handled_build != build.id
+      Dir.chdir(git.path) {code.call}
     end
 
     bucket_group = project.bucket_group(bucket.name)
     @prepared_bucket_groups.clear if @last_handled_build != build.id
     unless @prepared_bucket_groups.include?(bucket_group)
-      if project.before_each_bucket_group_code
-        Dir.chdir(git.path) {project.before_each_bucket_group_code.call}
+      if (code = project.before_each_bucket_group_code)
+        Dir.chdir(git.path) {code.call}
       end
       @prepared_bucket_groups.add(bucket_group)
     end
