@@ -473,12 +473,50 @@ describe Project do
           @project.e_mail_receivers('default:one').should == ['to@me.de', 'to@me.too']
         end
 
-        it "should user global addresses for buckets if no buckets addresses are given" do
+        it "should use global addresses for buckets if no buckets addresses are given" do
           @project.e_mail_receivers('default:one').should == ['to@me.de']
         end
 
         it "should use buckets addresses instead of global ones if given" do
           @project.e_mail_receivers('extra:three').should == ['to@you.com']
+        end
+
+        describe "for special github repos" do
+          before do
+            File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+              send_notifications_to(:toaster => %w(to@me.de to@me.too), :infopark => 'kra@pof.ni',
+                  :default => 'de@fau.lt')
+              buckets "extra" do
+                send_notifications_to(:phorsuedzie => "to@you.com")
+                bucket(:three).performs_rake_tasks('3a', '3b')
+              end
+            |)
+          end
+
+          it "should use the specified addresses if the repo matches #1" do
+            @project.stub(:url).and_return "git@github.com:toaster/project.git"
+            @project.e_mail_receivers('default:one').should == %w(to@me.de to@me.too)
+          end
+
+          it "should use the specified addresses if the repo matches #2" do
+            @project.stub(:url).and_return "https://github.com/infopark/project.git"
+            @project.e_mail_receivers('default:one').should == %w(kra@pof.ni)
+          end
+
+          it "should use the default addresses if the repo does not match #1" do
+            @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
+            @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
+          end
+
+          it "should use the default addresses if the repo does not match #2" do
+            @project.stub(:url).and_return "https://infopark.com/toaster/project.git"
+            @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
+          end
+
+          it "should provide github specific addresses for buckets too" do
+            @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
+            @project.e_mail_receivers('extra:three').should == %w(to@you.com)
+          end
         end
       end
 

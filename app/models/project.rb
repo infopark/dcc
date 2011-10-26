@@ -109,8 +109,16 @@ class Project < ActiveRecord::Base
     @after_bucket_tasks[bucket_group(bucket_identifier)] || []
   end
 
-  def set_e_mail_receivers(bucket_group_name, receivers)
-    @e_mail_receivers[bucket_group_name] = receivers
+  def github_user
+    (m = %r#(git@github\.com:|https?://github\.com/)([^/]*)/.*#.match(url)) && m[2]
+  end
+
+  def set_e_mail_receivers(bucket_group_name, *receivers)
+    if receivers.length == 1 && receivers.first.is_a?(Hash)
+      receivers = (github_user && receivers.first[github_user.to_sym]) || receivers.first[:default]
+    end
+    @e_mail_receivers[bucket_group_name] =
+        receivers.is_a?(Array) ? receivers : (receivers ? [receivers] : [])
   end
 
   def set_rake_tasks(bucket_name, bucket_group_name, rake_tasks)
@@ -190,7 +198,7 @@ private
   end
 
   def send_notifications_to(*args)
-    set_e_mail_receivers(nil, args.flatten)
+    set_e_mail_receivers(nil, *args)
   end
 
   def before_all(&block)
@@ -235,7 +243,7 @@ private
       end
 
       def send_notifications_to(*args)
-        @project.set_e_mail_receivers(@name, args.flatten)
+        @project.set_e_mail_receivers(@name, *args)
       end
 
       def before_all
