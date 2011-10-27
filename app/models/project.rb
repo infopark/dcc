@@ -3,6 +3,9 @@ require 'lib/dcc/git'
 require 'lib/mailer'
 require 'lib/dcc/logger'
 require 'app/models/dependency'
+require 'net/http'
+require 'json'
+
 
 class Project < ActiveRecord::Base
   include DCC::Logger
@@ -115,7 +118,17 @@ class Project < ActiveRecord::Base
 
   def set_e_mail_receivers(bucket_group_name, *receivers)
     if receivers.length == 1 && receivers.first.is_a?(Hash)
-      receivers = (github_user && receivers.first[github_user.to_sym]) || receivers.first[:default]
+      receiver_map = receivers.first
+      receivers = nil
+      if github_user
+        receivers = receiver_map[github_user.to_sym]
+        unless receivers
+          user = JSON.parse(Net::HTTP.new('github.com').
+              get("/api/v2/json/user/show/#{github_user}").body)['user']
+          receivers = user['email'] if user
+        end
+      end
+      receivers = receiver_map[:default] unless receivers
     end
     @e_mail_receivers[bucket_group_name] =
         receivers.is_a?(Array) ? receivers : (receivers ? [receivers] : [])
