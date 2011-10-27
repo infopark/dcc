@@ -491,8 +491,8 @@ describe Project do
                 bucket(:three).performs_rake_tasks('3a', '3b')
               end
             |)
-            Net::HTTP.stub(:new).with('github.com').and_return(
-              mock('http', :get => mock('response', :body => '{}'))
+            Net::HTTP.stub(:new).and_return(
+              mock('http', :use_ssl= => nil, :get => mock('response', :body => '{}'))
             )
           end
 
@@ -524,14 +524,13 @@ describe Project do
           it "should use the github user's address if none is given prior to the default address" do
             @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
             http = mock('http')
-            http.stub(:get).with('/api/v2/json/user/show/phorsuedzie').and_return(
+            http.should_receive(:use_ssl=).with(true).ordered
+            http.should_receive(:get).with('/users/phorsuedzie').ordered.and_return(
               mock('response', :body => %|{
-                "user": {
-                  "email": "me@github.com"
-                }
+                "email": "me@github.com"
               }|)
             )
-            Net::HTTP.stub(:new).with('github.com').and_return http
+            Net::HTTP.should_receive(:new).with('api.github.com', 443).and_return http
             @project.e_mail_receivers('default:one').should == %w(me@github.com)
           end
         end

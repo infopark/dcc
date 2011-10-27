@@ -3,7 +3,7 @@ require 'lib/dcc/git'
 require 'lib/mailer'
 require 'lib/dcc/logger'
 require 'app/models/dependency'
-require 'net/http'
+require 'net/https'
 require 'json'
 
 
@@ -123,9 +123,9 @@ class Project < ActiveRecord::Base
       if github_user
         receivers = receiver_map[github_user.to_sym]
         unless receivers
-          user = JSON.parse(Net::HTTP.new('github.com').
-              get("/api/v2/json/user/show/#{github_user}").body)['user']
-          receivers = user['email'] if user
+          http = Net::HTTP.new('api.github.com', Net::HTTP.https_default_port)
+          http.use_ssl = true
+          receivers = JSON.parse(http.get("/users/#{github_user}").body)['email']
         end
       end
       receivers = receiver_map[:default] unless receivers
