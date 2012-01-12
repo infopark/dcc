@@ -32,27 +32,28 @@ module DCC
 
     def checkout
       # FIXME: Tests
+      log.debug "checking out git repository (#{path}/.git exists: #{File.exists?("#{path}/.git")})"
       clone unless File.exists?("#{path}/.git")
     end
 
     def clone
       # FIXME: Tests
+      log.debug("cloning git repository…")
       FileUtils.rm_rf(path) if File.exists?(path)
+      log.debug("→ cloning")
       git("clone", url, path, :do_not_chdir => true)
+      log.debug("→ checking out")
       git("checkout", remote_branch)
+      log.debug("→ update submodules")
       update_submodules
-    end
-
-    def fetch
-      # FIXME: Tests
-      git("fetch")
+      log.debug("… cloning repository done")
     end
 
     def update(options = {})
       # FIXME: Tests
       log.debug("updating git repository…")
       log.debug("→ fetching")
-      fetch
+      git("fetch")
       log.debug("→ resetting")
       git("reset", "--hard")
       log.debug("→ checking out")
@@ -61,7 +62,7 @@ module DCC
       update_submodules
       log.debug("→ cleanup")
       git("clean", *["-f", "-d", ("-x" if options[:clean])].compact)
-      log.debug("… done")
+      log.debug("… updating repository done")
     end
 
     def current_commit
@@ -98,7 +99,7 @@ module DCC
           end
         end
       end
-      log.debug("… done")
+      log.debug("… updating submodules done")
     end
 
 
