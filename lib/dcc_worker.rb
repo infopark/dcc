@@ -46,6 +46,8 @@ class DCCWorker
   def run
     log.debug "running"
     log_general_error_on_failure("running worker failed") do
+      ENV.each {|k,v| ENV[k] = nil if k =~ /^RBENV_/}
+      ENV['PATH'] = ENV['PATH'].split(':').reject {|p| p =~ %r|/.rbenv/versions/|}.join(':')
       process_bucket do |bucket_id|
         @currently_processed_bucket_id = bucket_id
         bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}

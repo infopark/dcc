@@ -99,6 +99,23 @@ describe DCCWorker, "when running as follower" do
     @worker.run
   end
 
+  it "should clean up the rbenv environment" do
+    old_path = ENV['PATH']
+    begin
+      ENV['RBENV_DIR'] = 'hau mich weg'
+      ENV['RBENV_ROOT'] = 'mich auch'
+      ENV['RBENV_irgendwas'] = 'erwische alles!'
+      ENV['PATH'] = 'ein/pfad/in/.rbenv/versions/oder/darunter:/ein/pfad/woanders:/noch/ein/pfad/in/.rbenv/versions/oder/so:keinpfadin.rbenv/versionssondernwasanderes'
+      @worker.run
+      ENV['RBENV_DIR'].should be_nil
+      ENV['RBENV_ROOT'].should be_nil
+      ENV['RBENV_irgendwas'].should be_nil
+      ENV['PATH'].should == '/ein/pfad/woanders:keinpfadin.rbenv/versionssondernwasanderes'
+    ensure
+      ENV['PATH'] = old_path
+    end
+  end
+
   describe 'when determining if it is processing a specific bucket' do
     before do
       @worker.stub!(:perform_task)
