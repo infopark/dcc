@@ -795,7 +795,11 @@ describe DCCWorker, "when running as leader" do
     end
 
     it "should return changed buckets" do
-      @leader.read_buckets(@project1).should == %w(p11_id p12_id p13_id)
+      buckets = @leader.read_buckets(@project1)
+      buckets.size.should == 3
+      buckets.should be_include('p11_id')
+      buckets.should be_include('p12_id')
+      buckets.should be_include('p13_id')
     end
 
     it "should not return unchanched buckets" do

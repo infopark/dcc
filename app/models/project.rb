@@ -166,19 +166,27 @@ class Project < ActiveRecord::Base
   end
 
   def wants_build?
-    git.update
-    update_dependencies
     log.debug "determining if #{self} wants build..."
+
     wants_build = build_requested?
     log.debug "build_requested? -> #{wants_build}"
-    unless wants_build
-      log.debug "current_commit (#{current_commit}) != last_commit (#{last_commit})\
-          -> #{wants_build = current_commit != last_commit}"
+
+    if git.remote_changed?
+      log.debug "remote changed → updating"
+      git.update
+      unless wants_build
+        wants_build = current_commit != last_commit
+        log.debug "current_commit (#{current_commit}) != last_commit (#{last_commit})\
+            → #{wants_build}"
+      end
     end
+
+    update_dependencies
     unless wants_build
       wants_build = dependencies.any? {|d| d.has_changed?}
-      log.debug "dependency has changed -> #{wants_build}"
+      log.debug "dependency has changed → #{wants_build}"
     end
+
     unless wants_build
       read_config
       if @rebuild_if
@@ -186,6 +194,7 @@ class Project < ActiveRecord::Base
         log.debug "rebuild_if returned #{wants_build}"
       end
     end
+
     wants_build
   end
 

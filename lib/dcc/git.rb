@@ -21,6 +21,15 @@ module DCC
 
     attr_reader :url, :branch, :fallback_branch
 
+    def remote_changed?
+      revs = {}
+      git("ls-remote", "--heads").each do |line|
+        hash, head = line.split
+        revs[head.gsub(%r|refs/heads/|, "origin/")] = hash
+      end
+      revs[remote_branch] != current_commit
+    end
+
     def dependency?
       @is_dependency
     end
@@ -120,8 +129,9 @@ module DCC
         return execute(command, options) do |io|
           io.readlines.collect {|line| line.chomp}
         end
-      rescue Exception
+      rescue Exception => e
         if (i += 1) < 10
+          log.debug("retry git command “#{command.join(' ')}” because of #{e} in 10 seconds")
           sleep 10
           retry
         else

@@ -136,7 +136,8 @@ describe Project do
 
   describe "with git" do
     before do
-      @git = mock("git", :current_commit => "the current commit", :path => 'git_path')
+      @git = mock("git", :current_commit => "the current commit", :path => 'git_path',
+          :remote_changed? => false)
       @project.stub!(:git).and_return @git
     end
 
@@ -175,7 +176,8 @@ describe Project do
         File.stub(:read).with("git_path/dcc_config.rb").and_return "rebuild_if {false}"
       end
 
-      it "should say 'true' if the current commit has changed" do
+      it "should say 'true' if the current commit is not the same as remote" do
+        @git.stub!(:remote_changed?).and_return true
         @project.stub!(:current_commit).and_return 'new'
         @project.wants_build?.should be_true
       end
@@ -211,6 +213,7 @@ describe Project do
       end
 
       it "should update the repository prior to getting the current commit" do
+        @git.stub!(:remote_changed?).and_return true
         @git.should_receive(:update).ordered
         @git.should_receive(:current_commit).ordered
         @project.wants_build?
@@ -568,7 +571,12 @@ describe Project do
                 end
               |)
           @project.update_dependencies
-          @project.dependencies.map {|d| d.url}.should == %w(url1 url2 url3 url4)
+          urls = @project.dependencies.map {|d| d.url}
+          urls.size.should == 4
+          urls.should be_include('url1')
+          urls.should be_include('url2')
+          urls.should be_include('url3')
+          urls.should be_include('url4')
         end
 
         it "should set the branch into the dependencies if given" do
@@ -579,7 +587,10 @@ describe Project do
                 end
               |)
           @project.update_dependencies
-          @project.dependencies.map {|d| d.branch}.should == %w(branch1 branch2)
+          branches = @project.dependencies.map {|d| d.branch}
+          branches.size.should == 2
+          branches.should be_include('branch1')
+          branches.should be_include('branch2')
         end
 
         it "should use the projects branch as default of the dependencies' branch" do
@@ -602,7 +613,10 @@ describe Project do
                 end
               |)
           @project.update_dependencies
-          @project.dependencies.map {|d| d.fallback_branch}.should == %w(branch1 branch2)
+          branches = @project.dependencies.map {|d| d.fallback_branch}
+          branches.size.should == 2
+          branches.should be_include('branch1')
+          branches.should be_include('branch2')
         end
 
         it "should update changed dependencies" do
@@ -618,8 +632,14 @@ describe Project do
                 depends_upon.project "url2", :fallback_branch => "branch2"
               |)
           @project.update_dependencies
-          @project.dependencies.map {|d| d.branch}.should == %w(branch2 current)
-          @project.dependencies.map {|d| d.fallback_branch}.should == [nil, "branch2"]
+          branches = @project.dependencies.map {|d| d.branch}
+          branches.size.should == 2
+          branches.should be_include('branch2')
+          branches.should be_include('current')
+          branches = @project.dependencies.map {|d| d.fallback_branch}
+          branches.size.should == 2
+          branches.should be_include('branch2')
+          branches.should be_include(nil)
         end
 
         it "should delete removed dependencies" do
