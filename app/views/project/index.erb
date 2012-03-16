@@ -14,7 +14,7 @@
       <% end -%>
     </div>
     <% if project.last_system_error -%>
-      <pre><%= project.last_system_error %></pre>
+      <pre><%= html_escape(project.last_system_error) %></pre>
     <% end -%>
   </div>
 <% end -%>
