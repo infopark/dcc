@@ -28,8 +28,7 @@ h1 {
   background: #e7e7e7;
   width: 96%;
   margin: 5px auto;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
+  border-radius: 5px;
   border: 1px solid #333;
   padding:10px 10px 5px 10px;
   overflow: hidden;
@@ -39,8 +38,7 @@ h1 {
   background: #7a8faa;
   width: 96%;
   margin: 5px auto;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
+  border-radius: 5px;
   border: 1px solid #333;
   padding: 10px 10px 5px 10px;
   overflow: hidden;
@@ -58,8 +56,7 @@ input[type="text"] {
 
 .box {
   background: #f9f9f9;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
+  border-radius: 5px;
   border: 1px solid #e1e1e1;
   padding: 5px;
   margin-bottom: 5px;
@@ -75,24 +72,31 @@ input[type="text"] {
 }
 
 a {
-  text-decoration: none;
-  color: #444;
+   text-decoration: none;
+   color: #444;
+   display: inline-block;
+   font-weight: bold;
+   font-size: 18px;
+   margin: 2px 0 0 0;
 }
 
-a.link {
+span.link {
+  text-decoration: none;
+  color: #444;
   display: inline-block;
   font-weight: bold;
   font-size: 18px;
   margin: 2px 0 0 0;
+  cursor: pointer;
 }
 
-span.status {
+span.status span {
   display: inline-block;
   font-size: 11px;
   padding: 3px 15px;
-  -moz-border-radius: 15px;
-  -webkit-border-radius: 15px;
+  border-radius: 15px;
   color: #fff;
+  margin-left: 10px;
   margin-bottom: 5px;
 }
 
@@ -121,14 +125,41 @@ div.buttons {
   padding-top: 3px;
 }
 
+div.button {
+  background: #666;
+  padding: 2px 5px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 5px;
+  text-shadow: 0 1px 1px #222;
+  border: 1px solid #999;
+  float:right;
+  font-size: 13px;
+  margin-left: 7px;
+  cursor: pointer;
+}
+
+div.button.green {
+  background: #748dad;
+}
+
+div.button.red {
+  background: #929292;
+}
+
+div.button.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 input[type="submit"] {
   background: #666;
   padding: 2px 5px;
   color: #fff;
   text-decoration: none;
   font-weight: bold;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
+  border-radius: 5px;
   text-shadow: 0 1px 1px #222;
   border: 1px solid #999;
   float:right;
@@ -144,5 +175,17 @@ input[type="submit"].red {
 }
 
 pre {
-    overflow: auto;
+  overflow: auto;
+}
+
+#spinner {
+  height: 100%;
+  position: fixed;
+  background: white url('../images/loader.gif') no-repeat center center;
+  opacity: 0.5;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  display: none;
 }

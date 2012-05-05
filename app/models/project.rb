@@ -211,6 +211,17 @@ class Project < ActiveRecord::Base
     @for_error_log_code[bucket_group_name] = code
   end
 
+  def to_json(*args)
+    {
+      :name => name,
+      :id => id,
+      :url => url,
+      :branch => branch,
+      :build_requested => build_requested,
+      :last_build => last_build
+    }.to_json(*args)
+  end
+
 private
 
   @@inner_class = Class.new do

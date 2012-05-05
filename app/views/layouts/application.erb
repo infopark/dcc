@@ -4,7 +4,7 @@
     <%= stylesheet_link_tag 'style' %>
     <link rel="shortcut icon" href="/images/diccr-favicon-medium.ico" type="image/x-icon">
     <link rel="icon" href="/images/diccr-favicon-medium.ico" type="image/x-icon">
-    <meta http-equiv="refresh" content="10">
+    <%= yield(:additional_headers) %>
   </head>
   <body>
     <div id="container">
@@ -17,6 +17,8 @@
           <%= extra_content %>
         </div>
       <% end -%>
+    </div>
+    <div id="spinner">
     </div>
   </body>
 </html>
