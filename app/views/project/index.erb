@@ -1,24 +1,3 @@
-<% @projects.sort_by {|p| p.name.downcase}.each do |project| -%>
-  <div class="box">
-    <% link_to({:action => "show", :id => project}, :class => 'link') do -%>
-      <span title="URL: <%= project.url %>; Branch: <%= project.branch %>"><%= project.name %></span>
-    <% end -%>
-    <% build = last_build(project) -%>
-    <%= render :partial => "build_status", :locals => {:build => build} if build %>
-    <div class="buttons">
-      <% form_for :project, :url => {:action => :delete, :id => project} do |f| -%>
-        <%= submit_tag 'Löschen', :class => 'red' %>
-      <% end -%>
-      <% form_for :project, :url => {:action => :build, :id => project} do |f| -%>
-        <%= submit_tag 'Bauen', :class => 'green' %>
-      <% end -%>
-    </div>
-    <% if project.last_system_error -%>
-      <pre><%= html_escape(project.last_system_error) %></pre>
-    <% end -%>
-  </div>
-<% end -%>
-
 <% content_for :extra_content do -%>
   <% form_for :project, :url => {:action => :create} do |f| -%>
     Name: <%= f.text_field :name %>
@@ -26,4 +5,9 @@
     Branch: <%= f.text_field :branch %>
     <%= submit_tag 'Anlegen' %>
   <% end -%>
+<% end -%>
+
+<% content_for :additional_headers do -%>
+  <%= javascript_include_tag :defaults %>
+  <%= javascript_include_tag 'underscore-min' %>
 <% end -%>

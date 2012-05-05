@@ -1,5 +1,5 @@
 <h1>
-  Projekt <%= link_to @build.project.name, :action => 'show', :id => @build.project %>,
+  Projekt <%= @build.project.name %>,
   Build <%= build_display_identifier(@build) %>
   <%= if (href = build_gitweb_url(@build)); "(#{link_to "Commit anschauen", href})"; end %>
 </h1>
