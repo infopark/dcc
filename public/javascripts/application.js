@@ -87,7 +87,7 @@ duration = function(build)
 
 update_status = function(box, thing, sub_things)
 {
-  var span = box.find('.status');
+  var span = box.find('.status').first();
   if (span.length == 0) {
     span = $("<span class='status'></span>").appendTo(box);
   }
@@ -162,7 +162,7 @@ render_bucket = function(build_box, bucket, update)
     update_status($("#" + bucket.id), bucket);
   } else {
     var box = $("<div class='box' id='" + bucket.id + "'></div>").appendTo(build_box);
-    var title_span = render_title_span(box, bucket.name, "auf " + bucket.worker_uri,
+    render_title_span(box, bucket.name, "auf " + bucket.worker_uri,
       function() {
         update_log(bucket.id).toggle();
       }
@@ -173,38 +173,76 @@ render_bucket = function(build_box, bucket, update)
 };
 
 
+render_build = function(div, build, css_class, insert_before)
+{
+  var build_box = $('#' + build.id);
+  update = build_box.length > 0;
+  if (!update) {
+    build_box = $("<div class='box " + css_class + "' id='" + build.id + "'></div>");
+    if (insert_before) {
+      build_box.insertBefore(insert_before);
+    } else {
+      build_box.appendTo(div);
+    }
+    title_box = $("<div class='title'>").appendTo(build_box);
+    bucket_box = $("<div class='box buckets'>").appendTo(build_box).hide();
+    render_title_span(title_box, build.short_identifier,
+      build.identifier + " verwaltet von " + build.leader_uri,
+      function() {
+        build_box.find('.buckets').toggle();
+      }
+    );
+    update_status(title_box, build, build.bucket_state_counts);
+    if (build.gitweb_url) {
+      $("<a href='" + build.gitweb_url +
+          "' class='button' target='_blank'>Commit anschauen</a>").appendTo(title_box);
+    }
+    $("<a href='/project/show_build/" + build.id +
+        "' class='button' target='_blank'>statische Build-Seite</a>").appendTo(title_box);
+  }
+  _.each(_.sortBy(build.in_work_buckets, function(b) { return b.name; }), function(bucket) {
+    render_bucket(bucket_box, bucket, update);
+  });
+  _.each(_.sortBy(build.failed_buckets, function(b) { return b.name; }), function(bucket) {
+    render_bucket(bucket_box, bucket, update);
+  });
+  _.each(_.sortBy(build.pending_buckets, function(b) { return b.name; }), function(bucket) {
+    render_bucket(bucket_box, bucket, update);
+  });
+};
+
 render_builds = function(div, project, update)
 {
   var last_build = project.last_build;
-  var build_box = div.find('.box');
-  if (!update || last_build.id != div.find('.last_build').attr('id')) {
+  var last_build_box = div.find('.last_build');
+  if (update && last_build.id != last_build_box.attr('id')) {
     div.empty();
-    build_box = $("<div class='box last_build' id='" + last_build.id + "'></div>").appendTo(div);
-    $(
-      "<span class='link' title='" + last_build.identifier +
-          " verwaltet von " + last_build.leader_uri + "'>" +
-        last_build.short_identifier +
-      "</span>"
-    ).appendTo(build_box);
-    if (last_build.gitweb_url) {
-      $("<a href='" + last_build.gitweb_url +
-          "' class='button' target='_blank'>Commit anschauen</a>").appendTo(build_box);
-    }
-    $("<a href='/project/show_build/" + last_build.id +
-        "' class='button' target='_blank'>statische Build-Seite</a>").appendTo(build_box);
     update = false;
   }
-  _.each(_.sortBy(last_build.in_work_buckets, function(b) { return b.name; }), function(bucket) {
-    render_bucket(build_box, bucket, update);
-  });
-  _.each(_.sortBy(last_build.failed_buckets, function(b) { return b.name; }), function(bucket) {
-    render_bucket(build_box, bucket, update);
-  });
-  _.each(_.sortBy(last_build.pending_buckets, function(b) { return b.name; }), function(bucket) {
-    render_bucket(build_box, bucket, update);
-  });
+  render_build(div, last_build, 'last_build');
   if (update) {
     _.each(last_build.done_buckets, function(bucket) { $('#' + bucket.id).remove(); });
+  } else if (project.previous_build_id) {
+    $("<span class='link' id='" + project.previous_build_id +
+        "'>mehr anzeigen</span>").appendTo(div).click(function() {
+      var show_more = $(this);
+      $.ajax({
+        url: '/project/old_build/' + show_more.attr('id'),
+        dataType: 'json',
+        success: function(result) {
+          if (result.previous_build_id) {
+            show_more.attr('id', result.previous_build_id);
+          } else {
+            show_more.remove();
+            show_more = null;
+          }
+          render_build(div, result.build, '', show_more);
+        },
+        error: function(result) {
+          alert("Build holen fehlgeschlagen." + result.response);
+        }
+      });
+    });
   }
 };
 

@@ -29,6 +29,15 @@ class ProjectController < ApplicationController
     }
   end
 
+  def old_build
+    b = Build.find(params[:id])
+    pb = b.project.last_build(:before_build => b)
+    render :json => {
+      :build => b,
+      :previous_build_id => pb ? pb.id : nil
+    }
+  end
+
   # alt für statische Links (z.B. für Pull-Requests)
   def show_build
     @build = Build.find(params[:id])

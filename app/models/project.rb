@@ -212,13 +212,16 @@ class Project < ActiveRecord::Base
   end
 
   def to_json(*args)
+    lb = last_build
+    pb = last_build(:before_build => lb)
     {
       :name => name,
       :id => id,
       :url => url,
       :branch => branch,
       :build_requested => build_requested,
-      :last_build => last_build
+      :last_build => lb,
+      :previous_build_id => pb ? pb.id : nil
     }.to_json(*args)
   end
 

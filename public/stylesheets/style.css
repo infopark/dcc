@@ -97,7 +97,6 @@ span.status span {
   border-radius: 15px;
   color: #fff;
   margin-left: 10px;
-  margin-bottom: 5px;
 }
 
 span.failure {
@@ -151,6 +150,10 @@ div.button.red {
 div.button.disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+div.title {
+  margin-bottom: 3px;
 }
 
 a.button {

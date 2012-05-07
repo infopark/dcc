@@ -67,8 +67,8 @@ class Build < ActiveRecord::Base
       :gitweb_url => gitweb_url,
       :failed_buckets => (buckets_for_status(40) + buckets_for_status(35)),
       :pending_buckets => buckets_for_status(20),
-      :in_work_buckets => buckets_for_status(30),
-      :done_buckets => buckets_for_status(10)
+      :in_work_buckets => buckets_for_status(30)
+      #:done_buckets => buckets_for_status(10)
     }.to_json(*args)
   end
 end
