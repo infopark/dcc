@@ -188,11 +188,10 @@ render_builds = function(div, project, update)
     ).appendTo(build_box);
     if (last_build.gitweb_url) {
       $("<a href='" + last_build.gitweb_url +
-          "' class='link' target='_blank'>Commit anschauen</a>").appendTo(build_box);
+          "' class='button' target='_blank'>Commit anschauen</a>").appendTo(build_box);
     }
     $("<a href='/project/show_build/" + last_build.id +
-        "' class='link' target='_blank' style='margin-left: 2em;'>statische Build-Seite</a>").
-        appendTo(build_box);
+        "' class='button' target='_blank'>statische Build-Seite</a>").appendTo(build_box);
     update = false;
   }
   _.each(_.sortBy(last_build.in_work_buckets, function(b) { return b.name; }), function(bucket) {
