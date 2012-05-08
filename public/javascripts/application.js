@@ -292,6 +292,7 @@ update_projects = function() {
         if (project.build_requested) {
           build_button.addClass('disabled');
         } else {
+          build_button.removeClass('disabled');
           build_button.click(function() {
             $.ajax({
               url: '/project/build/' + project.id,
