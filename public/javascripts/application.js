@@ -214,35 +214,37 @@ render_build = function(div, build, css_class, insert_before)
 render_builds = function(div, project, update)
 {
   var last_build = project.last_build;
-  var last_build_box = div.find('.last_build');
-  if (update && last_build.id != last_build_box.attr('id')) {
-    div.empty();
-    update = false;
-  }
-  render_build(div, last_build, 'last_build');
-  if (update) {
-    _.each(last_build.done_buckets, function(bucket) { $('#' + bucket.id).remove(); });
-  } else if (project.previous_build_id) {
-    $("<span class='link' id='" + project.previous_build_id +
-        "'>mehr anzeigen</span>").appendTo(div).click(function() {
-      var show_more = $(this);
-      $.ajax({
-        url: '/project/old_build/' + show_more.attr('id'),
-        dataType: 'json',
-        success: function(result) {
-          if (result.previous_build_id) {
-            show_more.attr('id', result.previous_build_id);
-          } else {
-            show_more.remove();
-            show_more = null;
+  if (last_build) {
+    var last_build_box = div.find('.last_build');
+    if (update && last_build.id != last_build_box.attr('id')) {
+      div.empty();
+      update = false;
+    }
+    render_build(div, last_build, 'last_build');
+    if (update) {
+      _.each(last_build.done_buckets, function(bucket) { $('#' + bucket.id).remove(); });
+    } else if (project.previous_build_id) {
+      $("<span class='link' id='" + project.previous_build_id +
+          "'>mehr anzeigen</span>").appendTo(div).click(function() {
+        var show_more = $(this);
+        $.ajax({
+          url: '/project/old_build/' + show_more.attr('id'),
+          dataType: 'json',
+          success: function(result) {
+            if (result.previous_build_id) {
+              show_more.attr('id', result.previous_build_id);
+            } else {
+              show_more.remove();
+              show_more = null;
+            }
+            render_build(div, result.build, '', show_more);
+          },
+          error: function(result) {
+            alert("Build holen fehlgeschlagen." + result.response);
           }
-          render_build(div, result.build, '', show_more);
-        },
-        error: function(result) {
-          alert("Build holen fehlgeschlagen." + result.response);
-        }
+        });
       });
-    });
+    }
   }
 };
 
