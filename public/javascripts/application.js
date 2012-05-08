@@ -77,7 +77,7 @@ duration = function(build)
       s = " in " + format_duration(Date.parse(build.finished_at) - Date.parse(build.started_at));
     } else {
       var d = new Date(Date.parse(build.started_at));
-      s = " since " + d.getFullYear() + "-" + fd(d.getMonth()) + "-" + fd(d.getDay()) + " " +
+      s = " since " + d.getFullYear() + "-" + fd(d.getMonth() + 1) + "-" + fd(d.getDate()) + " " +
           fd(d.getHours()) + ":" + fd(d.getMinutes()) + ":" + fd(d.getSeconds());
     }
   }
