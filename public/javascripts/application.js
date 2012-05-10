@@ -177,7 +177,9 @@ render_build = function(div, build, css_class, insert_before)
 {
   var build_box = $('#' + build.id);
   update = build_box.length > 0;
-  if (!update) {
+  if (update) {
+    update_status(build_box, build, build.bucket_state_counts);
+  } else {
     build_box = $("<div class='box " + css_class + "' id='" + build.id + "'></div>");
     if (insert_before) {
       build_box.insertBefore(insert_before);
