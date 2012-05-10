@@ -28,7 +28,8 @@ class Bucket < ActiveRecord::Base
       :name => name,
       :status => status,
       :started_at => started_at,
-      :finished_at => finished_at
+      :finished_at => finished_at,
+      :worker_uri => worker_uri
     }.to_json(*args)
   end
 end
