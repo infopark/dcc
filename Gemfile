@@ -1,4 +1,5 @@
 source 'https://rubygems.org'
+source 'http://gems.github.com'
 
 gem 'rails', '~>2.3'
 gem 'activerecord-lazy-attributes'
