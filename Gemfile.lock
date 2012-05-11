@@ -43,3 +43,4 @@ DEPENDENCIES
   mongrel
   mysql (~> 2.8)
   rails (~> 2.3)
+  rake
