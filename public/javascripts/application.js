@@ -98,8 +98,8 @@ update_status = function(box, thing)
     stat = $("<span class='status'></span>").appendTo(box);
   }
   stat.empty();
-  var s = "<a href='" + href + "'><span class='" + status_css_class(thing.status) + "'>"
-      + status_message(thing.status);
+  var s = "<a href='" + href + "' target='_blank'>" +
+      "<span class='" + status_css_class(thing.status) + "'>" + status_message(thing.status);
   if (thing.bucket_state_counts) {
     s += " (";
     var prepend_comma = false;
