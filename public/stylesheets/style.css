@@ -99,6 +99,10 @@ span.status span {
   margin-left: 10px;
 }
 
+span.status a {
+  font-weight: normal;
+}
+
 span.failure {
   background: #cf2222;
 }

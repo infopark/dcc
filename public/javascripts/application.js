@@ -85,19 +85,25 @@ duration = function(build)
 };
 
 
-update_status = function(box, thing, sub_things)
+update_status = function(box, thing)
 {
-  var span = box.find('.status').first();
-  if (span.length == 0) {
-    span = $("<span class='status'></span>").appendTo(box);
+  var stat = box.find('.status').first();
+  var href;
+  if (thing.bucket_state_counts) {
+    href = "/project/show_build/" + thing.id;
+  } else {
+    href = "/project/show_bucket/" + thing.id;
   }
-  span.empty();
-  var s = "<span class='" + status_css_class(thing.status) + "'>"
+  if (stat.length == 0) {
+    stat = $("<span class='status'></span>").appendTo(box);
+  }
+  stat.empty();
+  var s = "<a href='" + href + "'><span class='" + status_css_class(thing.status) + "'>"
       + status_message(thing.status);
-  if (sub_things) {
+  if (thing.bucket_state_counts) {
     s += " (";
     var prepend_comma = false;
-    _.each(sub_things, function(value, key) {
+    _.each(thing.bucket_state_counts, function(value, key) {
       if (value > 0) {
         if (prepend_comma) {
           s += ", ";
@@ -108,8 +114,8 @@ update_status = function(box, thing, sub_things)
     });
     s += ")";
   }
-  s += duration(thing) + "</span>";
-  $(s).appendTo(span);
+  s += duration(thing) + "</a></span>";
+  $(s).appendTo(stat);
 };
 
 
@@ -178,7 +184,7 @@ render_build = function(div, build, css_class, insert_before)
   var build_box = $('#' + build.id);
   update = build_box.length > 0;
   if (update) {
-    update_status(build_box, build, build.bucket_state_counts);
+    update_status(build_box, build);
   } else {
     build_box = $("<div class='box " + css_class + "' id='" + build.id + "'></div>");
     if (insert_before) {
@@ -194,13 +200,11 @@ render_build = function(div, build, css_class, insert_before)
         build_box.find('.buckets').toggle();
       }
     );
-    update_status(title_box, build, build.bucket_state_counts);
+    update_status(title_box, build);
     if (build.gitweb_url) {
       $("<a href='" + build.gitweb_url +
           "' class='button' target='_blank'>Commit anschauen</a>").appendTo(title_box);
     }
-    $("<a href='/project/show_build/" + build.id +
-        "' class='button' target='_blank'>statische Build-Seite</a>").appendTo(title_box);
   }
   _.each(_.sortBy(build.in_work_buckets, function(b) { return b.name; }), function(bucket) {
     render_bucket(bucket_box, bucket, update);
@@ -318,7 +322,7 @@ update_projects = function() {
           );
         }
         if (build) {
-          update_status(title, build, build.bucket_state_counts);
+          update_status(title, build);
           var span = title.find('.indicator');
           if (span.length == 0) {
             span = $("<span class='indicator'></span>").appendTo(title);
