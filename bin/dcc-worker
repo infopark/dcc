@@ -19,6 +19,10 @@ class Dcc < DaemonSpawn::Base
 
     ActionMailer::Base.delivery_method = :sendmail
 
+    ActiveRecord::Base.time_zone_aware_attributes = true
+    ActiveRecord::Base.default_timezone = :utc
+    Time.zone_default = Time.send(:get_zone, 'UTC')
+
     DCCWorker.new(config[:group_name], config[:memcache_servers], config).run
   end
 
