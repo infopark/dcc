@@ -9,8 +9,6 @@ module NavigationHelpers
     case page_name
     when /the (home|start)\s?page/
       '/'
-    when /the project\s?page/
-      "/project/show/#{@project_id}"
     when /it's bucket page/
       "/project/show_bucket/#{@bucket_id}"
     when /it's build page/
