@@ -5,3 +5,4 @@ std_opts = "#{rerun_opts} --format rerun --out rerun.txt --strict --tags ~@wip"
 %>
 default: --drb <%= std_opts %>
 wip: --drb --tags @wip:3 --wip features
+full_ok: --drb --strict --tags ~@wip --format progress features
