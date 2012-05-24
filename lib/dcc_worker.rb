@@ -11,6 +11,7 @@ require 'lib/bucket_store'
 require 'monitor'
 require 'set'
 require 'iconv'
+require 'timeout'
 
 class DCCWorker
   include Politics::StaticQueueWorker
@@ -52,7 +53,9 @@ class DCCWorker
         @currently_processed_bucket_id = bucket_id
         bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
         log_bucket_error_on_failure(bucket, "processing bucket failed") do
-          perform_task bucket
+          Timeout::timeout(7200) do
+            perform_task bucket
+          end
         end
       end
     end
