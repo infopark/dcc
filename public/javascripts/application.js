@@ -334,6 +334,17 @@ update_projects = function() {
             "</span>").appendTo(span);
           }
         }
+
+        var system_error = $("#" + project.id + "_error");
+        if (project.last_system_error) {
+          if (system_error.length == 0) {
+            system_error = $("<pre id='" + project.id + "_error'></pre>").appendTo(box);
+            render_log(system_error, project.last_system_error);
+          }
+        } else {
+          system_error.remove();
+        }
+
         var builds_box = box.find('.builds');
         if (builds_box.length == 0) {
           builds_box = $("<div class='builds'></div>").appendTo(box).hide();

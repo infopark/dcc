@@ -221,7 +221,8 @@ class Project < ActiveRecord::Base
       :branch => branch,
       :build_requested => build_requested,
       :last_build => lb,
-      :previous_build_id => pb ? pb.id : nil
+      :previous_build_id => pb ? pb.id : nil,
+      :last_system_error => last_system_error
     }.to_json(*args)
   end
 
