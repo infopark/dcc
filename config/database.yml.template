@@ -1,16 +1,6 @@
-# SQLite version 3.x
-#   gem install sqlite3-ruby (not necessary on OS X Leopard)
 development:
-#  adapter: sqlite3
-#  database: db/development.sqlite3
-  adapter: mysql
-  host: master-of-disaster.infopark
-  database: dcc
-  username: dcc
-  password: dcc
-  encoding: utf8
-  pool: 5
-  timeout: 5000
+  adapter: sqlite3
+  database: db/development.sqlite3
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -23,10 +13,10 @@ test: &TEST
 
 production:
   adapter: mysql
-  host: master-of-disaster.infopark
+  host: mysql-server
   database: dcc
   username: dcc
-  password: dcc
+  password: secret_pass
   encoding: utf8
   pool: 50
 

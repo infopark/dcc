@@ -3,3 +3,4 @@ tmp/*
 db/*.*
 .*.sw?
 rerun.txt
+config/database.yml
