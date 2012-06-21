@@ -200,6 +200,10 @@ pre {
   overflow: auto;
 }
 
+pre.log {
+  max-height: 80%;
+}
+
 #spinner {
   height: 100%;
   position: fixed;
