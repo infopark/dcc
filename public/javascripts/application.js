@@ -121,7 +121,8 @@ update_status = function(box, thing)
 
 render_title_span = function(box, title, details, click)
 {
-  $("<span title='" + details + "' class='link'>" + title + "</span>").appendTo(box).click(click);
+  return $("<span title='" + details + "' class='link'>" + title + "</span>").
+      appendTo(box).click(click);
 };
 
 
@@ -167,14 +168,20 @@ render_bucket = function(build_box, bucket, update)
   if (update) {
     update_status($("#" + bucket.id), bucket);
   } else {
+    var log_id = "log_" + bucket.id;
+    var overlay_id = "overlay_" + log_id;
+
+    $("<div class='overlay' id='" + overlay_id + "'>" +
+      "<pre class='log' id='" + log_id + "'></pre>"
+    + "</div>").appendTo($('#container'));
+
     var box = $("<div class='box' id='" + bucket.id + "'></div>").appendTo(build_box);
     render_title_span(box, bucket.name, "auf " + bucket.worker_uri,
       function() {
-        update_log(bucket.id).toggle();
+        update_log(bucket.id);
       }
-    );
+    ).attr('rel', "#" + overlay_id).overlay();
     update_status(box, bucket);
-    $("<pre class='log' id='log_" + bucket.id + "'></pre>").appendTo(box).hide();
   }
 };
 

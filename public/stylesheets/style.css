@@ -201,7 +201,36 @@ pre {
 }
 
 pre.log {
-  max-height: 80%;
+  background-color: #fffacd;
+}
+
+.overlay {
+  display: none;
+  z-index: 10000;
+  width: 90%;
+  height: 80%;
+  border: 1px solid #666;
+  box-shadow: 0 0 90px 5px #000;
+  background-color: #fffacd;
+}
+
+.overlay pre.log {
+  position: absolute;
+  margin-top: 0;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+.overlay .close {
+  background-image: url('../images/close.png');
+  position: absolute;
+  right: -15px;
+  top: -15px;
+  cursor: pointer;
+  height: 35px;
+  width: 35px;
+  z-index: 9000;
 }
 
 #spinner {
