@@ -239,7 +239,7 @@ private
   end
 
   def before_all(&block)
-    @before_all_code = block
+    @before_all_code = block if block
     Class.new(super_class = @@inner_class) do
       def performs_rake_tasks(*args)
         @project.before_all_tasks = args.flatten

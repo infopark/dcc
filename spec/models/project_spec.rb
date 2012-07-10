@@ -352,6 +352,18 @@ describe Project do
           @project.before_all_code.call.should == "before_all_code"
         end
 
+        it "should return the before_all_code even if before_all was accessed later on without code" do
+          File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                before_all do
+                  "before_all_code"
+                end
+
+                before_all.performs_rake_tasks("bla")
+              |)
+          @project.before_all_code.should be_a(Proc)
+          @project.before_all_code.call.should == "before_all_code"
+        end
+
         it "should return nil if no before_all-block was given" do
           File.stub!(:read).with("git_path/dcc_config.rb").and_return("")
           @project.before_all_code.should be_nil
