@@ -5,6 +5,12 @@ send_notifications_to "tilo@infopark.de"
 before_all do
   File.open("config/database.yml", "w") do |f|
     f.puts({
+      'development' => {
+        'adapter' => 'sqlite3',
+        'database' => 'db/development.sqlite3',
+        'pool' => 5,
+        'timeout' => 5000
+      },
       'test' => {
         'adapter' => 'sqlite3',
         'database' => 'db/test.sqlite3',
