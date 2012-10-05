@@ -36,7 +36,7 @@ module DCC
 
     def path
       # FIXME: Tests
-      "#{File.dirname(__FILE__)}/../../tmp/#{@name}/#{sub_path}"
+      @path ||= File.expand_path("../../../tmp/#{@name}/#{sub_path}", __FILE__)
     end
 
     def checkout
@@ -118,7 +118,7 @@ module DCC
       command = ["git"]
       command << operation
       command += args.compact
-      error_log = File.expand_path(File.join(path, "..", "#{@name}_git.err"))
+      error_log = File.join(path, "..", "#{@name}_git.err")
       FileUtils.rm_f(error_log)
       FileUtils.mkdir_p(File.dirname(error_log))
       FileUtils.touch(error_log)
