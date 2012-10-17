@@ -85,6 +85,17 @@ duration = function(build)
 };
 
 
+escape_html = function(str)
+{
+    return str
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+}
+
+
 update_status = function(box, thing)
 {
   var stat = box.find('.status').first();
@@ -121,15 +132,14 @@ update_status = function(box, thing)
 
 render_title_span = function(box, title, details, click)
 {
-  return $("<span title='" + details + "' class='link'>" + title + "</span>").
+  return $("<span title='" + escape_html(details) + "' class='link'>" + escape_html(title) + "</span>").
       appendTo(box).click(click);
 };
 
 
 render_log = function(pre, log)
 {
-  log = log.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  pre.append(log);
+  pre.append(escape_html(log));
 };
 
 
