@@ -501,10 +501,6 @@ describe Project do
             File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
               send_notifications_to(:toaster => %w(to@me.de to@me.too), :infopark => 'kra@pof.ni',
                   :default => 'de@fau.lt')
-              buckets "extra" do
-                send_notifications_to(:phorsuedzie => "to@you.com")
-                bucket(:three).performs_rake_tasks('3a', '3b')
-              end
             |)
             Net::HTTP.stub(:new).and_return(
               mock('http', :use_ssl= => nil, :get => mock('response', :body => '{}'))
@@ -531,9 +527,27 @@ describe Project do
             @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
           end
 
-          it "should provide github specific addresses for buckets too" do
-            @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
-            @project.e_mail_receivers('extra:three').should == %w(to@you.com)
+          describe "for special buckets" do
+            before do
+              File.stub!(:read).with("git_path/dcc_config.rb").and_return(%Q|
+                send_notifications_to(:toaster => %w(to@me.de to@me.too), :infopark => 'kra@pof.ni',
+                    :default => 'de@fau.lt')
+                buckets "extra" do
+                  send_notifications_to(:phorsuedzie => "to@you.com")
+                  bucket(:three).performs_rake_tasks('3a', '3b')
+                end
+              |)
+            end
+
+            it "should provide github specific addresses too" do
+              @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
+              @project.e_mail_receivers('extra:three').should == %w(to@you.com)
+            end
+
+            it "should fall back to global configuration when no specific configuration matched" do
+              @project.stub(:url).and_return "git@github.com:toaster/project.git"
+              @project.e_mail_receivers('extra:three').should == %w(to@me.de to@me.too)
+            end
           end
 
           it "should use the github user's address if none is given prior to the default address" do

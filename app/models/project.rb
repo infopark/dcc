@@ -130,8 +130,7 @@ class Project < ActiveRecord::Base
       end
       receivers = receiver_map[:default] unless receivers
     end
-    @e_mail_receivers[bucket_group_name] =
-        receivers.is_a?(Array) ? receivers : (receivers ? [receivers] : [])
+    @e_mail_receivers[bucket_group_name] = receivers ? Array(receivers) : nil
   end
 
   def set_rake_tasks(bucket_name, bucket_group_name, rake_tasks)
