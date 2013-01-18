@@ -65,11 +65,11 @@ module DCC
       git("fetch")
       log.debug("→ resetting")
       git("reset", "--hard")
-      cleanup options
+      cleanup
       log.debug("→ checking out")
       git("checkout", options[:commit] || remote_branch)
       update_submodules
-      cleanup options
+      cleanup
       log.debug("… updating repository done")
     end
 
@@ -87,9 +87,9 @@ module DCC
 
     private
 
-    def cleanup(options = {})
+    def cleanup()
       log.debug("→ cleanup")
-      git("clean", *["-f", "-d", ("-x" if options[:clean])].compact)
+      git("clean", "-f", "-d", "-x")
     end
 
     def branch_exists?(branch)
