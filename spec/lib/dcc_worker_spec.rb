@@ -184,7 +184,7 @@ describe DCCWorker, "when running as follower" do
 
   describe '' do
     before do
-      @git = mock('git', :path => 'git path', :update => nil)
+      @git = mock('git', :path => 'git path', :update => nil, :current_commit => nil)
       @project = mock('project', :name => "project's name", :before_all_tasks => [], :git => @git,
           :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [], :id => 1,
           :last_build => nil)
@@ -376,13 +376,20 @@ describe DCCWorker, "when running as follower" do
       end
 
       it "should perform all the rake tasks for the task one by one on the updated git path" do
-        @git.should_receive(:update).with(:commit => 'the commit').ordered
+        @git.stub(:current_commit).and_return 'the commit'
+        @git.should_receive(:update).with(:commit => 'the commit', :make_pristine => false).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'bt_1', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'bt_2', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'rt21', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'rt22', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'at_1', @logs).ordered
         @worker.should_receive(:perform_rake_task).with('git path', 'at_2', @logs).ordered
+        @worker.perform_task(@bucket)
+      end
+
+      it "should make a pristine environment when the commit has changed" do
+        @git.stub(:current_commit).and_return 'other commit'
+        @git.should_receive(:update).with(:commit => 'the commit', :make_pristine => true)
         @worker.perform_task(@bucket)
       end
 
@@ -507,7 +514,7 @@ describe DCCWorker, "when running as follower with fixtures" do
         :before_all_tasks => [], :before_bucket_tasks => [], :after_bucket_tasks => [],
         :before_all_code => nil, :before_each_bucket_group_code => nil,
         :bucket_group => 'default', :last_build => nil,
-        :git => mock('git', :update => nil, :path => '/nix'))))
+        :git => mock('git', :update => nil, :path => '/nix', :current_commit => nil))))
     @worker = DCCWorker.new('dcc_test', nil, :log_level => Logger::ERROR)
     @worker.stub(:execute)
   end

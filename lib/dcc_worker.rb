@@ -67,7 +67,7 @@ class DCCWorker
     build = bucket.build
     project = build.project
     git = project.git
-    git.update :commit => build.commit
+    git.update :commit => build.commit, :make_pristine => git.current_commit != build.commit
 
     if @last_handled_build != build.id
       if (code = project.before_all_code)

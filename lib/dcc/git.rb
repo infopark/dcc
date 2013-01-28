@@ -65,17 +65,18 @@ module DCC
       git("fetch")
       log.debug("→ resetting")
       git("reset", "--hard")
-      cleanup
+      cleanup options
       log.debug("→ checking out")
       git("checkout", options[:commit] || remote_branch)
       update_submodules
-      cleanup
+      cleanup options
       log.debug("… updating repository done")
     end
 
     def current_commit
       # FIXME: Tests
-      git("log", '--pretty=format:%H', '-n', '1')[0]
+      #git("log", '--pretty=format:%H', '-n', '1')[0]
+      git("rev-parse", "HEAD")
     end
 
     def remote_branch
@@ -87,9 +88,9 @@ module DCC
 
     private
 
-    def cleanup()
+    def cleanup(options = {})
       log.debug("→ cleanup")
-      git("clean", "-f", "-d", "-x")
+      git("clean", "-f", "-d", options[:make_pristine] && "-x")
     end
 
     def branch_exists?(branch)

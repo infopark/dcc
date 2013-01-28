@@ -172,7 +172,7 @@ class Project < ActiveRecord::Base
 
     if git.remote_changed?
       log.debug "remote changed → updating"
-      git.update
+      git.update :make_pristine => true
       unless wants_build
         wants_build = current_commit != last_commit
         log.debug "current_commit (#{current_commit}) != last_commit (#{last_commit})\
