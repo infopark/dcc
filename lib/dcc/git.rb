@@ -75,8 +75,7 @@ module DCC
 
     def current_commit
       # FIXME: Tests
-      #git("log", '--pretty=format:%H', '-n', '1')[0]
-      git("rev-parse", "HEAD")
+      git("log", '--pretty=format:%H', '-n', '1')[0]
     end
 
     def remote_branch
