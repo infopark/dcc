@@ -33,14 +33,31 @@ class DCCWorker
     @prepared_bucket_groups = Set.new
     @currently_processed_bucket_id = nil
     if options[:tyrant]
-      log.debug { "become tyrant for at least #{1000000000} seconds" }
+      log.debug { "become tyrant" }
       instance_eval do
         alias :original_seize_leadership :seize_leadership
-        def seize_leadership
-          original_seize_leadership(1000000000)
+        def seize_leadership(ignore = nil)
+          original_seize_leadership(1000000)
+          @leader_uri = nil
+          @nominated_at = Time.now
+        end
+
+        alias :original_nominate :nominate
+        def nominate
+          seize_leadership
+        end
+
+        def leader?
+          uri == leader_uri
         end
       end
       seize_leadership
+      fork do
+        while true
+          seize_leadership
+          sleep 60
+        end
+      end
     end
   end
 
