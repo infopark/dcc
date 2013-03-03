@@ -210,25 +210,29 @@ class DCCWorker
   end
 
   def project_in_build?(project)
-    !@buckets.empty?(project.name) || (
+    buckets_pending = synchronize { !@buckets.empty?(project.name) }
+    buckets_pending || (
       build = project.last_build
       build && !build.buckets.select do |b|
-        (b.status == 30 && (DRbObject.new(nil, b.worker_uri).processing?(b.id) rescue false)) ||
-        (
-          (b.status == 20 || b.status == 30) && (
-            log.debug "setting bucket #{b} to „processing failed“: status = #{b.status}, " +
-                "answer from worker (#{b.worker_uri}): #{
-                  begin
-                    DRbObject.new(nil, b.worker_uri).processing?(b.id)
-                  rescue Exception => e
-                    "failure: #{e.message}\n\n#{e.backtrace.join("\n")}"
-                  end
-                }"
-            b.status = 35
-            b.save
+        begin
+          case b.status
+          when 20
+            raise "bucket #{b} is pending but the leader did not know about it"
+          when 30
+            unless DRbObject.new(nil, b.worker_uri).processing?(b.id)
+              raise "worker #{b.worker_uri} does not process #{b}"
+            end
+            true
+          else
             false
-          )
-        )
+          end
+        rescue Exception => e
+          log.debug "setting bucket #{b} to “processing failed”: status = #{b.status}, " +
+              "reason: #{e.message}\n\n#{e.backtrace.join("\n")}"
+          b.status = 35
+          b.save
+          false
+        end
       end.empty?
     )
   end
@@ -264,7 +268,7 @@ class DCCWorker
 
   def next_bucket(requestor_uri)
     sleep(rand(21) / 10.0)
-    bucket_spec = [@buckets.next_bucket(requestor_uri), sleep_until_next_bucket_time]
+    bucket_spec = [synchronize {@buckets.next_bucket(requestor_uri)}, sleep_until_next_bucket_time]
     if bucket_id = bucket_spec[0]
       bucket = Bucket.find(bucket_id)
       bucket.worker_uri = requestor_uri
