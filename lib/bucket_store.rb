@@ -1,6 +1,9 @@
 require 'set'
+require 'lib/dcc/logger'
 
 class BucketStore
+  include DCC::Logger
+
   def initialize
     @buckets = {}
     @workers_to_projects = {}
@@ -12,10 +15,13 @@ class BucketStore
     cleanup
     @buckets[project] = buckets
     @projects_to_workers[project] = Set.new
+    log.debug "set buckets for #{project} to #{buckets.inspect}"
   end
 
   def next_bucket(worker_id)
+    log.debug "next_bucket for #{worker_id}"
     workers = @projects_to_workers[@workers_to_projects[worker_id]]
+    log.debug "#{worker_id} was in #{@workers_to_projects[worker_id]} which has #{workers.inspect}"
     workers.delete worker_id if workers
     @workers_to_projects.delete worker_id
 
@@ -28,6 +34,8 @@ class BucketStore
     end
     @workers_to_projects[worker_id] = project
     @projects_to_workers[project].add worker_id
+    log.debug "#{worker_id} is in #{@workers_to_projects[worker_id]} which has #{workers.inspect}"
+    log.debug "popping out of #{@buckets[project].inspect}"
     @buckets[project].pop
   end
 
@@ -39,6 +47,7 @@ class BucketStore
 private
 
   def cleanup
+    log.debug "clean up buckets #{@buckets.inspect}"
     @buckets.delete_if {|k,v| !v || v.empty?}
     @projects_to_workers.delete_if {|k,v| !@buckets[k]}
     @workers_to_projects.delete_if {|k,v| !@buckets[v]}
