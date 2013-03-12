@@ -4,6 +4,11 @@ module DCC
     @@log.level = ::Logger::FATAL
 
     def self.setLog(log)
+      class <<log
+        def debug(msg = nil, &block)
+          add(::Logger::DEBUG, msg, "#{Kernel.caller.first}", &block)
+        end
+      end
       @@log = log
     end
 
