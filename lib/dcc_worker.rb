@@ -269,8 +269,11 @@ class DCCWorker
   def next_bucket(requestor_uri)
     sleep(rand(21) / 10.0)
     bucket_spec = [synchronize {@buckets.next_bucket(requestor_uri)}, sleep_until_next_bucket_time]
+    log.debug "got bucket spec #{bucket_spec.inspect}"
     if bucket_id = bucket_spec[0]
+      log.debug "search bucket #{bucket_id}"
       bucket = Bucket.find(bucket_id)
+      log.debug "update bucket #{bucket_id}"
       bucket.worker_uri = requestor_uri
       bucket.status = 30
       bucket.started_at = Time.now
