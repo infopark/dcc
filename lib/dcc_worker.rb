@@ -272,7 +272,7 @@ class DCCWorker
     log.debug "got bucket spec #{bucket_spec.inspect}"
     if bucket_id = bucket_spec[0]
       log.debug "search bucket #{bucket_id}"
-      bucket = Bucket.find(bucket_id)
+      bucket = Bucket.find(bucket_id) rescue Bucket.find(bucket_id)
       log.debug "update bucket #{bucket_id}"
       bucket.worker_uri = requestor_uri
       bucket.status = 30
