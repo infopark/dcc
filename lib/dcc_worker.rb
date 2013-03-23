@@ -272,18 +272,7 @@ class DCCWorker
     log.debug "got bucket spec #{bucket_spec.inspect}"
     if bucket_id = bucket_spec[0]
       log.debug "search bucket #{bucket_id}"
-      begin
-        bucket = Bucket.find(bucket_id)
-      rescue => e
-        log.debug "Ooops, Bucket.find failed: #{e}"
-        begin
-          Bucket.find(bucket_id)
-        rescue => e2
-          log.debug "Ooops, Bucket.find failed again: #{e2}"
-          log.debug "Giving up"
-          raise e2
-        end
-      end
+      bucket = retry_on_mysql_failure { Bucket.find(bucket_id) }
       log.debug "update bucket #{bucket_id}"
       bucket.worker_uri = requestor_uri
       bucket.status = 30
