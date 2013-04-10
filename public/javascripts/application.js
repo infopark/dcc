@@ -385,9 +385,9 @@ var init_search = function() {
 var update_search = function() {
   var text = $('#search').val();
   window.location.hash = text;
-  $('.box').show();
+  $('#projects > .box').show();
   if (text !== '') {
-    $('.box:not(:contains("' + text + '"))').hide();
+    $('#projects > .box:not(:contains("' + text + '"))').hide();
   }
 }
 
