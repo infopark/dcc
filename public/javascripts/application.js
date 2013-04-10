@@ -368,6 +368,7 @@ update_projects = function() {
         }
         render_builds(builds_box, project, update);
       });
+      update_search();
     },
     error: function(result) {
       //$('#spinner').fadeOut(100);
@@ -376,8 +377,22 @@ update_projects = function() {
   });
 };
 
+var init_search = function() {
+  $('#search').val(('' + window.location.hash).replace(/#/, ''));
+  update_search();
+}
+
+var update_search = function() {
+  var text = $('#search').val();
+  window.location.hash = text;
+  $('.box').show();
+  if (text !== '') {
+    $('.box:not(:contains("' + text + '"))').hide();
+  }
+}
 
 $(document).ready(function() {
+  init_search();
   update_projects();
   setInterval("update_projects();", 10000);
 });
