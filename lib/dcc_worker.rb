@@ -79,7 +79,7 @@ class DCCWorker
   end
 
   def perform_task(bucket)
-    log.debug "performing task #{bucket}"
+    log.info "performing task #{bucket}"
     logs = bucket.logs
     build = bucket.build
     project = build.project
@@ -246,7 +246,7 @@ class DCCWorker
   def read_buckets(project)
     buckets = []
     as_dictator do
-      log.debug "reading buckets for project #{project}"
+      log.info "reading buckets for project #{project}"
       log_project_error_on_failure(project, "reading buckets failed") do
         if project.wants_build?
           build_number = project.next_build_number
@@ -357,7 +357,7 @@ private
 
   def compute_buckets_and_finish_last_build_if_necessary(project)
     build = project.last_build
-    log.debug "finished?: checking build #{build || '<nil>'} (#{
+    log.info "finished?: checking build #{build || '<nil>'} (#{
         build && build.finished_at || '<nil>'})"
     if build && !build.finished_at
       log.debug "marking project #{project.name}'s build #{build.identifier} as finished"
