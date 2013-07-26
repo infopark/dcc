@@ -123,9 +123,13 @@ class Project < ActiveRecord::Base
       if github_user
         receivers = receiver_map[github_user.to_sym]
         unless receivers
-          http = Net::HTTP.new('api.github.com', Net::HTTP.https_default_port)
-          http.use_ssl = true
-          receivers = JSON.parse(http.get("/users/#{github_user}").body)['email']
+          begin
+            http = Net::HTTP.new('api.github.com', Net::HTTP.https_default_port)
+            http.use_ssl = true
+            receivers = JSON.parse(http.get("/users/#{github_user}").body)['email']
+          rescue Exception => e
+            log.warn "Could not determine E-Mail receiver from GitHub: #{e.message}"
+          end
         end
       end
       receivers = receiver_map[:default] unless receivers
