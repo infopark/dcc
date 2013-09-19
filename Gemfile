@@ -9,13 +9,15 @@ gem 'mongrel'
 gem 'infopark-politics'
 
 gem 'rake'
-gem 'rspec-rails'
-gem 'technicalpickles-jeweler'
+gem 'jeweler'
 gem 'rdoc', '>=2.4.2'
 
-gem 'cucumber'
-gem 'sqlite3'
-gem 'spork'
-gem 'cucumber-rails', '>= 0.2.2'
-gem 'database_cleaner', '>= 0.2.3'
-gem 'webrat', '>= 0.6.0'
+group :test do
+  gem 'rspec-rails'
+  gem 'cucumber'
+  gem 'sqlite3'
+  gem 'spork'
+  gem 'cucumber-rails', '>= 0.2.2'
+  gem 'database_cleaner', '>= 0.2.3'
+  gem 'webrat', '>= 0.6.0'
+end
