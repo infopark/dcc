@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Project do
-  fixtures :projects, :builds, :dependencies
+  fixtures :projects, :builds, :dependencies, :buckets, :logs
 
   before(:each) do
     @project = Project.find(1)
@@ -47,6 +47,40 @@ describe Project do
   it "may have a last_system_error" do
     @project.last_system_error.should be_nil
     Project.find(3).last_system_error.should == "project's last system error"
+  end
+
+  context "when deleting" do
+    it "deletes itself and all it's builds, buckets and logs" do
+      Project.destroy(3)
+      lambda {
+        Project.find(3)
+      }.should raise_error ActiveRecord::RecordNotFound
+      [1, 3].each do |id|
+        lambda {
+          Build.find(id)
+        }.should raise_error ActiveRecord::RecordNotFound
+      end
+      [1, 2].each do |id|
+        lambda {
+          Bucket.find(id)
+        }.should raise_error ActiveRecord::RecordNotFound
+      end
+      [1, 2].each do |id|
+        lambda {
+          Log.find(id)
+        }.should raise_error ActiveRecord::RecordNotFound
+      end
+    end
+
+    it "does not delete builds, buckets or logs of other projects" do
+      Project.destroy(1)
+      lambda {
+        Project.find(1)
+      }.should raise_error ActiveRecord::RecordNotFound
+      [1, 3].each {|id| Build.find(id) }
+      [1, 2].each {|id| Bucket.find(id) }
+      [1, 2].each {|id| Log.find(id) }
+    end
   end
 end
 

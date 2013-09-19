@@ -1,5 +1,5 @@
 class Build < ActiveRecord::Base
-  has_many :buckets, :dependent => :delete_all
+  has_many :buckets, :dependent => :destroy
   belongs_to :project
 
   def commit
