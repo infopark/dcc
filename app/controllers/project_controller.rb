@@ -17,6 +17,10 @@ class ProjectController < ApplicationController
     render :json => p
   end
 
+  def show
+    render :json => Project.find(params[:id])
+  end
+
   def list
     render :json => {:projects => Project.find(:all)}
   end

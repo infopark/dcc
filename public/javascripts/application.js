@@ -299,6 +299,7 @@ update_projects = function() {
             if (confirm("Soll das Projekt „" + project.name + "“ wirklich gelöscht werden?")) {
               $.ajax({
                 url: '/project/delete/' + project.id,
+                type: 'POST',
                 dataType: 'json',
                 success: function(result) {
                   box.remove();
@@ -319,6 +320,7 @@ update_projects = function() {
           build_button.click(function() {
             $.ajax({
               url: '/project/build/' + project.id,
+              type: 'POST',
               dataType: 'json',
               success: function(result) {
                 build_button.unbind('click');
