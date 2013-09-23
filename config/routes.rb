@@ -41,10 +41,13 @@ ActionController::Routing::Routes.draw do |map|
       :controller => :project, :action => :delete, :conditions => { :method => :post }
   map.connect 'project/build/:id',
       :controller => :project, :action => :build, :conditions => { :method => :post }
+
+  map.connect 'project/list/:id', :controller => :project, :action => :list
+  map.connect 'project/log/:id', :controller => :project, :action => :log
+  map.connect 'project/old_build/:id', :controller => :project, :action => :old_build
+  map.connect 'project/show_build/:id', :controller => :project, :action => :show_build
+  map.connect 'project/show_bucket/:id', :controller => :project, :action => :show_bucket
+  map.connect 'project/index/:id', :controller => :project, :action => :index
+
   map.connect 'project/:id', :controller => :project, :action => :show
-  # Install the default routes as the lowest priority.
-  # Note: These default routes make all actions in every controller accessible via GET requests. You should
-  # consider removing the them or commenting them out if you're using named routes and resources.
-  map.connect ':controller/:action/:id'
-  map.connect ':controller/:action/:id.:format'
 end
