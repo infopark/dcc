@@ -370,7 +370,7 @@ update_projects = function() {
         }
         render_builds(builds_box, project, update);
       });
-      update_search();
+      update_search(true);
     },
     error: function(result) {
       //$('#spinner').fadeOut(100);
@@ -381,12 +381,18 @@ update_projects = function() {
 
 var init_search = function() {
   $('#search').val(('' + window.location.hash).replace(/#/, ''));
-  update_search();
 }
 
-var update_search = function() {
+var update_search = function(prefer_hash) {
   var text = $('#search').val();
-  window.location.hash = text;
+  var hash = ('' + window.location.hash).replace(/#/, '');
+  if (text != hash) {
+    if (prefer_hash) {
+      text = hash;
+      init_search();
+    }
+    window.location.hash = text;
+  }
   $('#projects > .box').show();
   if (text !== '') {
     $('#projects > .box:not(:contains("' + text + '"))').hide();
@@ -395,6 +401,7 @@ var update_search = function() {
 
 $(document).ready(function() {
   init_search();
+  update_search();
   update_projects();
   setInterval("update_projects();", 10000);
 });
