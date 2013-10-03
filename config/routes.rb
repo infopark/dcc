@@ -50,4 +50,6 @@ ActionController::Routing::Routes.draw do |map|
   map.connect 'project/index/:id', :controller => :project, :action => :index
 
   map.connect 'project/:id', :controller => :project, :action => :show
+
+  map.connect 'stats/project/:id', :controller => :stats, :action => :show
 end

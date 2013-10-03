@@ -12,6 +12,10 @@
   <%= javascript_include_tag 'underscore-min' %>
   <%= javascript_include_tag 'application' %>
   <%= javascript_include_tag 'jquery.tools.min' %>
+  <script type="text/javascript" src="//www.google.com/jsapi"></script>
+  <script type="text/javascript">
+    google.load('visualization', '1', {packages: ['corechart']});
+  </script>
 <% end -%>
 
 <% content_for :header_content do -%>
