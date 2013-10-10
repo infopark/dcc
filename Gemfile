@@ -1,6 +1,8 @@
 source 'https://rubygems.org'
 source 'http://gems.github.com'
 
+gem 'daemon-spawn'
+
 gem 'rails', '~>2.3'
 gem 'activerecord-lazy-attributes'
 gem 'mysql', '~>2.8'
