@@ -24,6 +24,14 @@ class Dcc < DaemonSpawn::Base
     ActiveRecord::Base.default_timezone = :utc
     Time.zone_default = Time.send(:get_zone, 'UTC')
 
+    # http://zerolith.com/mysql-server-has-gone-away-activerecord.html
+    Thread.new {
+      loop {
+        sleep 30.minutes
+        ActiveRecord::Base.verify_active_connections!
+      }
+    }.priority = -10
+
     DCCWorker.new(config[:group_name], config[:memcache_servers], config).run
   end
 
