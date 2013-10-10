@@ -135,7 +135,8 @@ div.buttons {
   padding-top: 3px;
 }
 
-div.button {
+.button {
+  line-height: 110%;
   background: #666;
   padding: 2px 5px;
   color: #fff;
@@ -146,40 +147,29 @@ div.button {
   border: 1px solid #999;
   float:right;
   font-size: 13px;
-  margin-left: 7px;
+  margin: 0 0 0 7px;
   cursor: pointer;
 }
 
-div.button.green {
+.button.green {
   background: #748dad;
 }
 
-div.button.red {
+.button.yellow {
+  background: #748dad;
+}
+
+.button.red {
   background: #929292;
 }
 
-div.button.disabled {
+.button.disabled {
   opacity: 0.5;
   cursor: default;
 }
 
 div.title {
   margin-bottom: 3px;
-}
-
-a.button {
-  background: #666;
-  padding: 2px 5px;
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-  border-radius: 5px;
-  text-shadow: 0 1px 1px #222;
-  border: 1px solid #999;
-  float:right;
-  font-size: 13px;
-  margin-left: 7px;
-  cursor: pointer;
 }
 
 input[type="submit"] {
@@ -217,6 +207,7 @@ pre.log {
   width: 90%;
   height: 80%;
   border: 1px solid #666;
+  border-radius: 8px;
   box-shadow: 0 0 90px 5px #000;
   background-color: #fffacd;
 }
@@ -238,6 +229,14 @@ pre.log {
   height: 35px;
   width: 35px;
   z-index: 9000;
+}
+
+#overlay .details {
+  top: 8px;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  position: absolute;
 }
 
 #spinner {

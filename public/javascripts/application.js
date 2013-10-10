@@ -311,6 +311,8 @@ update_projects = function() {
             }
           });
           build_button = $("<div class='button green build'>Bauen</div>").appendTo(buttons);
+          $("<a title='Stats' class='button yellow stats' onclick='show_stats(" + project.id +
+              ")' rel='#overlay'>◔</a>").appendTo(buttons).overlay();
           update = false;
         }
         if (project.build_requested) {
@@ -370,7 +372,7 @@ update_projects = function() {
         }
         render_builds(builds_box, project, update);
       });
-      update_search();
+      update_search(true);
     },
     error: function(result) {
       //$('#spinner').fadeOut(100);
@@ -381,20 +383,57 @@ update_projects = function() {
 
 var init_search = function() {
   $('#search').val(('' + window.location.hash).replace(/#/, ''));
-  update_search();
-}
+};
 
-var update_search = function() {
+var update_search = function(prefer_hash) {
   var text = $('#search').val();
-  window.location.hash = text;
+  var hash = ('' + window.location.hash).replace(/#/, '');
+  if (text != hash) {
+    if (prefer_hash) {
+      text = hash;
+      init_search();
+    }
+    window.location.hash = text;
+  }
   $('#projects > .box').show();
   if (text !== '') {
     $('#projects > .box:not(:contains("' + text + '"))').hide();
   }
-}
+};
+
+var show_stats = function(project_id) {
+  $('#overlay .details').empty();
+  $.getJSON("/stats/project/" + project_id, function(json) {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Date');
+    data.addColumn('number', 'Slowest');
+    data.addColumn('number', 'Fastest');
+    data.addRows(json.rows);
+    var vAxis = {
+      format: '# min',
+      gridlines: { color: '#dfdaad', count: json.max / 5 },
+      minorGridlines: { count: 5 },
+      viewWindow: { max: json.max / 5 * 5, min: 0 }
+    };
+    new google.visualization.ColumnChart($('#overlay .details').get(0)).draw(data, {
+      backgroundColor: '#fffacd',
+      bar: { groupWidth: '70%' },
+      colors: ['#77c76f', '#27771f'],
+      focusTarget: 'category',
+      height: '100%',
+      isStacked: true,
+      legend: { position: 'bottom' },
+      series: [ { targetAxisIndex: 0 }, { targetAxisIndex: 1 } ],
+      title: json.name + " - Cruise Duration by Green Commit",
+      vAxes: [vAxis, vAxis],
+      width: '100%'
+    });
+  });
+};
 
 $(document).ready(function() {
   init_search();
+  update_search();
   update_projects();
   setInterval("update_projects();", 10000);
 });
