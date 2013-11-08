@@ -14,6 +14,10 @@ gem 'rake'
 gem 'jeweler'
 gem 'rdoc', '>=2.4.2'
 
+group :development do
+  gem 'rake'
+end
+
 group :test do
   gem 'rspec-rails'
   gem 'cucumber'
