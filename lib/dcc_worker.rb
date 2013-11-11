@@ -12,6 +12,7 @@ require 'monitor'
 require 'set'
 require 'iconv'
 require 'timeout'
+require 'socket'
 
 class DCCWorker
   include Politics::StaticQueueWorker
@@ -59,6 +60,12 @@ class DCCWorker
         end
       end
     end
+  end
+
+  def hostname
+    UDPSocket.open {|s| s.connect("64.233.187.99", 1); s.addr.last}
+    # TODO Für Ruby 1.9:
+    #Socket.ip_address_list.detect {|a| a.ipv4_private? }.ip_address
   end
 
   def run
