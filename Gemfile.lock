@@ -28,13 +28,13 @@ GEM
     daemons (1.1.8)
     database_cleaner (0.2.3)
     diff-lcs (1.1.3)
-    eventmachine (0.12.10)
+    eventmachine (1.0.3)
     fastthread (1.0.7)
     gem_plugin (0.2.3)
     gherkin (2.4.16)
       json (>= 1.4.6)
     git (1.2.6)
-    infopark-politics (0.3.1)
+    infopark-politics (0.3.3)
       memcache-client (>= 1.5.0)
       net-mdns (>= 0.4)
       starling-starling (>= 0.9.8)
@@ -86,7 +86,7 @@ DEPENDENCIES
   cucumber-rails (>= 0.2.2)
   daemon-spawn
   database_cleaner (>= 0.2.3)
-  infopark-politics
+  infopark-politics (>= 0.3.3)
   jeweler
   json
   mongrel

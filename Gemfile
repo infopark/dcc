@@ -8,7 +8,7 @@ gem 'activerecord-lazy-attributes'
 gem 'mysql', '~>2.8'
 gem 'json'
 gem 'mongrel'
-gem 'infopark-politics'
+gem 'infopark-politics', '>=0.3.3'
 
 gem 'rake'
 gem 'jeweler'
