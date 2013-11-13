@@ -145,7 +145,7 @@ render_log = function(pre, log)
 
 update_log = function(bucket_id)
 {
-  var pre = $("#log_" + bucket_id);
+  var pre = find_bucket_element(bucket_id, 'log');
   $.ajax({
     url: '/project/log/' + bucket_id,
     dataType: 'json',
@@ -173,19 +173,81 @@ update_log = function(bucket_id)
 };
 
 
+html_id = function(clazz, id, specifier)
+{
+  var suffix = "";
+  if (specifier) {
+    suffix = "_" + specifier;
+  }
+  return clazz + "_" + id + suffix;
+};
+
+
+bucket_html_id = function(id, specifier)
+{
+  return html_id('bucket', id, specifier);
+};
+
+
+build_html_id = function(id, specifier)
+{
+  return html_id('build', id, specifier);
+};
+
+
+project_html_id = function(id, specifier)
+{
+  return html_id('project', id, specifier);
+};
+
+
+find_bucket_element = function(id, specifier)
+{
+  return $("#" + bucket_html_id(id, specifier));
+};
+
+
+find_build_element = function(id)
+{
+  return $("#" + build_html_id(id));
+};
+
+
+find_project_element = function(id, specifier)
+{
+  return $("#" + project_html_id(id, specifier));
+};
+
+
+id_from_element = function(clazz, e)
+{
+  var components = e.attr('id').split('_');
+  if (components[0] == clazz) {
+    return components[1];
+  }
+};
+
+
+build_id_from_element = function(e)
+{
+  return id_from_element('build', e);
+};
+
+
 render_bucket = function(build_box, bucket, update)
 {
   if (update) {
-    update_status($("#" + bucket.id), bucket);
+    update_status(find_bucket_element(bucket.id), bucket);
   } else {
-    var log_id = "log_" + bucket.id;
+    var log_id = bucket_html_id(bucket.id, 'log');
     var overlay_id = "overlay_" + log_id;
 
     $("<div class='overlay' id='" + overlay_id + "'>" +
       "<pre class='log' id='" + log_id + "'></pre>"
     + "</div>").appendTo($('#container'));
 
-    var box = $("<div class='box' id='" + bucket.id + "'></div>").appendTo(build_box);
+    var box =
+        $("<div class='box' id='" + bucket_html_id(bucket.id) + "'></div>").appendTo(build_box);
     render_title_span(box, bucket.name, "auf " + bucket.worker_uri,
       function() {
         update_log(bucket.id);
@@ -198,12 +260,12 @@ render_bucket = function(build_box, bucket, update)
 
 render_build = function(div, build, css_class, insert_before)
 {
-  var build_box = $('#' + build.id);
+  var build_box = find_build_element(build.id);
   update = build_box.length > 0;
   if (update) {
     update_status(build_box, build);
   } else {
-    build_box = $("<div class='box " + css_class + "' id='" + build.id + "'></div>");
+    build_box = $("<div class='box " + css_class + "' id='" + build_html_id(build.id) + "'></div>");
     if (insert_before) {
       build_box.insertBefore(insert_before);
     } else {
@@ -239,23 +301,23 @@ render_builds = function(div, project, update)
   var last_build = project.last_build;
   if (last_build) {
     var last_build_box = div.find('.last_build');
-    if (update && last_build.id != last_build_box.attr('id')) {
+    if (update && last_build.id != build_id_from_element(last_build_box)) {
       div.empty();
       update = false;
     }
     render_build(div, last_build, 'last_build');
     if (update) {
-      _.each(last_build.done_buckets, function(bucket) { $('#' + bucket.id).remove(); });
+      _.each(last_build.done_buckets, function(bucket) { find_build_element(bucket.id).remove(); });
     } else if (project.previous_build_id) {
-      $("<span class='link' id='" + project.previous_build_id +
+      $("<span class='link' id='" + build_html_id(project.previous_build_id) +
           "'>mehr anzeigen</span>").appendTo(div).click(function() {
         var show_more = $(this);
         $.ajax({
-          url: '/project/old_build/' + show_more.attr('id'),
+          url: '/project/old_build/' + build_id_from_element(show_more),
           dataType: 'json',
           success: function(result) {
             if (result.previous_build_id) {
-              show_more.attr('id', result.previous_build_id);
+              show_more.attr('id', build_html_id(result.previous_build_id));
             } else {
               show_more.remove();
               show_more = null;
@@ -284,7 +346,7 @@ update_projects = function() {
         projects = $("<div id='projects'></div>").appendTo("#mainContent");
       }
       _.each(_.sortBy(result.projects, function(p) { return p.name; }), function(project) {
-        var box = $("#" + project.id);
+        var box = find_project_element(project.id);
         var update = true;
         var build_button;
         var title;
@@ -292,7 +354,8 @@ update_projects = function() {
           build_button = box.find('.buttons').find('.build');
           title = box.find('.title');
         } else {
-          box = $("<div class='box' id='" + project.id + "'></div>").appendTo(projects);
+          box = $("<div class='box' id='" + project_html_id(project.id) +
+              "'></div>").appendTo(projects);
           title = $("<div class='title'></div>)").appendTo(box);
           var buttons = $("<div class='buttons'></div>").appendTo(title);
           $("<div class='button red'>Löschen</div>").appendTo(buttons).click(function() {
@@ -354,10 +417,11 @@ update_projects = function() {
           }
         }
 
-        var system_error = $("#" + project.id + "_error");
+        var system_error = find_project_element(project.id, 'error');
         if (project.last_system_error) {
           if (system_error.length == 0) {
-            system_error = $("<pre id='" + project.id + "_error'></pre>").appendTo(box);
+            system_error =
+                $("<pre id='" + project_html_id(project.id, 'error') + "'></pre>").appendTo(box);
             render_log(system_error, project.last_system_error);
           }
         } else {

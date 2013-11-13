@@ -8,6 +8,7 @@ require 'politics/static_queue_worker'
 require 'monitor'
 require 'set'
 require 'timeout'
+require 'socket'
 
 require_relative 'command_line'
 require_relative 'rake'
@@ -64,17 +65,23 @@ class Worker
     end
   end
 
+  def hostname
+    Socket.ip_address_list.detect {|a| a.ipv4_private? }.ip_address
+  end
+
   def run
     log.debug "running"
     log_general_error_on_failure("running worker failed") do
-      ENV.each {|k,v| ENV[k] = nil if k =~ /^RBENV_/}
-      ENV['PATH'] = ENV['PATH'].split(':').reject {|p| p =~ %r|/.rbenv/versions/|}.join(':')
-      process_bucket do |bucket_id|
-        @currently_processed_bucket_id = bucket_id
-        bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
-        log_bucket_error_on_failure(bucket, "processing bucket failed") do
-          Timeout::timeout(7200) do
-            perform_task bucket
+      with_reset_rbenv do
+        without_bundler do
+          process_bucket do |bucket_id|
+            @currently_processed_bucket_id = bucket_id
+            bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
+            log_bucket_error_on_failure(bucket, "processing bucket failed") do
+              Timeout::timeout(7200) do
+                perform_task bucket
+              end
+            end
           end
         end
       end
@@ -373,6 +380,33 @@ require 'pry';binding.pry
     synchronize do
       @buckets.set_buckets project.name, buckets
     end
+  end
+
+  def with_environment(additional_env, &block)
+    original_env = ENV.to_hash
+    string_only_version = additional_env.stringify_keys.merge(additional_env) do |k, v|
+      v.nil? ? nil : v.to_s
+    end
+    ENV.update(string_only_version)
+    yield if block_given?
+  ensure
+    ENV.replace(original_env)
+  end
+
+  def without_bundler(&block)
+    with_environment({"RUBYOPT" => nil, "BUNDLE_GEMFILE" => nil, "BUNDLE_BIN_PATH" => nil}, &block)
+  end
+
+  def with_reset_rbenv(&block)
+    with_environment({
+      "RBENV_VERSION" => nil,
+      "RBENV_DIR" => nil,
+      "GEM_PATH" => nil,
+      "GEM_HOME" => nil,
+      "PATH" => ENV['PATH'].split(':').select do |path|
+        path !~ %r|^#{ENV["RBENV_ROOT"]}/versions/|
+      end.join(':')
+    }, &block)
   end
 end
 

@@ -102,18 +102,32 @@ describe Worker, "when running as follower" do
     @worker.run
   end
 
-  it "should clean up the rbenv environment" do
+  it "should perform the tasks without bundler or rbenv environment" do
     old_path = ENV['PATH']
     begin
       ENV['RBENV_DIR'] = 'hau mich weg'
-      ENV['RBENV_ROOT'] = 'mich auch'
-      ENV['RBENV_irgendwas'] = 'erwische alles!'
-      ENV['PATH'] = 'ein/pfad/in/.rbenv/versions/oder/darunter:/ein/pfad/woanders:/noch/ein/pfad/in/.rbenv/versions/oder/so:keinpfadin.rbenv/versionssondernwasanderes'
+      ENV['RBENV_VERSION'] = 'mich auch'
+      ENV['RBENV_ROOT'] = '/hier/liegt/rbenv'
+      ENV['GEM_PATH'] = "woll'n wa nich"
+      ENV['GEM_HOME'] = "dito"
+      ENV['RUBYOPT'] = "bittenich"
+      ENV['BUNDLE_GEMFILE'] = "unerwünscht"
+      ENV['BUNDLE_BIN_PATH'] = "persona non grata"
+      ENV['PATH'] = '/hier/liegt/rbenv/versions/oder/darunter:/ein/pfad/woanders:/hier/liegt/rbenv/versions/oder/so:/keinpfadin/rbenv/versions/sondernwasanderes'
+
+      @worker.stub(:perform_task) { @perform_task_env = ENV.to_hash }
       @worker.run
-      ENV['RBENV_DIR'].should be_nil
-      ENV['RBENV_ROOT'].should be_nil
-      ENV['RBENV_irgendwas'].should be_nil
-      ENV['PATH'].should == '/ein/pfad/woanders:keinpfadin.rbenv/versionssondernwasanderes'
+      %w(
+        RBENV_VERSION
+        RBENV_DIR
+        GEM_PATH
+        GEM_HOME
+        RUBYOPT
+        BUNDLE_GEMFILE
+        BUNDLE_BIN_PATH
+      ).each {|key| @perform_task_env.keys.should_not include(key) }
+      @perform_task_env['PATH'].should ==
+          '/ein/pfad/woanders:/keinpfadin/rbenv/versions/sondernwasanderes'
     ensure
       ENV['PATH'] = old_path
     end
