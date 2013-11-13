@@ -1,8 +1,7 @@
+# encoding: utf-8
 class Build < ActiveRecord::Base
   has_many :buckets, :dependent => :destroy
   belongs_to :project
-
-  DONE = 10
 
   def commit
     read_attribute(:commit_hash)
@@ -23,7 +22,7 @@ class Build < ActiveRecord::Base
   def gitweb_url_map
     @@gitweb_url_map ||=
         begin
-          YAML.load_file("#{RAILS_ROOT}/config/gitweb_url_map.yml")
+          YAML.load_file("#{Rails.root}/config/gitweb_url_map.yml")
         rescue Errno::ENOENT
           {}
         end
@@ -55,7 +54,7 @@ class Build < ActiveRecord::Base
       :identifier => identifier,
       :status => status,
       :bucket_state_counts => {
-        "10" => bucket_count(DONE),
+        "10" => bucket_count(10),
         "20" => bucket_count(20),
         "30" => bucket_count(30),
         "35" => bucket_count(35),
@@ -70,7 +69,7 @@ class Build < ActiveRecord::Base
       :failed_buckets => (buckets_for_status(40) + buckets_for_status(35)),
       :pending_buckets => buckets_for_status(20),
       :in_work_buckets => buckets_for_status(30),
-      :done_buckets => buckets_for_status(DONE)
+      :done_buckets => buckets_for_status(10)
     }.to_json(*args)
   end
 end

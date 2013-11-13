@@ -1,5 +1,5 @@
 <% content_for :extra_content do -%>
-  <% form_for :project, :url => {:action => :create} do |f| -%>
+  <%= form_for :project, :url => {:action => :create} do |f| -%>
     Name: <%= f.text_field :name %>
     URL: <%= f.text_field :url %>
     Branch: <%= f.text_field :branch %>
@@ -12,10 +12,6 @@
   <%= javascript_include_tag 'underscore-min' %>
   <%= javascript_include_tag 'application' %>
   <%= javascript_include_tag 'jquery.tools.min' %>
-  <script type="text/javascript" src="//www.google.com/jsapi"></script>
-  <script type="text/javascript">
-    google.load('visualization', '1', {packages: ['corechart']});
-  </script>
 <% end -%>
 
 <% content_for :header_content do -%>

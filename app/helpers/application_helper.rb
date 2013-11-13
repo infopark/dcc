@@ -3,7 +3,7 @@ module ApplicationHelper
   def gitweb_url_map
     @@gitweb_url_map ||=
         begin
-          YAML.load_file("#{RAILS_ROOT}/config/gitweb_url_map.yml")
+          YAML.load_file("#{Rails.root}/config/gitweb_url_map.yml")
         rescue Errno::ENOENT
           {}
         end

@@ -15,8 +15,9 @@ class Dcc < DaemonSpawn::Base
     ActiveRecord::Base.establish_connection(
         YAML::load(File.read('config/database.yml'))[config[:environment]])
 
-    require 'lazy_attributes'
-    require 'lib/dcc_worker'
+    # FIXME
+    #require 'lazy_attributes'
+    require 'dcc/worker'
 
     ActionMailer::Base.delivery_method = :sendmail
 
@@ -32,7 +33,7 @@ class Dcc < DaemonSpawn::Base
       }
     }.priority = -10
 
-    DCCWorker.new(config[:group_name], config[:memcache_servers], config).run
+    DCC::Worker.new(config[:group_name], config[:memcache_servers], config).run
   end
 
   def stop

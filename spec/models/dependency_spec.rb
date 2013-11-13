@@ -1,3 +1,4 @@
+# encoding: utf-8
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Dependency do
@@ -32,7 +33,7 @@ end
 describe Dependency do
   before do
     @dependency = Dependency.new(:url => "url", :branch => "b", :fallback_branch => "fb")
-    @dependency.stub!(:project).and_return mock('project', :name => "project's name", :id => 123)
+    @dependency.stub(:project).and_return double('project', :name => "project's name", :id => 123)
   end
 
   describe "when providing git" do
@@ -52,8 +53,8 @@ describe Dependency do
 
   describe "with git" do
     before do
-      git = mock("git", :current_commit => "the current commit", :path => 'git_path')
-      @dependency.stub!(:git).and_return git
+      git = double("git", :current_commit => "the current commit", :path => 'git_path')
+      @dependency.stub(:git).and_return git
     end
 
     describe "when providing current commit" do
@@ -64,12 +65,12 @@ describe Dependency do
 
     describe "when asked 'has_changed?'" do
       before do
-        @dependency.stub!(:last_commit).and_return 'the current commit'
-        @dependency.git.stub!(:update)
+        @dependency.stub(:last_commit).and_return 'the current commit'
+        @dependency.git.stub(:update)
       end
 
       it "should answer 'true' if current commit has changed" do
-        @dependency.stub!(:current_commit).and_return 'new'
+        @dependency.stub(:current_commit).and_return 'new'
         @dependency.has_changed?.should be_true
       end
 
@@ -87,7 +88,7 @@ describe Dependency do
 
   describe "when updating state" do
     it "should set last commit to current commit and save" do
-      @dependency.stub!(:current_commit).and_return 'new'
+      @dependency.stub(:current_commit).and_return 'new'
       @dependency.should_receive(:last_commit=).with('new').ordered
       @dependency.should_receive(:save).ordered
       @dependency.update_state

@@ -1,6 +1,8 @@
-log/*
-tmp/*
-db/*.*
+/.bundle
+/db/*.*
+/log/*
+/tmp
 .*.sw?
-rerun.txt
-config/database.yml
+/rerun.txt
+/config/database.yml
+/config/worker.yml

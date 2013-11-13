@@ -28,7 +28,7 @@ class CreateBuilds < ActiveRecord::Migration
     add_index :buckets, :name
     add_index :buckets, :build_id
     remove_index :buckets, :column => [:project_id, :commit]
-    remove_index :buckets, :column => [:name, :project_id, :commit, :build_number]
+    remove_index :buckets, name: 'buckets_idx_name_pid_commit_build'
     remove_index :buckets, :column => :build_number
     remove_index :buckets, :column => :project_id
     remove_columns :buckets, :commit_hash, :project_id, :build_number

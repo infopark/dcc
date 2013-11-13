@@ -1,4 +1,7 @@
+# encoding: utf-8
 require File.dirname(__FILE__) + '/../spec_helper'
+
+module DCC
 
 describe Rake do
   let(:rake) {Rake.new("project path")}
@@ -32,4 +35,6 @@ describe Rake do
       end
     end
   end
+end
+
 end

@@ -1,25 +1,33 @@
 source 'https://rubygems.org'
-source 'http://gems.github.com'
 
 gem 'daemon-spawn'
-
-gem 'rails', '~>2.3'
-gem 'activerecord-lazy-attributes'
+gem 'rails', '~>3.2'
 gem 'mysql', '~>2.8'
 gem 'json'
-gem 'mongrel'
-gem 'infopark-politics'
+gem 'jquery-rails'
+gem 'infopark-politics', '>= 0.3.2'
 
-gem 'rake'
-gem 'jeweler'
-gem 'rdoc', '>=2.4.2'
+# Gems used only for assets and not required
+# in production environments by default.
+group :assets do
+  gem 'sass-rails',   '~> 3.2.3'
+  gem 'coffee-rails', '~> 3.2.1'
+
+  # See https://github.com/sstephenson/execjs#readme for more supported runtimes
+  # gem 'therubyracer', :platforms => :ruby
+
+  gem 'uglifier', '>= 1.0.3'
+end
+
+group :development do
+  gem 'rake'
+  gem 'rspec-rails'
+  gem 'pry'
+end
 
 group :test do
-  gem 'rspec-rails'
-  gem 'cucumber'
   gem 'sqlite3'
-  gem 'spork'
-  gem 'cucumber-rails', '>= 0.2.2'
-  gem 'database_cleaner', '>= 0.2.3'
-  gem 'webrat', '>= 0.6.0'
+  gem 'cucumber-rails', require: false
+  gem 'database_cleaner'
+  gem 'therubyracer'
 end

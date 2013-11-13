@@ -1,3 +1,4 @@
+# encoding: utf-8
 class ProjectController < ApplicationController
   def create
     p = Project.new(params[:project])
@@ -22,7 +23,7 @@ class ProjectController < ApplicationController
   end
 
   def list
-    render :json => {:projects => Project.find(:all)}
+    render :json => {:projects => Project.all}
   end
 
   def log

@@ -1,8 +1,8 @@
+# encoding: utf-8
 require 'forwardable'
-require 'lib/dcc/git'
-require 'lib/mailer'
-require 'lib/dcc/logger'
-require 'app/models/dependency'
+require 'dcc/git'
+require 'dcc/logger'
+require 'dependency'
 require 'net/https'
 require 'json'
 
@@ -13,6 +13,7 @@ class Project < ActiveRecord::Base
   has_many :builds, :dependent => :destroy
   has_many :dependencies, :dependent => :destroy
   validate :must_have_name, :must_have_url, :must_have_branch
+  attr_accessible :name, :url, :branch
 
   attr_writer :before_all_tasks
 
@@ -59,7 +60,7 @@ class Project < ActiveRecord::Base
 
   def update_dependencies
     read_config
-    Dependency.find_all_by_project_id(id).each do |d|
+    Dependency.where(:project_id => id).each do |d|
       if @logged_deps.include?(d.url)
         if [d.branch, d.fallback_branch] != @logged_deps[d.url]
           d.branch, d.fallback_branch = @logged_deps[d.url]
@@ -70,19 +71,20 @@ class Project < ActiveRecord::Base
       end
       @logged_deps.delete(d.url)
     end
+    # TODO: flush cache eleganter (löschen via #dependencies → kein explizites Flush mehr)
+    dependencies(true)
     @logged_deps.each do |url, branches|
       dependencies.create(:url => url, :branch => branches[0], :fallback_branch => branches[1])
     end
   end
 
   def last_build(options = {})
-    conditions = options[:before_build] ? "id < #{options[:before_build].id}" : nil
-    Build.find_last_by_project_id(id, :conditions => conditions)
+    conditions = options[:before_build] ? " AND id < #{options[:before_build].id}" : nil
+    Build.where("project_id = ?#{conditions}", id).last
   end
 
   def next_build_number
-    build = builds.find(:first, :conditions => %Q(commit_hash = '#{current_commit}'),
-        :order => "build_number DESC")
+    build = builds.where(:commit_hash => current_commit).order("build_number").last
     build ? build.build_number + 1 : 1
   end
 

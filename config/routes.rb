@@ -1,55 +1,70 @@
-ActionController::Routing::Routes.draw do |map|
-  # The priority is based upon order of creation: first created -> highest priority.
+Dcc::Application.routes.draw do
+  # The priority is based upon order of creation:
+  # first created -> highest priority.
 
   # Sample of regular route:
-  #   map.connect 'products/:id', :controller => 'catalog', :action => 'view'
+  #   match 'products/:id' => 'catalog#view'
   # Keep in mind you can assign values other than :controller and :action
 
   # Sample of named route:
-  #   map.purchase 'products/:id/purchase', :controller => 'catalog', :action => 'purchase'
+  #   match 'products/:id/purchase' => 'catalog#purchase', :as => :purchase
   # This route can be invoked with purchase_url(:id => product.id)
 
   # Sample resource route (maps HTTP verbs to controller actions automatically):
-  #   map.resources :products
+  #   resources :products
 
   # Sample resource route with options:
-  #   map.resources :products, :member => { :short => :get, :toggle => :post }, :collection => { :sold => :get }
+  #   resources :products do
+  #     member do
+  #       get 'short'
+  #       post 'toggle'
+  #     end
+  #
+  #     collection do
+  #       get 'sold'
+  #     end
+  #   end
 
   # Sample resource route with sub-resources:
-  #   map.resources :products, :has_many => [ :comments, :sales ], :has_one => :seller
+  #   resources :products do
+  #     resources :comments, :sales
+  #     resource :seller
+  #   end
 
   # Sample resource route with more complex sub-resources
-  #   map.resources :products do |products|
-  #     products.resources :comments
-  #     products.resources :sales, :collection => { :recent => :get }
+  #   resources :products do
+  #     resources :comments
+  #     resources :sales do
+  #       get 'recent', :on => :collection
+  #     end
   #   end
 
   # Sample resource route within a namespace:
-  #   map.namespace :admin do |admin|
-  #     # Directs /admin/products/* to Admin::ProductsController (app/controllers/admin/products_controller.rb)
-  #     admin.resources :products
+  #   namespace :admin do
+  #     # Directs /admin/products/* to Admin::ProductsController
+  #     # (app/controllers/admin/products_controller.rb)
+  #     resources :products
   #   end
 
-  # You can have the root of your site routed with map.root -- just remember to delete public/index.html.
-  map.root :controller => "project"
+  # You can have the root of your site routed with "root"
+  # just remember to delete public/index.html.
+  # root :to => 'welcome#index'
 
   # See how all your routes lay out with "rake routes"
 
-  map.connect 'project/create',
-      :controller => :project, :action => :create, :conditions => { :method => :post }
-  map.connect 'project/delete/:id',
-      :controller => :project, :action => :delete, :conditions => { :method => :post }
-  map.connect 'project/build/:id',
-      :controller => :project, :action => :build, :conditions => { :method => :post }
+  # This is a legacy wild controller route that's not recommended for RESTful applications.
+  # Note: This route will make all actions in every controller accessible via GET requests.
+  # match ':controller(/:action(/:id))(.:format)'
 
-  map.connect 'project/list/:id', :controller => :project, :action => :list
-  map.connect 'project/log/:id', :controller => :project, :action => :log
-  map.connect 'project/old_build/:id', :controller => :project, :action => :old_build
-  map.connect 'project/show_build/:id', :controller => :project, :action => :show_build
-  map.connect 'project/show_bucket/:id', :controller => :project, :action => :show_bucket
-  map.connect 'project/index/:id', :controller => :project, :action => :index
-
-  map.connect 'project/:id', :controller => :project, :action => :show
-
-  map.connect 'stats/project/:id', :controller => :stats, :action => :show
+  match '/' => 'project#index'
+  match 'project/create' => 'project#create', :via => :post
+  match 'project/delete/:id' => 'project#delete', :via => :post
+  match 'project/build/:id' => 'project#build', :via => :post
+  match 'project/list/:id' => 'project#list'
+  match 'project/log/:id' => 'project#log'
+  match 'project/old_build/:id' => 'project#old_build'
+  match 'project/show_build/:id' => 'project#show_build'
+  match 'project/show_bucket/:id' => 'project#show_bucket'
+  match 'project/index/:id' => 'project#index'
+  match 'project/:id' => 'project#show'
 end

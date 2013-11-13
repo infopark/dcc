@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'yaml'
 
 send_notifications_to "tilo@infopark.de"

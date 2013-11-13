@@ -1,10 +1,12 @@
+# encoding: utf-8
 require 'forwardable'
-require 'lib/dcc/logger'
+require 'dcc/logger'
 
 class Dependency < ActiveRecord::Base
   include DCC::Logger
 
   belongs_to :project
+  attr_accessible :url, :branch, :fallback_branch
 
   extend Forwardable
   def_delegators :git, :current_commit

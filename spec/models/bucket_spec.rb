@@ -1,3 +1,4 @@
+# encoding: utf-8
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Bucket do
@@ -71,9 +72,9 @@ describe Bucket do
 
   describe "when building error log" do
     before do
-      @bucket.build.stub(:project).and_return(@project = mock('project', :name => 'p'))
+      @bucket.build.stub(:project).and_return(@project = double('project', :name => 'p'))
       @bucket.stub(:finished_at).and_return Time.now
-      @project.stub(:for_error_log).and_return(mock('code', :call => 'nix da'))
+      @project.stub(:for_error_log).and_return(double('code', :call => 'nix da'))
       @bucket.stub(:log).and_return('the log')
     end
 
@@ -90,7 +91,7 @@ describe Bucket do
     end
 
     it "should store the outcome of the “for_error_log” code for the log into the database" do
-      @project.should_receive(:for_error_log).with('one').and_return(code = mock('error_log_code'))
+      @project.should_receive(:for_error_log).with('one').and_return(code = double('error_log_code'))
       code.should_receive(:call).with('the log').and_return('the errors')
       @bucket.should_receive(:error_log=).with("the errors").ordered
       @bucket.should_receive(:save).ordered

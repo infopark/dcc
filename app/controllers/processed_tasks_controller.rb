@@ -1,3 +1,4 @@
+# encoding: utf-8
 class ProcessedTasksController < ApplicationController
   def index
     @buckets = Bucket.find_all_by_status(30)

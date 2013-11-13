@@ -1,3 +1,4 @@
+# encoding: utf-8
 class NotFinishedYet < RuntimeError
 end
 
@@ -5,7 +6,8 @@ end
 class Bucket < ActiveRecord::Base
   has_many :logs, :dependent => :delete_all
   belongs_to :build
-  attr_lazy :log
+  # FIXME wie in Rails 3?
+  #attr_lazy :log
 
   def to_s
     "#<Bucket; ID: #{id}, Task: #{name}, Build: #{build.identifier}, Project: #{build.project.name}>"

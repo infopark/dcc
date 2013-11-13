@@ -1,5 +1,8 @@
+# encoding: utf-8
 require File.dirname(__FILE__) + '/../spec_helper'
-require 'lib/bucket_store'
+require 'dcc/bucket_store'
+
+module DCC
 
 describe BucketStore do
   before do
@@ -164,4 +167,6 @@ describe BucketStore do
       @store.next_bucket('c').should == 4
     end
   end
+end
+
 end

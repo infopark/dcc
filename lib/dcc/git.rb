@@ -1,5 +1,6 @@
-require "lib/command_line"
-require "lib/dcc/logger"
+# encoding: utf-8
+require_relative "command_line"
+require_relative "logger"
 require "digest/md5"
 
 module DCC

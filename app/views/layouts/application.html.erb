@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Distributed Cruise Control - <%= controller.controller_name %></title>
+  <%= stylesheet_link_tag    "application", :media => "all" %>
+  <%= javascript_include_tag "application" %>
+  <%= csrf_meta_tags %>
+  <link rel="shortcut icon" href="/images/diccr-favicon-medium.ico" type="image/x-icon">
+  <link rel="icon" href="/images/diccr-favicon-medium.ico" type="image/x-icon">
+  <%= yield(:additional_headers) %>
+</head>
+<body>
+  <div id="container">
+    <div id="headerContent">
+      <%= link_to image_tag('/images/logo.png', :class => 'logo'), :action => 'index' %>
+      <%= yield(:header_content) %>
+    </div>
+    <div id="mainContent">
+      <%= yield %>
+    </div>
+    <% unless (extra_content = yield(:extra_content)).blank? -%>
+      <div id="extraContent">
+        <%= extra_content %>
+      </div>
+    <% end -%>
+  </div>
+  <div id="spinner">
+  </div>
+</body>
+</html>

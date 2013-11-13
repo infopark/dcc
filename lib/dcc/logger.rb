@@ -1,3 +1,4 @@
+# encoding: utf-8
 module DCC
   module Logger
     @@log = ::Logger.new(STDOUT)
