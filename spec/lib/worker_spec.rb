@@ -37,19 +37,19 @@ class TestRake < Rake
   end
 
   def rake(*args)
-    File.open(log_file, mode_string="w" ) do |f|
+    File.open(log_file, "w:iso-8859-1") do |f|
       # angebissenes € am Ende
-      f.write "first fÃ¼nf rake output\n\342\202"
+      f.write "first fünf rake output\n€".force_encoding('ISO8859-1')[0..-2]
       f.flush
       sleep 0.15
       # € geht weiter
-      f.write "\254second fÃ¼nf rake output\n\342\202"
+      f.write "€second fünf rake output\n€".force_encoding('ISO8859-1')[2..-2]
       f.flush
       sleep 0.1
-      f.write "\254third fÃ¼nf rake output\n\342"
+      f.write "€third fünf rake output\n€".force_encoding('ISO8859-1')[2..-3]
       f.flush
       sleep 0.1
-      f.write "\202\254last fÃ¼nf rake output\n"
+      f.write "€last fünf rake output\n".force_encoding('ISO8859-1')[1..-1]
     end
   end
 end
@@ -228,7 +228,7 @@ describe Worker, "when running as follower" do
         @project.stub(:before_all_code).and_return(@before_all_code = Proc.new {"code"})
         Dir.stub(:chdir).and_yield
         @worker.stub(:execute)
-        Mailer.stub(:failure_message).and_return double(deliver: nil)
+        Mailer.stub(:failure_message).and_return double('mail', deliver: nil)
       end
 
       describe "when before_each_bucket_group_code is not given" do
@@ -497,10 +497,10 @@ describe Worker, "when running as follower" do
       end
 
       it "should write the output of a task every few seconds into the db" do
-        @logs.should_receive(:create).once.with(:log => "first fÃ¼nf rake output\n").ordered
-        @logs.should_receive(:create).once.with(:log => "€second fÃ¼nf rake output\n").ordered
-        @logs.should_receive(:create).once.with(:log => "€third fÃ¼nf rake output\n").ordered
-        @logs.should_receive(:create).once.with(:log => "€last fÃ¼nf rake output\n").ordered
+        @logs.should_receive(:create).once.with(:log => "first fünf rake output\n").ordered
+        @logs.should_receive(:create).once.with(:log => "€second fünf rake output\n").ordered
+        @logs.should_receive(:create).once.with(:log => "€third fünf rake output\n").ordered
+        @logs.should_receive(:create).once.with(:log => "€last fünf rake output\n").ordered
         @worker.perform_rake_task('path', 'task', @logs)
       end
 

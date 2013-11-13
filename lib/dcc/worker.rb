@@ -187,16 +187,15 @@ class Worker
     log.debug "read #{log_file} from position #{log_length} into DB"
     log_content = ""
     begin
-      log_content = File.open(log_file) {|f| f.seek(log_length) and f.read}
-      #log_content = Iconv.new('UTF-8//IGNORE', 'UTF-8').
-      #    iconv(/.*/um.match(File.open(log_file) {|f| f.seek(log_length) and f.read})[0])
-      log.debug "read log (length: #{log_content.length}): #{log_content}"
+      log_content = File.open(log_file, 'r:iso-8859-1') {|f| f.seek(log_length) and f.read }.
+          encode('ISO8859-1').force_encoding('UTF-8').chars.select(&:valid_encoding?).join
+      log.debug "read log (length: #{log_content.bytesize}): #{log_content}"
     rescue Exception => e
       log.debug "could not read #{log_file}: #{e}"
     end
     if !log_content.empty?
       logs.create(:log => log_content)
-      log_content.length
+      log_content.bytesize
     else
       0
     end
@@ -346,7 +345,6 @@ private
     log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
     msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
     log.error "#{subject}\n#{msg}"
-require 'pry';binding.pry
     if bucket = options[:bucket]
       bucket.status = 35
       bucket.log = "#{bucket.log}\n\n------ Processing failed ------\n\n#{subject}\n\n#{msg}"
