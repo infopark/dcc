@@ -549,7 +549,7 @@ describe Worker, "when running as follower with fixtures" do
     it "should send an email if build failed" do
       Mailer.should_receive(:failure_message).with(@bucket, %r(^druby://)).
           and_return(message = double)
-      double.should_receive(:deliver)
+      message.should_receive(:deliver)
       @worker.perform_task(@bucket)
     end
 
@@ -565,8 +565,8 @@ describe Worker, "when running as follower with fixtures" do
   it "should send no email if build succeeded again" do
     @bucket.build.project.should_receive(:last_build).with(:before_build => @bucket.build).
         and_return Build.find(330)
-    Mailer.should_receive(:failure_message)
-    Mailer.should_receive(:fixed_message)
+    Mailer.should_not_receive(:failure_message)
+    Mailer.should_not_receive(:fixed_message)
     @worker.perform_task(@bucket)
   end
 
@@ -582,7 +582,7 @@ describe Worker, "when running as follower with fixtures" do
     @bucket.build.project.should_receive(:last_build).with(:before_build => @bucket.build).
         and_return Build.find(332)
     Mailer.should_receive(:fixed_message).with(@bucket, %r(^druby://)).and_return(message = double)
-    double.should_receive(:deliver)
+    message.should_receive(:deliver)
     @worker.perform_task(@bucket)
   end
 end
