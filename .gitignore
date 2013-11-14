@@ -6,3 +6,4 @@
 /rerun.txt
 /config/database.yml
 /config/worker.yml
+/public/assets

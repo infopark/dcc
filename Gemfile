@@ -5,7 +5,9 @@ gem 'rails', '~>3.2'
 gem 'mysql', '~>2.8'
 gem 'json'
 gem 'jquery-rails'
+gem 'underscore-rails'
 gem 'infopark-politics', '>= 0.4.0'
+gem 'thin'
 
 # Gems used only for assets and not required
 # in production environments by default.

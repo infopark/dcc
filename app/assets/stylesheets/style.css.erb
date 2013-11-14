@@ -1,6 +1,6 @@
 body {
   font: 100% Verdana, Arial, Helvetica, sans-serif;
-  background: #666 url(../images/bg_blue.png) fixed 0 0;
+  background: #666 url(<%= asset_path 'bg_blue.png' %>) fixed 0 0;
   margin: 0;
   padding: 0;
   text-align: center;
@@ -123,7 +123,7 @@ span.in_progress {
 }
 
 span.progress_indicator {
-  background-image: url(../images/progressindicator.gif);
+  background-image: url(<%= asset_path 'progressindicator.gif' %>);
   color: #444;
   padding: 6px 5px 5px 7px;
 }
@@ -212,6 +212,9 @@ pre.log {
 }
 
 .overlay {
+  position: fixed;
+  top: 10%;
+  left: 5%;
   display: none;
   z-index: 10000;
   width: 90%;
@@ -230,7 +233,7 @@ pre.log {
 }
 
 .overlay .close {
-  background-image: url('../images/close.png');
+  background-image: url(<%= asset_path 'close.png' %>);
   position: absolute;
   right: -15px;
   top: -15px;
@@ -243,7 +246,7 @@ pre.log {
 #spinner {
   height: 100%;
   position: fixed;
-  background: white url('../images/loader.gif') no-repeat center center;
+  background: white url(<%= asset_path 'loader.gif' %>) no-repeat center center;
   opacity: 0.5;
   left: 0;
   top: 0;

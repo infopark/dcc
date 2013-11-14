@@ -1,3 +1,8 @@
+/*!
+ *
+ * DCC Client
+ */
+
 status_message = function(status)
 {
   switch(status) {
@@ -132,8 +137,8 @@ update_status = function(box, thing)
 
 render_title_span = function(box, title, details, click)
 {
-  return $("<span title='" + escape_html(details) + "' class='link'>" + escape_html(title) + "</span>").
-      appendTo(box).click(click);
+  return $("<span title='" + escape_html(details) + "' class='link'>" + escape_html(title) +
+      "</span>").appendTo(box).click(click);
 };
 
 
@@ -242,17 +247,21 @@ render_bucket = function(build_box, bucket, update)
     var log_id = bucket_html_id(bucket.id, 'log');
     var overlay_id = "overlay_" + log_id;
 
-    $("<div class='overlay' id='" + overlay_id + "'>" +
-      "<pre class='log' id='" + log_id + "'></pre>"
-    + "</div>").appendTo($('#container'));
+    var overlay = $("<div class='overlay' id='" + overlay_id + "'>" +
+          "<pre class='log' id='" + log_id + "'></pre>" +
+        "</div>").appendTo($('#container'));
+    var overlay_close = $("<div class='close'></div>").appendTo(overlay).click(function() {
+      overlay.toggle();
+    });
 
     var box =
         $("<div class='box' id='" + bucket_html_id(bucket.id) + "'></div>").appendTo(build_box);
     render_title_span(box, bucket.name, "auf " + bucket.worker_uri,
       function() {
         update_log(bucket.id);
+        overlay.toggle();
       }
-    ).attr('rel', "#" + overlay_id).overlay();
+    );
     update_status(box, bucket);
   }
 };

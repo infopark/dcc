@@ -7,13 +7,6 @@
   <% end -%>
 <% end -%>
 
-<% content_for :additional_headers do -%>
-  <%= javascript_include_tag 'jquery' %>
-  <%= javascript_include_tag 'underscore-min' %>
-  <%= javascript_include_tag 'application' %>
-  <%= javascript_include_tag 'jquery.tools.min' %>
-<% end -%>
-
 <% content_for :header_content do -%>
   <input id="search" type="text" placeholder="Suche nach"
       onchange="update_search()" onkeyup="update_search()" />
