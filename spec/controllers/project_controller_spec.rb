@@ -1,14 +1,16 @@
 # encoding: utf-8
-require File.dirname(__FILE__) + '/../spec_helper'
+require 'spec_helper'
 
-describe ProjectController, "when delivering index" do
+describe ProjectController do
+
+context "when delivering index" do
   it "should render overview" do
     get 'index'
     response.should render_template('index')
   end
 end
 
-describe ProjectController, "when creating a project" do
+context "when creating a project" do
   it "should create a project with the given name, url and branch" do
     project = mock_model(Project, :id => 666)
     Project.should_receive(:new).with({"name" => "the name", "url" => "the url",
@@ -24,16 +26,22 @@ describe ProjectController, "when creating a project" do
   end
 end
 
-describe ProjectController, "when deleting a project" do
+context "when deleting a project" do
   it "should remove the specified project" do
     Project.should_receive(:destroy).with("666")
     post 'delete', :id => 666
   end
+
+  it "should render an empty json response" do
+    Project.stub(:destroy)
+    post 'delete', :id => 666
+    response.body.should == "{}"
+  end
 end
 
-describe ProjectController, "when showing a build" do
+context "when showing a build" do
   before do
-    Build.stub!(:find).and_return nil
+    Build.stub(:find).and_return nil
   end
 
   it "should fetch the build and assign it for the view" do
@@ -48,9 +56,9 @@ describe ProjectController, "when showing a build" do
   end
 end
 
-describe ProjectController, "when showing a bucket" do
+context "when showing a bucket" do
   before do
-    Bucket.stub!(:find).and_return nil
+    Bucket.stub(:find).and_return nil
   end
 
   it "should fetch the bucket and assign it for the view" do
@@ -65,11 +73,67 @@ describe ProjectController, "when showing a bucket" do
   end
 end
 
-describe ProjectController, "when requesting a project to build" do
+context "when requesting a project to build" do
+  before do
+    Project.stub(:find).with("666").and_return(@project = double('project',
+      :as_json => {updated: "project"},
+      :build_requested= => nil,
+      :save => nil
+    ))
+  end
+
   it "should set the build flag and save the project" do
-    Project.should_receive(:find).with("666").and_return(project = mock('project', :to_json => nil))
-    project.should_receive(:build_requested=).with(true).ordered
-    project.should_receive(:save).ordered
+    @project.should_receive(:build_requested=).with(true).ordered
+    @project.should_receive(:save).ordered
     post 'build', :id => 666
   end
+
+  it "renders the updated project as json" do
+    post 'build', :id => 666
+    response.body.should == '{"updated":"project"}'
+  end
+end
+
+context "when showing a project" do
+  before do
+    Project.stub(:find).with("666").and_return double('project', :as_json => {the: 'project'})
+    get "show", :id => 666
+  end
+
+  it "renders the project as json" do
+    response.body.should == '{"the":"project"}'
+  end
+end
+
+context "when requesting all projects" do
+  before do
+    Project.stub(:all).and_return [1, 2, 3, 4].map {|p| double(as_json: {p: p}) }
+    get "list"
+  end
+
+  it "renders the projects as json" do
+    response.body.should == '{"projects":[{"p":1},{"p":2},{"p":3},{"p":4}]}'
+  end
+end
+
+context "when requesting a bucket log" do
+  before do
+    Bucket.stub(:find).and_return double(
+      log: "the complete log",
+      logs: %w(some log fragments).map {|l| double(log: l) }
+    )
+  end
+
+  it "uses the requested bucket" do
+    Bucket.should_receive(:find).with("666").and_return Bucket.new
+    get "log", :id => 666
+  end
+
+  it "renders the log data as json" do
+    get "log", :id => 666
+    response.body.should ==
+        '{"log":"the complete log","logs":["some","log","fragments"]}'
+  end
+end
+
 end

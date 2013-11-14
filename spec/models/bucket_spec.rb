@@ -98,4 +98,17 @@ describe Bucket do
       @bucket.build_error_log
     end
   end
+
+  describe "#as_json" do
+    it "returns the bucket as json serializable structure" do
+      @bucket.as_json.with_indifferent_access.should == {
+        id: 1,
+        name: "one",
+        status: 10,
+        started_at: nil,
+        finished_at: nil,
+        worker_uri: nil
+      }.with_indifferent_access
+    end
+  end
 end

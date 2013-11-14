@@ -48,7 +48,7 @@ class Build < ActiveRecord::Base
     buckets_for_status(status).size
   end
 
-  def to_json(*args)
+  def as_json(*args)
     {
       :id => id,
       :identifier => identifier,
@@ -66,10 +66,10 @@ class Build < ActiveRecord::Base
       :leader_uri => leader_uri,
       :commit => commit,
       :gitweb_url => gitweb_url,
-      :failed_buckets => (buckets_for_status(40) + buckets_for_status(35)),
-      :pending_buckets => buckets_for_status(20),
-      :in_work_buckets => buckets_for_status(30),
-      :done_buckets => buckets_for_status(10)
-    }.to_json(*args)
+      :failed_buckets => (buckets_for_status(40) + buckets_for_status(35)).as_json(*args),
+      :pending_buckets => buckets_for_status(20).as_json(*args),
+      :in_work_buckets => buckets_for_status(30).as_json(*args),
+      :done_buckets => buckets_for_status(10).as_json(*args)
+    }
   end
 end

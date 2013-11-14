@@ -10,7 +10,7 @@ describe ProjectHelper do
     end
 
     it "should return the last build" do
-      Build.stub!(:find_last_by_project_id_and_commit_hash).with(666, 'der commit',
+      Build.stub(:find_last_by_project_id_and_commit_hash).with(666, 'der commit',
           :order => 'build_number').and_return('last build')
       helper.last_build(@project).should == 'last build'
     end

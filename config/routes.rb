@@ -60,7 +60,7 @@ Dcc::Application.routes.draw do
   match 'project/create' => 'project#create', :via => :post
   match 'project/delete/:id' => 'project#delete', :via => :post
   match 'project/build/:id' => 'project#build', :via => :post
-  match 'project/list/:id' => 'project#list'
+  match 'project/list' => 'project#list'
   match 'project/log/:id' => 'project#log'
   match 'project/old_build/:id' => 'project#old_build'
   match 'project/show_build/:id' => 'project#show_build'

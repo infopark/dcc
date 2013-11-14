@@ -83,6 +83,21 @@ describe Project do
       [1, 2].each {|id| Log.find(id) }
     end
   end
+
+  describe "#as_json" do
+    it "returns the project as json serializable structure" do
+      @project.as_json.with_indifferent_access.should == {
+        name: "project name",
+        id: 1,
+        url: "project url",
+        branch: "project branch",
+        build_requested: nil,
+        last_build: nil,
+        previous_build_id: nil,
+        last_system_error: nil
+      }.with_indifferent_access
+    end
+  end
 end
 
 describe Project, "when creating a new one" do

@@ -24,7 +24,7 @@ class Bucket < ActiveRecord::Base
     save
   end
 
-  def to_json(*args)
+  def as_json(*args)
     {
       :id => id,
       :name => name,
@@ -32,6 +32,6 @@ class Bucket < ActiveRecord::Base
       :started_at => started_at,
       :finished_at => finished_at,
       :worker_uri => worker_uri
-    }.to_json(*args)
+    }
   end
 end

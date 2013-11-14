@@ -216,7 +216,7 @@ class Project < ActiveRecord::Base
     @for_error_log_code[bucket_group_name] = code
   end
 
-  def to_json(*args)
+  def as_json(*args)
     lb = last_build
     pb = last_build(:before_build => lb)
     {
@@ -225,10 +225,10 @@ class Project < ActiveRecord::Base
       :url => url,
       :branch => branch,
       :build_requested => build_requested,
-      :last_build => lb,
+      :last_build => lb.as_json(*args),
       :previous_build_id => pb ? pb.id : nil,
       :last_system_error => last_system_error
-    }.to_json(*args)
+    }
   end
 
 private

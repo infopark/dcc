@@ -34,6 +34,7 @@ class ProjectController < ApplicationController
     }
   end
 
+  # FIXME test
   def old_build
     b = Build.find(params[:id])
     pb = b.project.last_build(:before_build => b)

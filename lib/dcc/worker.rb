@@ -162,10 +162,9 @@ class Worker
   def _perform_rake_task(path, task, logs)
     log.debug "performing rake task #{task}"
     rake = Rake.new(path)
-    old_connections = ActiveRecord::Base.connection_pool
-    old_connections.disconnect!
+    old_connection_pool = close_db_connections
     pid = fork do
-      ActiveRecord::Base.establish_connection(old_connections.spec.config)
+      ActiveRecord::Base.establish_connection(old_connection_pool.spec.config)
       begin
         rake.rake(task)
       rescue
@@ -173,7 +172,7 @@ class Worker
       end
       exit 0
     end
-    ActiveRecord::Base.establish_connection(old_connections.spec.config)
+    ActiveRecord::Base.establish_connection(old_connection_pool.spec.config)
     log_length = 0
     while !Process.waitpid(pid, Process::WNOHANG)
       log_length += read_log_into_db(rake.log_file, log_length, logs)
@@ -316,7 +315,8 @@ private
   rescue ActiveRecord::StatementInvalid => e
     if e.message =~ /MySQL server has gone away/
       log.debug "MySQL server has gone away … retry with new connection"
-      ActiveRecord::Base.establish_connection(ActiveRecord::Base.connection_pool.spec.config)
+      connection_pool = close_db_connections
+      ActiveRecord::Base.establish_connection(connection_pool.spec.config)
       sleep 3
       result = yield
       log.debug "retry with new connection succeeded"
@@ -405,6 +405,17 @@ private
         path !~ %r|^#{ENV["RBENV_ROOT"]}/versions/|
       end.join(':')
     }, &block)
+  end
+
+  def close_db_connections
+    ActiveRecord::Base.connection_pool.tap do |pool|
+      pool.connections.each do |connection|
+        while connection.open_transactions > 0
+          connection.decrement_open_transactions
+        end
+      end
+      pool.disconnect!
+    end
   end
 end
 

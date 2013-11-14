@@ -41,14 +41,14 @@ class TestRake < Rake
       # angebissenes € am Ende
       f.write "first fünf rake output\n€".force_encoding('ISO8859-1')[0..-2]
       f.flush
-      sleep 0.15
+      sleep 0.3
       # € geht weiter
       f.write "€second fünf rake output\n€".force_encoding('ISO8859-1')[2..-2]
       f.flush
-      sleep 0.1
+      sleep 0.2
       f.write "€third fünf rake output\n€".force_encoding('ISO8859-1')[2..-3]
       f.flush
-      sleep 0.1
+      sleep 0.2
       f.write "€last fünf rake output\n".force_encoding('ISO8859-1')[1..-1]
     end
   end
