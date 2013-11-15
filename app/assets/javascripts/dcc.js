@@ -259,9 +259,9 @@ render_bucket = function(build_box, bucket, update)
     var log_id = bucket_html_id(bucket.id, 'log');
     var overlay_id = "overlay_" + log_id;
 
-    var log_overlay = $("<div class='overlay' id='" + overlay_id + "'>" +
+    var log_overlay = $("<div class='overlay' id='" + overlay_id + "'><div class='container'>" +
           "<pre class='log' id='" + log_id + "'></pre>" +
-        "</div>").appendTo($('#container'));
+        "</div></div>").appendTo($('#container'));
 
     var box =
         $("<div class='box' id='" + bucket_html_id(bucket.id) + "'></div>").appendTo(build_box);
