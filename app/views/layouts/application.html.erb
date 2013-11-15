@@ -7,7 +7,10 @@
   <%= csrf_meta_tags %>
   <link rel="shortcut icon" href="<%= asset_path 'diccr-favicon-medium.ico' %>" type="image/x-icon">
   <link rel="icon" href="<%= asset_path 'diccr-favicon-medium.ico' %>" type="image/x-icon">
-  <%= yield(:additional_headers) %>
+  <script type="text/javascript" src="//www.google.com/jsapi"></script>
+  <script type="text/javascript">
+    google.load('visualization', '1', {packages: ['corechart']});
+  </script>
 </head>
 <body>
   <div id="container">
@@ -23,6 +26,10 @@
         <%= extra_content %>
       </div>
     <% end -%>
+  </div>
+  <div id="overlay" class="overlay">
+    <div class="details">
+    </div>
   </div>
   <div id="spinner">
   </div>

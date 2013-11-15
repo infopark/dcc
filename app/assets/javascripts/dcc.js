@@ -239,6 +239,18 @@ build_id_from_element = function(e)
 };
 
 
+overlay = function(click_element, overlay_element)
+{
+    var overlay_close = overlay_element.find('.close');
+    if (overlay_close.length == 0) {
+      overlay_close = $("<div class='close'></div>").appendTo(overlay_element).click(function() {
+        overlay_element.toggle();
+      });
+      click_element.on('click', function() { overlay_element.toggle(); });
+    }
+};
+
+
 render_bucket = function(build_box, bucket, update)
 {
   if (update) {
@@ -247,21 +259,15 @@ render_bucket = function(build_box, bucket, update)
     var log_id = bucket_html_id(bucket.id, 'log');
     var overlay_id = "overlay_" + log_id;
 
-    var overlay = $("<div class='overlay' id='" + overlay_id + "'>" +
+    var log_overlay = $("<div class='overlay' id='" + overlay_id + "'>" +
           "<pre class='log' id='" + log_id + "'></pre>" +
         "</div>").appendTo($('#container'));
-    var overlay_close = $("<div class='close'></div>").appendTo(overlay).click(function() {
-      overlay.toggle();
-    });
 
     var box =
         $("<div class='box' id='" + bucket_html_id(bucket.id) + "'></div>").appendTo(build_box);
-    render_title_span(box, bucket.name, "auf " + bucket.worker_uri,
-      function() {
+    overlay(render_title_span(box, bucket.name, "auf " + bucket.worker_uri, function() {
         update_log(bucket.id);
-        overlay.toggle();
-      }
-    );
+      }), log_overlay);
     update_status(box, bucket);
   }
 };
@@ -383,6 +389,8 @@ update_projects = function() {
             }
           });
           build_button = $("<div class='button green build'>Bauen</div>").appendTo(buttons);
+          overlay($("<a title='Stats' class='button yellow stats' onclick='show_stats(" +
+              project.id + ")'>◔</a>").appendTo(buttons), $('#overlay'));
           update = false;
         }
         if (project.build_requested) {
@@ -454,7 +462,7 @@ update_projects = function() {
 
 var init_search = function() {
   $('#search').val(('' + window.location.hash).replace(/#/, ''));
-}
+};
 
 var update_search = function(prefer_hash) {
   var text = $('#search').val();
@@ -470,7 +478,37 @@ var update_search = function(prefer_hash) {
   if (text !== '') {
     $('#projects > .box:not(:contains("' + text + '"))').hide();
   }
-}
+};
+
+var show_stats = function(project_id) {
+  $('#overlay .details').empty();
+  $.getJSON("/stats/project/" + project_id, function(json) {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Date');
+    data.addColumn('number', 'Slowest');
+    data.addColumn('number', 'Fastest');
+    data.addRows(json.rows);
+    var vAxis = {
+      format: '# min',
+      gridlines: { color: '#dfdaad', count: json.max / 5 },
+      minorGridlines: { count: 5 },
+      viewWindow: { max: json.max / 5 * 5, min: 0 }
+    };
+    new google.visualization.ColumnChart($('#overlay .details').get(0)).draw(data, {
+      backgroundColor: '#fffacd',
+      bar: { groupWidth: '70%' },
+      colors: ['#77c76f', '#27771f'],
+      focusTarget: 'category',
+      height: '100%',
+      isStacked: true,
+      legend: { position: 'bottom' },
+      series: [ { targetAxisIndex: 0 }, { targetAxisIndex: 1 } ],
+      title: json.name + " - Cruise Duration by Green Commit",
+      vAxes: [vAxis, vAxis],
+      width: '100%'
+    });
+  });
+};
 
 $(document).ready(function() {
   init_search();

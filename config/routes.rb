@@ -67,4 +67,5 @@ Dcc::Application.routes.draw do
   match 'project/show_bucket/:id' => 'project#show_bucket'
   match 'project/index/:id' => 'project#index'
   match 'project/:id' => 'project#show'
+  match 'stats/project/:id' => 'stats#show'
 end

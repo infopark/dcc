@@ -3,6 +3,8 @@ class Build < ActiveRecord::Base
   has_many :buckets, :dependent => :destroy
   belongs_to :project
 
+  DONE = 10
+
   def commit
     read_attribute(:commit_hash)
   end
@@ -54,7 +56,7 @@ class Build < ActiveRecord::Base
       :identifier => identifier,
       :status => status,
       :bucket_state_counts => {
-        "10" => bucket_count(10),
+        "10" => bucket_count(DONE),
         "20" => bucket_count(20),
         "30" => bucket_count(30),
         "35" => bucket_count(35),
@@ -69,7 +71,7 @@ class Build < ActiveRecord::Base
       :failed_buckets => (buckets_for_status(40) + buckets_for_status(35)).as_json(*args),
       :pending_buckets => buckets_for_status(20).as_json(*args),
       :in_work_buckets => buckets_for_status(30).as_json(*args),
-      :done_buckets => buckets_for_status(10).as_json(*args)
+      :done_buckets => buckets_for_status(DONE).as_json(*args)
     }
   end
 end
