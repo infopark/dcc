@@ -1,6 +1,6 @@
 <div class="box">
-  <% link_to({:action => "show_bucket", :id => bucket}, :class => 'link') do -%>
+  <%= link_to({:action => "show_bucket", :id => bucket}, :class => 'link') do %>
     <span title="<%= bucket_display_details(bucket) %>"><%= bucket.name %></span>
-  <% end -%>
+  <% end %>
   <%= render :partial => "bucket_status", :locals => {:bucket => bucket} %>
 </div>

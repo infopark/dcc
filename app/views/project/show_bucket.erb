@@ -7,12 +7,12 @@
   Task <%= @bucket.name %></h1>
 </h1>
 <%= render :partial => "bucket_status", :locals => {:bucket => @bucket} %>
-<pre><%= @bucket.log ? @bucket.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %></pre>
+<pre><%= @bucket.log %></pre>
 
 <% content_for :extra_content do -%>
   <% unless @bucket.logs.blank? -%>
 <pre>
-<% @bucket.logs.each do |log| -%><%= log.log ? log.log.gsub(/</, "&lt;").gsub(/>/, "&gt;") : "" %><% end -%>
+<% @bucket.logs.each do |log| -%><%= log.log %><% end -%>
 </pre>
   <% end -%>
 <% end -%>
