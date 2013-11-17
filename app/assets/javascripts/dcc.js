@@ -246,8 +246,8 @@ overlay = function(click_element, overlay_element)
       overlay_close = $("<div class='close'></div>").appendTo(overlay_element).click(function() {
         overlay_element.toggle();
       });
-      click_element.on('click', function() { overlay_element.toggle(); });
     }
+    click_element.on('click', function() { overlay_element.toggle(); });
 };
 
 
