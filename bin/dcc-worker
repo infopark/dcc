@@ -2,11 +2,18 @@
 
 require 'rubygems'
 require 'yaml'
-gem 'rails', '<3'
 require 'active_record'
 require 'action_mailer'
 require 'fileutils'
 require 'daemon_spawn'
+
+%w(
+  ../../lib
+  ../../app
+).each do |dir|
+  libdir = File.expand_path(dir, __FILE__)
+  $LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
+end
 
 class Dcc < DaemonSpawn::Base
   def start(args)
@@ -23,7 +30,6 @@ class Dcc < DaemonSpawn::Base
 
     ActiveRecord::Base.time_zone_aware_attributes = true
     ActiveRecord::Base.default_timezone = :utc
-    Time.zone_default = Time.send(:get_zone, 'UTC')
 
     # http://zerolith.com/mysql-server-has-gone-away-activerecord.html
     Thread.new {

@@ -2,10 +2,10 @@
 require 'forwardable'
 require 'dcc/git'
 require 'dcc/logger'
-require 'dependency'
 require 'net/https'
 require 'json'
 
+require_relative 'dependency'
 
 class Project < ActiveRecord::Base
   include DCC::Logger

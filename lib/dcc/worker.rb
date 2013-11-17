@@ -1,14 +1,15 @@
 # encoding: utf-8
 require 'politics'
 require 'politics/static_queue_worker'
-#require 'models/project'
-#require 'models/build'
-#require 'models/bucket'
-#require 'models/log'
 require 'monitor'
 require 'set'
 require 'timeout'
 require 'socket'
+
+require 'models/project'
+require 'models/build'
+require 'models/bucket'
+require 'models/log'
 
 require_relative 'command_line'
 require_relative 'rake'
