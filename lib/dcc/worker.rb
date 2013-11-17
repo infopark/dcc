@@ -73,13 +73,15 @@ class Worker
     log.debug "running"
     log_general_error_on_failure("running worker failed") do
       with_reset_rbenv do
-        without_bundler do
-          process_bucket do |bucket_id|
-            @currently_processed_bucket_id = bucket_id
-            bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
-            log_bucket_error_on_failure(bucket, "processing bucket failed") do
-              Timeout::timeout(7200) do
-                perform_task bucket
+        with_reset_rails_env do
+          without_bundler do
+            process_bucket do |bucket_id|
+              @currently_processed_bucket_id = bucket_id
+              bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
+              log_bucket_error_on_failure(bucket, "processing bucket failed") do
+                Timeout::timeout(7200) do
+                  perform_task bucket
+                end
               end
             end
           end
@@ -393,6 +395,12 @@ private
 
   def without_bundler(&block)
     with_environment({"RUBYOPT" => nil, "BUNDLE_GEMFILE" => nil, "BUNDLE_BIN_PATH" => nil}, &block)
+  end
+
+  def with_reset_rails_env(&block)
+    with_environment({
+      "RAILS_ENV" => nil,
+    }, &block)
   end
 
   def with_reset_rbenv(&block)

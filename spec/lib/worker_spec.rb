@@ -102,7 +102,7 @@ describe Worker, "when running as follower" do
     @worker.run
   end
 
-  it "should perform the tasks without bundler or rbenv environment" do
+  it "should perform the tasks without bundler, rbenv or rails environment" do
     old_path = ENV['PATH']
     begin
       ENV['RBENV_DIR'] = 'hau mich weg'
@@ -113,6 +113,7 @@ describe Worker, "when running as follower" do
       ENV['RUBYOPT'] = "bittenich"
       ENV['BUNDLE_GEMFILE'] = "unerwünscht"
       ENV['BUNDLE_BIN_PATH'] = "persona non grata"
+      ENV['RAILS_ENV'] = "please do not disturb"
       ENV['PATH'] = '/hier/liegt/rbenv/versions/oder/darunter:/ein/pfad/woanders:/hier/liegt/rbenv/versions/oder/so:/keinpfadin/rbenv/versions/sondernwasanderes'
 
       @worker.stub(:perform_task) { @perform_task_env = ENV.to_hash }
@@ -125,6 +126,7 @@ describe Worker, "when running as follower" do
         RUBYOPT
         BUNDLE_GEMFILE
         BUNDLE_BIN_PATH
+        RAILS_ENV
       ).each {|key| @perform_task_env.keys.should_not include(key) }
       @perform_task_env['PATH'].should ==
           '/ein/pfad/woanders:/keinpfadin/rbenv/versions/sondernwasanderes'
