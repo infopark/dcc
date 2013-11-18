@@ -28,6 +28,7 @@ class Dcc < DaemonSpawn::Base
     require 'dcc/mailer'
 
     ActionMailer::Base.delivery_method = :sendmail
+    ActionMailer::Base.sendmail_settings = {:arguments => ''}
     DCC::Mailer.default from: config[:email_sender], to: config[:admin_e_mail_address]
 
     ActiveRecord::Base.time_zone_aware_attributes = true
