@@ -247,7 +247,7 @@ overlay = function(click_element, overlay_element)
         overlay_element.toggle();
       });
     }
-    click_element.on('click', function() { overlay_element.toggle(); });
+    click_element.click(function() { overlay_element.toggle(); });
 };
 
 
@@ -397,6 +397,7 @@ update_projects = function() {
           build_button.addClass('disabled');
         } else {
           build_button.removeClass('disabled');
+          build_button.unbind('click');
           build_button.click(function() {
             $.ajax({
               url: '/project/build/' + project.id,
