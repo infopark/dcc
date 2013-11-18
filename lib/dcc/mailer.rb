@@ -6,8 +6,6 @@ require 'action_mailer'
 module DCC
 
 class Mailer < ActionMailer::Base
-  default :from => 'develop@infopark.de'
-
   def failure_message(bucket, host)
     bucket_state_message(bucket, host, 'fehlgeschlagen')
   end
@@ -17,7 +15,8 @@ class Mailer < ActionMailer::Base
   end
 
   def dcc_message(receivers, subject, message)
-    mail to: receivers, subject: "[dcc]#{" " unless subject =~ /^\[/}#{subject}",
+    mail to: (receivers.blank? ? self.class.default[:to] : receivers),
+        subject: "[dcc]#{" " unless subject =~ /^\[/}#{subject}",
         content_type: 'text/plain',
         body: "#{message}\n-- \nSent to you by diccr - the distributed cruise control app.\n"
   end

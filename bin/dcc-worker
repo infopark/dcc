@@ -25,8 +25,10 @@ class Dcc < DaemonSpawn::Base
     # FIXME
     #require 'lazy_attributes'
     require 'dcc/worker'
+    require 'dcc/mailer'
 
     ActionMailer::Base.delivery_method = :sendmail
+    DCC::Mailer.default from: config[:email_sender], to: config[:admin_e_mail_address]
 
     ActiveRecord::Base.time_zone_aware_attributes = true
     ActiveRecord::Base.default_timezone = :utc
