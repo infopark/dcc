@@ -322,7 +322,8 @@ render_builds = function(div, project, update)
     }
     render_build(div, last_build, 'last_build');
     if (update) {
-      _.each(last_build.done_buckets, function(bucket) { find_build_element(bucket.id).remove(); });
+      _.each(last_build.done_buckets,
+          function(bucket) { find_bucket_element(bucket.id).remove(); });
     } else if (project.previous_build_id) {
       $("<span class='link' id='" + build_html_id(project.previous_build_id) +
           "'>mehr anzeigen</span>").appendTo(div).click(function() {
