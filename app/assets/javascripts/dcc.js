@@ -178,6 +178,8 @@ update_log = function(bucket_id)
       }
     },
     error: function(result) {
+      // FIXME schönere Fehlermeldung
+      // FIXME ggf. neues setTimeout (OK → retry, Abbrechen → sein lassen)
       alert("Log holen fehlgeschlagen." + result.response);
     }
   });
@@ -458,6 +460,8 @@ update_projects = function() {
       setTimeout("update_projects();", 10000);
     },
     error: function(result) {
+      // FIXME schönere Fehlermeldung
+      // FIXME ggf. neues setTimeout (OK → retry, Abbrechen → sein lassen)
       alert("Projekte holen fehlgeschlagen." + result.response);
     }
   });
