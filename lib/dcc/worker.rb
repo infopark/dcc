@@ -70,6 +70,12 @@ class Worker
     Socket.ip_address_list.detect {|a| a.ipv4_private? }.ip_address
   end
 
+  def bucket_request_context
+    {
+      hostname: Socket.gethostname
+    }
+  end
+
   def run
     log.debug "running"
     log_general_error_on_failure("running worker failed") do
@@ -262,8 +268,12 @@ class Worker
       log_project_error_on_failure(project, "reading buckets failed") do
         if project.wants_build?
           build_number = project.next_build_number
-          build = project.builds.create(:commit => project.current_commit,
-              :build_number => build_number, :leader_uri => uri)
+          build = project.builds.create(
+            commit: project.current_commit,
+            build_number: build_number,
+            leader_uri: uri,
+            leader_hostname: Socket.gethostname
+          )
           project.buckets_tasks.each_key do |task|
             bucket = build.buckets.create(:name => task, :status => 20)
             buckets << bucket.id
@@ -278,7 +288,7 @@ class Worker
     buckets
   end
 
-  def next_bucket(requestor_uri)
+  def next_bucket(requestor_uri, context)
     sleep(rand(21) / 10.0)
     bucket_spec = [synchronize {@buckets.next_bucket(requestor_uri)}, sleep_until_next_bucket_time]
     log.debug "got bucket spec #{bucket_spec.inspect}"
@@ -287,6 +297,7 @@ class Worker
       bucket = synchronize { retry_on_mysql_failure { Bucket.find(bucket_id) } }
       log.debug "update bucket #{bucket_id}"
       bucket.worker_uri = requestor_uri
+      bucket.worker_hostname = context[:hostname]
       bucket.status = 30
       bucket.started_at = Time.now
       bucket.save

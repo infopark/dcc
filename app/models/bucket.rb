@@ -26,12 +26,13 @@ class Bucket < ActiveRecord::Base
 
   def as_json(*args)
     {
-      :id => id,
-      :name => name,
-      :status => status,
-      :started_at => started_at,
-      :finished_at => finished_at,
-      :worker_uri => worker_uri
+      id: id,
+      name: name,
+      status: status,
+      started_at: started_at,
+      finished_at: finished_at,
+      worker_uri: worker_uri,
+      worker_hostname: worker_hostname,
     }
   end
 end

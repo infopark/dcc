@@ -107,7 +107,8 @@ describe Bucket do
         status: 10,
         started_at: nil,
         finished_at: nil,
-        worker_uri: nil
+        worker_uri: nil,
+        worker_hostname: nil,
       }.with_indifferent_access
     end
   end

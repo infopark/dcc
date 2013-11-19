@@ -270,7 +270,7 @@ render_bucket = function(build_box, bucket, update)
 
     var box =
         $("<div class='box' id='" + bucket_html_id(bucket.id) + "'></div>").appendTo(build_box);
-    overlay(render_title_span(box, bucket.name, "auf " + bucket.worker_uri, function() {
+    overlay(render_title_span(box, bucket.name, "auf " + bucket.worker_hostname, function() {
         update_log(bucket.id);
       }), log_overlay);
     update_status(box, bucket);
@@ -294,7 +294,7 @@ render_build = function(div, build, css_class, insert_before)
     title_box = $("<div class='title'>").appendTo(build_box);
     bucket_box = $("<div class='box buckets'>").appendTo(build_box).hide();
     render_title_span(title_box, build.short_identifier,
-      build.identifier + " verwaltet von " + build.leader_uri,
+      build.identifier + " verwaltet von " + build.leader_hostname,
       function() {
         build_box.find('.buckets').toggle();
       }

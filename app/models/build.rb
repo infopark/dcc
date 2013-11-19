@@ -52,26 +52,27 @@ class Build < ActiveRecord::Base
 
   def as_json(*args)
     {
-      :id => id,
-      :identifier => identifier,
-      :status => status,
-      :bucket_state_counts => {
+      id: id,
+      identifier: identifier,
+      status: status,
+      bucket_state_counts: {
         "10" => bucket_count(DONE),
         "20" => bucket_count(20),
         "30" => bucket_count(30),
         "35" => bucket_count(35),
         "40" => bucket_count(40)
       },
-      :started_at => started_at,
-      :finished_at => finished_at,
-      :short_identifier => "#{commit[0..7]}.#{build_number}",
-      :leader_uri => leader_uri,
-      :commit => commit,
-      :gitweb_url => gitweb_url,
-      :failed_buckets => (buckets_for_status(40) + buckets_for_status(35)).as_json(*args),
-      :pending_buckets => buckets_for_status(20).as_json(*args),
-      :in_work_buckets => buckets_for_status(30).as_json(*args),
-      :done_buckets => buckets_for_status(DONE).as_json(*args)
+      started_at: started_at,
+      finished_at: finished_at,
+      short_identifier: "#{commit[0..7]}.#{build_number}",
+      leader_uri: leader_uri,
+      leader_hostname: leader_hostname,
+      commit: commit,
+      gitweb_url: gitweb_url,
+      failed_buckets: (buckets_for_status(40) + buckets_for_status(35)).as_json(*args),
+      pending_buckets: buckets_for_status(20).as_json(*args),
+      in_work_buckets: buckets_for_status(30).as_json(*args),
+      done_buckets: buckets_for_status(DONE).as_json(*args),
     }
   end
 end

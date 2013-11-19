@@ -55,20 +55,25 @@ class TestRake < Rake
 end
 
 describe Worker do
-  before do
-    @worker = Worker.new('dcc_test', nil, :log_level => ::Logger::ERROR)
+  let(:worker) { Worker.new('dcc_test', nil, :log_level => ::Logger::ERROR) }
+
+  describe "#bucket_request_context" do
+    it "should contain the hostname" do
+      Socket.stub(:gethostname).and_return "Scooby Doo"
+      worker.bucket_request_context[:hostname].should == "Scooby Doo"
+    end
   end
 
   describe "when performing operation protected against MySQL failures" do
     it "should return the block's result if MySQL did not fail" do
-      @worker.send(:retry_on_mysql_failure) do
+      worker.send(:retry_on_mysql_failure) do
         "das ergebnis"
       end.should == "das ergebnis"
     end
 
     it "should return the block's result if MySQL fails once and succeeds afterwards" do
       failed = false
-      @worker.send(:retry_on_mysql_failure) do
+      worker.send(:retry_on_mysql_failure) do
         unless failed
           failed = true
           raise ActiveRecord::StatementInvalid.new("MySQL server has gone away")
@@ -823,6 +828,7 @@ describe Worker, "when running as leader" do
         double(m[:name], :id => "#{m[:name]}_id")
       end
       @leader.stub(:uri).and_return "leader's uri"
+      Socket.stub(:gethostname).and_return "leader's hostname"
     end
 
     it "should return changed buckets" do
@@ -848,8 +854,8 @@ describe Worker, "when running as leader" do
     end
 
     it "creates the build and the buckets in the db" do
-      @project1.builds.should_receive(:create).
-          with(:commit => "12", :build_number => 2, :leader_uri => "leader's uri").
+      @project1.builds.should_receive(:create).with(commit: "12", build_number: 2,
+          leader_uri: "leader's uri", leader_hostname: "leader's hostname").
           and_return(build = double('', :buckets => double('')))
       [1, 2, 3].each do |task|
         build.buckets.should_receive(:create).with(:name => "p1#{task}", :status => 20).
@@ -902,7 +908,7 @@ describe Worker, "when running as leader" do
   describe "when delivering buckets" do
     before do
       @bucket = double('bucket', :worker_uri= => nil, :status= => nil, :save => nil, :id => 123,
-          :started_at= => nil,
+          :started_at= => nil, :worker_hostname= => nil,
           :build => double('build', :started_at => nil, :started_at= => nil, :save => nil))
       Bucket.stub(:find).with(123).and_return(@bucket)
       @leader.buckets.stub(:next_bucket).and_return(123)
@@ -914,19 +920,19 @@ describe Worker, "when running as leader" do
 
       @leader.buckets.should_receive(:next_bucket).and_return("next bucket")
       @leader.should_receive(:sleep_until_next_bucket_time).and_return(666)
-      @leader.next_bucket("requestor").should == ["next bucket", 666]
+      @leader.next_bucket("requestor", {}).should == ["next bucket", 666]
     end
 
     it "should store the requestor's uri into the bucket" do
       @bucket.should_receive(:worker_uri=).with("requestor").ordered
       @bucket.should_receive(:save).ordered
-      @leader.next_bucket("requestor")
+      @leader.next_bucket("requestor", {})
     end
 
     it "should store the status 'in work' into the bucket" do
       @bucket.should_receive(:status=).with(30).ordered
       @bucket.should_receive(:save).ordered
-      @leader.next_bucket("requestor")
+      @leader.next_bucket("requestor", {})
     end
 
     it "should store the current time for started_at into the bucket" do
@@ -934,7 +940,7 @@ describe Worker, "when running as leader" do
       Time.stub(:now).and_return(started_at)
       @bucket.should_receive(:started_at=).with(started_at).ordered
       @bucket.should_receive(:save).ordered
-      @leader.next_bucket("requestor")
+      @leader.next_bucket("requestor", {})
     end
 
     it "should store the current time for started_at into the build iff it's the first bucket" do
@@ -943,9 +949,15 @@ describe Worker, "when running as leader" do
       Time.stub(:now).and_return(started_at)
       build.should_receive(:started_at=).with(started_at).ordered
       build.should_receive(:save).ordered
-      @leader.next_bucket("requestor")
+      @leader.next_bucket("requestor", {})
       build.stub(:started_at).and_return started_at
-      @leader.next_bucket("requestor")
+      @leader.next_bucket("requestor", {})
+    end
+
+    it "should store the requestor's hostname into the bucket" do
+      @bucket.should_receive(:worker_hostname=).with("requestor's hostname").ordered
+      @bucket.should_receive(:save).ordered
+      @leader.next_bucket("requestor", {hostname: "requestor's hostname"})
     end
 
     describe "when no buckets are left" do
@@ -955,11 +967,11 @@ describe Worker, "when running as leader" do
 
       it "should not try to change bucket" do
         Bucket.should_not_receive(:find)
-        @leader.next_bucket("requestor")
+        @leader.next_bucket("requestor", {})
       end
 
       it "should deliver the nil bucket" do
-        @leader.next_bucket("requestor").should == [nil, 0]
+        @leader.next_bucket("requestor", {}).should == [nil, 0]
       end
     end
   end

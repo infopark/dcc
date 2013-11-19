@@ -54,6 +54,7 @@ describe Build do
         started_at: nil,
         finished_at: nil,
         leader_uri: "leader's uri",
+        leader_hostname: nil,
         commit: "c1",
         gitweb_url: nil,
         failed_buckets: [],
