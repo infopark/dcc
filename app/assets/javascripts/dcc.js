@@ -98,20 +98,27 @@ escape_html = function(str)
             .replace(/'/g, '&#39;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
-}
+};
+
+
+provide_element = function(identifier, container, default_content, create_callback) {
+  var element = $(container).find(identifier).first();
+  if (element.length == 0) {
+    element = $(default_content).appendTo($(container));
+    if (create_callback) { create_callback(element); }
+  }
+  return element;
+};
 
 
 update_status = function(box, thing)
 {
-  var stat = box.find('.status').first();
+  var stat = provide_element('.status', box, "<span class='status'></span>");
   var href;
   if (thing.bucket_state_counts) {
     href = "/project/show_build/" + thing.id;
   } else {
     href = "/project/show_bucket/" + thing.id;
-  }
-  if (stat.length == 0) {
-    stat = $("<span class='status'></span>").appendTo(box);
   }
   stat.empty();
   var s = "<a href='" + href + "' target='_blank'>" +
@@ -241,12 +248,8 @@ build_id_from_element = function(e)
 
 overlay = function(click_element, overlay_element)
 {
-    var overlay_close = overlay_element.find('.close');
-    if (overlay_close.length == 0) {
-      overlay_close = $("<div class='close'></div>").appendTo(overlay_element).click(function() {
-        overlay_element.toggle();
-      });
-    }
+    provide_element('.close', overlay_element, "<div class='close'></div>",
+        function(element) { element.click(function() { overlay_element.toggle(); }); });
     click_element.click(function() { overlay_element.toggle(); });
 };
 
