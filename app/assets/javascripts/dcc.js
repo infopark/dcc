@@ -314,22 +314,24 @@ render_build = function(div, build, css_class, insert_before)
   });
 };
 
-render_builds = function(div, project, update)
+render_builds = function(container, project, update)
 {
+  var builds_box = provide_element('.builds', container, "<div class='builds'></div>",
+      function(element) { element.hide(); });
   var last_build = project.last_build;
   if (last_build) {
-    var last_build_box = div.find('.last_build');
+    var last_build_box = builds_box.find('.last_build');
     if (update && last_build.id != build_id_from_element(last_build_box)) {
-      div.empty();
+      builds_box.empty();
       update = false;
     }
-    render_build(div, last_build, 'last_build');
+    render_build(builds_box, last_build, 'last_build');
     if (update) {
       _.each(last_build.done_buckets,
           function(bucket) { find_bucket_element(bucket.id).remove(); });
     } else if (project.previous_build_id) {
       $("<span class='link' id='" + build_html_id(project.previous_build_id) +
-          "'>mehr anzeigen</span>").appendTo(div).click(function() {
+          "'>mehr anzeigen</span>").appendTo(builds_box).click(function() {
         var show_more = $(this);
         $.ajax({
           url: '/project/old_build/' + build_id_from_element(show_more),
@@ -341,7 +343,7 @@ render_builds = function(div, project, update)
               show_more.remove();
               show_more = null;
             }
-            render_build(div, result.build, '', show_more);
+            render_build(builds_box, result.build, '', show_more);
           },
           error: function(result) {
             alert("Build holen fehlgeschlagen." + result.response);
@@ -353,114 +355,109 @@ render_builds = function(div, project, update)
 };
 
 
+render_project = function(project) {
+  var box = find_project_element(project.id);
+  var update = true;
+  var build_button;
+  var title;
+  if (box.length > 0) {
+    build_button = box.find('.buttons').find('.build');
+    title = box.find('.title');
+  } else {
+    box = $("<div class='box' id='" + project_html_id(project.id) +
+        "'></div>").appendTo(this);
+    title = $("<div class='title'></div>)").appendTo(box);
+    var buttons = $("<div class='buttons'></div>").appendTo(title);
+    $("<div class='button red'>Löschen</div>").appendTo(buttons).click(function() {
+      if (confirm("Soll das Projekt „" + project.name + "“ wirklich gelöscht werden?")) {
+        $.ajax({
+          url: '/project/delete/' + project.id,
+          type: 'POST',
+          dataType: 'json',
+          success: function(result) {
+            box.remove();
+          },
+          error: function(result) {
+            alert("Löschen fehlgeschlagen: " + result);
+          }
+        });
+      }
+    });
+    build_button = $("<div class='button green build'>Bauen</div>").appendTo(buttons);
+    overlay($("<a title='Stats' class='button yellow stats' onclick='show_stats(" +
+        project.id + ")'>◔</a>").appendTo(buttons), $('#overlay'));
+    update = false;
+  }
+  if (project.build_requested) {
+    build_button.addClass('disabled');
+  } else {
+    build_button.removeClass('disabled');
+    build_button.unbind('click');
+    build_button.click(function() {
+      $.ajax({
+        url: '/project/build/' + project.id,
+        type: 'POST',
+        dataType: 'json',
+        success: function(result) {
+          build_button.unbind('click');
+          build_button.addClass("disabled");
+        },
+        error: function(result) {
+          alert("Trigger Build fehlgeschlagen: " + result);
+        }
+      });
+    });
+  };
+  var build = project.last_build;
+  if (!update) {
+    render_title_span(title, project.name, "URL: " + project.url + "; " + project.branch,
+      function() {
+        box.find('.builds').toggle();
+      }
+    );
+  }
+  if (build) {
+    update_status(title, build);
+    var span = provide_element('.indicator', title, "<span class='indicator'></span>");
+    span.empty();
+    if (unfinished_buckets_count(build) > 0) {
+      $("<span class='progress_indicator'>" +
+        fd(buckets_in_work_count(build)) +
+      "</span>").appendTo(span);
+    }
+  }
+
+  var system_error = find_project_element(project.id, 'error');
+  if (project.last_system_error) {
+    if (system_error.length == 0) {
+      system_error =
+          $("<pre id='" + project_html_id(project.id, 'error') + "'></pre>").appendTo(box);
+      render_log(system_error, project.last_system_error);
+    }
+  } else {
+    system_error.remove();
+  }
+
+  render_builds(box, project, update);
+};
+
+
+render_projects = function(projects) {
+  var projects_element = provide_element("#projects", "#mainContent", "<div id='projects'></div>");
+  _.each(_.sortBy(projects, function(p) { return p.name; }), render_project, projects_element);
+};
+
+
 update_projects = function() {
-  //$('#spinner').fadeIn(300);
   $.ajax({
     url: '/project/list',
     dataType: 'json',
     success: function(result) {
-      //$('#spinner').fadeOut(500);
-      var projects = $("#projects");
-      if (projects.length == 0) {
-        projects = $("<div id='projects'></div>").appendTo("#mainContent");
-      }
-      _.each(_.sortBy(result.projects, function(p) { return p.name; }), function(project) {
-        var box = find_project_element(project.id);
-        var update = true;
-        var build_button;
-        var title;
-        if (box.length > 0) {
-          build_button = box.find('.buttons').find('.build');
-          title = box.find('.title');
-        } else {
-          box = $("<div class='box' id='" + project_html_id(project.id) +
-              "'></div>").appendTo(projects);
-          title = $("<div class='title'></div>)").appendTo(box);
-          var buttons = $("<div class='buttons'></div>").appendTo(title);
-          $("<div class='button red'>Löschen</div>").appendTo(buttons).click(function() {
-            if (confirm("Soll das Projekt „" + project.name + "“ wirklich gelöscht werden?")) {
-              $.ajax({
-                url: '/project/delete/' + project.id,
-                type: 'POST',
-                dataType: 'json',
-                success: function(result) {
-                  box.remove();
-                },
-                error: function(result) {
-                  alert("Löschen fehlgeschlagen: " + result);
-                }
-              });
-            }
-          });
-          build_button = $("<div class='button green build'>Bauen</div>").appendTo(buttons);
-          overlay($("<a title='Stats' class='button yellow stats' onclick='show_stats(" +
-              project.id + ")'>◔</a>").appendTo(buttons), $('#overlay'));
-          update = false;
-        }
-        if (project.build_requested) {
-          build_button.addClass('disabled');
-        } else {
-          build_button.removeClass('disabled');
-          build_button.unbind('click');
-          build_button.click(function() {
-            $.ajax({
-              url: '/project/build/' + project.id,
-              type: 'POST',
-              dataType: 'json',
-              success: function(result) {
-                build_button.unbind('click');
-                build_button.addClass("disabled");
-              },
-              error: function(result) {
-                alert("Trigger Build fehlgeschlagen: " + result);
-              }
-            });
-          });
-        };
-        var build = project.last_build;
-        if (!update) {
-          render_title_span(title, project.name, "URL: " + project.url + "; " + project.branch,
-            function() {
-              box.find('.builds').toggle();
-            }
-          );
-        }
-        if (build) {
-          update_status(title, build);
-          var span = title.find('.indicator');
-          if (span.length == 0) {
-            span = $("<span class='indicator'></span>").appendTo(title);
-          }
-          span.empty();
-          if (unfinished_buckets_count(build) > 0) {
-            $("<span class='progress_indicator'>" +
-              fd(buckets_in_work_count(build)) +
-            "</span>").appendTo(span);
-          }
-        }
-
-        var system_error = find_project_element(project.id, 'error');
-        if (project.last_system_error) {
-          if (system_error.length == 0) {
-            system_error =
-                $("<pre id='" + project_html_id(project.id, 'error') + "'></pre>").appendTo(box);
-            render_log(system_error, project.last_system_error);
-          }
-        } else {
-          system_error.remove();
-        }
-
-        var builds_box = box.find('.builds');
-        if (builds_box.length == 0) {
-          builds_box = $("<div class='builds'></div>").appendTo(box).hide();
-        }
-        render_builds(builds_box, project, update);
-      });
+      render_projects(result.projects);
       update_search(true);
       setTimeout("update_projects();", 10000);
     },
     error: function(result) {
-      //$('#spinner').fadeOut(100);
       alert("Projekte holen fehlgeschlagen." + result.response);
     }
   });
