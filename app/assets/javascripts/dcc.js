@@ -453,6 +453,7 @@ update_projects = function() {
         render_builds(builds_box, project, update);
       });
       update_search(true);
+      setTimeout("update_projects();", 10000);
     },
     error: function(result) {
       //$('#spinner').fadeOut(100);
@@ -515,5 +516,4 @@ $(document).ready(function() {
   init_search();
   update_search();
   update_projects();
-  setInterval("update_projects();", 10000);
 });
