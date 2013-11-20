@@ -217,8 +217,8 @@ describe ApplicationHelper do
   describe 'build_gitweb_url' do
     before do
       @project = double('project', :url => '')
-      @build = double('build', :identifier => 'build_identifier', :leader_uri => 'leader_uri',
-          :project => @project, :commit => 'commit_hash')
+      @build = double('build', identifier: 'build_identifier', leader_uri: 'leader_uri',
+          leader_hostname: 'leader_hostname', project: @project, commit: 'commit_hash')
       YAML.stub(:load_file).with("#{Rails.root}/config/gitweb_url_map.yml").and_return({
             '^git@machine:(.*?)(\.git)?$' => 'gitweb_url1 #{$1} #{commit}',
             '^git+ssh://machine/(.*?)(\.git)?$' => 'gitweb_url2 #{$1} #{commit}',
@@ -267,22 +267,24 @@ describe ApplicationHelper do
 
   describe 'build_display_details' do
     before do
-      @build = double('build', :identifier => "ziemlich lang das ding", :leader_uri => "leader's uri")
+      @build = double('build', identifier: "ziemlich lang das ding", leader_uri: "leader's uri",
+          leader_hostname: "leader's hostname")
     end
 
-    it "should return info containing the full identifier and the leader uri" do
+    it "should return info containing the full identifier and the leader hostname" do
       helper.build_display_details(@build).should =~ /ziemlich lang das ding/
-      helper.build_display_details(@build).should =~ /leader's uri/
+      helper.build_display_details(@build).should =~ /leader's hostname/
     end
   end
 
   describe 'bucket_display_details' do
     before do
-      @bucket = double('bucket', :name => 'bucket_name', :worker_uri => 'worker_uri')
+      @bucket = double('bucket', name: 'bucket_name', worker_uri: 'worker_uri',
+          worker_hostname: 'worker_hostname')
     end
 
-    it "should return info containing the worker uri" do
-      helper.bucket_display_details(@bucket).should =~ /worker_uri/
+    it "should return info containing the worker hostname" do
+      helper.bucket_display_details(@bucket).should =~ /worker_hostname/
     end
   end
 

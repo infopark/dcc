@@ -146,12 +146,12 @@ class Worker
     logs.clear
     if !succeeded
       bucket.build_error_log
-      Mailer.failure_message(bucket, uri).deliver
+      Mailer.failure_message(bucket).deliver
     else
       last_build = project.last_build(:before_build => build)
       if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
             last_bucket.status != 10
-        Mailer.fixed_message(bucket, uri).deliver
+        Mailer.fixed_message(bucket).deliver
       end
     end
   end
@@ -357,9 +357,12 @@ private
     log.debug "leaving protected block (->#{@@pbl -= 1})"
   rescue Exception => e
     log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
-    msg = "uri: #{uri}\nleader_uri: #{leader_uri}\n\n#{e.message}\n\n#{e.backtrace.join("\n")}"
+    bucket = options[:bucket]
+    msg = "uri: #{uri} (#{Socket.gethostname})\n" +
+        "leader_uri: #{leader_uri}#{bucket && " (#{bucket.leader_hostname})"}\n\n" +
+        "#{e.message}\n\n#{e.backtrace.join("\n")}"
     log.error "#{subject}\n#{msg}"
-    if bucket = options[:bucket]
+    if bucket
       bucket.status = 35
       bucket.log = "#{bucket.log}\n\n------ Processing failed ------\n\n#{subject}\n\n#{msg}"
       bucket.save

@@ -10,6 +10,7 @@ two:
   status: 20
   build_id: 3
   worker_uri: "worker's uri"
+  worker_hostname: "worker's hostname"
   log: "bucket's log"
   error_log: "bucket's error log"
   started_at: 2006-08-30T07:45:00+00:00

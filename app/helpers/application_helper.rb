@@ -23,11 +23,11 @@ module ApplicationHelper
   end
 
   def build_display_details(build)
-    "#{build.identifier} verwaltet von #{build.leader_uri}"
+    "#{build.identifier} verwaltet von #{build.leader_hostname || build.leader_uri}"
   end
 
   def bucket_display_details(bucket)
-    "auf #{bucket.worker_uri}" if bucket.worker_uri
+    "auf #{bucket.worker_hostname || bucket.worker_uri}" if bucket.worker_uri
   end
 
   def bucket_display_status(bucket)

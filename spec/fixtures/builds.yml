@@ -4,6 +4,7 @@ one:
   commit_hash: "c1"
   build_number: 6
   leader_uri: "leader's uri"
+  leader_hostname: "leader's hostname"
 
 three:
   id: 3

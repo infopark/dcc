@@ -183,7 +183,7 @@ describe Worker, "when running as follower" do
     before do
       @worker.stub(:loop?).and_return false
       Bucket.stub(:find).and_return(@bucket = double('bucket', :status= => nil, :save => nil,
-          :log= => nil, :log => 'old_log'))
+          :log= => nil, :log => 'old_log', :leader_hostname => nil))
       @worker.stub(:perform_task).and_raise("an error")
     end
 
@@ -554,7 +554,7 @@ describe Worker, "when running as follower with fixtures" do
     end
 
     it "should send an email if build failed" do
-      Mailer.should_receive(:failure_message).with(@bucket, %r(^druby://)).
+      Mailer.should_receive(:failure_message).with(@bucket).
           and_return(message = double)
       message.should_receive(:deliver)
       @worker.perform_task(@bucket)
@@ -588,7 +588,7 @@ describe Worker, "when running as follower with fixtures" do
   it "should send an email if build was fixed" do
     @bucket.build.project.should_receive(:last_build).with(:before_build => @bucket.build).
         and_return Build.find(332)
-    Mailer.should_receive(:fixed_message).with(@bucket, %r(^druby://)).and_return(message = double)
+    Mailer.should_receive(:fixed_message).with(@bucket).and_return(message = double)
     message.should_receive(:deliver)
     @worker.perform_task(@bucket)
   end

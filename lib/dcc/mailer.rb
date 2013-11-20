@@ -6,12 +6,12 @@ require 'action_mailer'
 module DCC
 
 class Mailer < ActionMailer::Base
-  def failure_message(bucket, host)
-    bucket_state_message(bucket, host, 'fehlgeschlagen')
+  def failure_message(bucket)
+    bucket_state_message(bucket, 'fehlgeschlagen')
   end
 
-  def fixed_message(bucket, host)
-    bucket_state_message(bucket, host, 'repariert')
+  def fixed_message(bucket)
+    bucket_state_message(bucket, 'repariert')
   end
 
   def dcc_message(receivers, subject, message)
@@ -33,9 +33,9 @@ private
         "Build: #{build.identifier}\nTask: #{bucket.name}\n#{message}")
   end
 
-  def bucket_state_message(bucket, host, state)
+  def bucket_state_message(bucket, state)
     bucket_message(bucket, bucket.build.project.e_mail_receivers(bucket.name),
-        "'#{bucket.name}' #{state} auf #{host}",
+        "'#{bucket.name}' #{state} auf #{Socket.gethostname}",
         "#{
           "\nFehler:\n\n#{bucket.error_log}\n\n#{'-' * 75}" if bucket.error_log
         }\nLog:\n\n#{bucket.log}")
