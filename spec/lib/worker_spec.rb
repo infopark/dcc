@@ -183,7 +183,7 @@ describe Worker, "when running as follower" do
     before do
       @worker.stub(:loop?).and_return false
       Bucket.stub(:find).and_return(@bucket = double('bucket', :status= => nil, :save => nil,
-          :log= => nil, :log => 'old_log', :leader_hostname => nil))
+          :log= => nil, :log => 'old_log', :build => double('build', :leader_hostname => nil)))
       @worker.stub(:perform_task).and_raise("an error")
     end
 
