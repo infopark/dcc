@@ -113,6 +113,26 @@ provide_element = function(identifier, container, default_content, create_callba
 };
 
 
+error_actions = [];
+show_error = function(headline, message, ok_action) {
+  if (ok_action) { error_actions.push(ok_action); }
+  var overlay = $("#error_overlay");
+  var messages = $("#error_messages");
+  messages.append(escape_html(headline));
+  messages.append(": ");
+  messages.append(escape_html(message));
+  messages.append("<br/>");
+  provide_element('.close', messages, "<div class='close'></div>",
+      function(button) { button.click(function() {
+        messages.empty();
+        overlay.hide();
+        _.each(error_actions, function(action) { action(); });
+        error_actions = [];
+      }); });
+  overlay.show();
+};
+
+
 // FIXME das muss auch den title-span von Buckets aktualisieren (da kommt der hostname dazu…)
 update_status = function(box, thing)
 {
@@ -180,10 +200,10 @@ update_log = function(bucket_id)
         setTimeout("update_log('" + bucket_id + "');", 5000);
       }
     },
-    error: function(result) {
-      // FIXME schönere Fehlermeldung
-      // FIXME ggf. neues setTimeout (OK → retry, Abbrechen → sein lassen)
-      alert("Log holen fehlgeschlagen." + result.response);
+    error: function(request, message, exception) {
+      show_error("Log holen fehlgeschlagen", message, function() {
+        setTimeout("update_log('" + bucket_id + "');", 5000);
+      });
     }
   });
   return pre;
@@ -335,8 +355,8 @@ render_builds = function(container, project)
             }
             render_build(builds_container, result.build, '');
           },
-          error: function(result) {
-            alert("Build holen fehlgeschlagen." + result.response);
+          error: function(request, message, exception) {
+            show_error("Build holen fehlgeschlagen", message);
           }
         });
       });
@@ -366,8 +386,8 @@ render_project = function(project) {
           success: function(result) {
             box.remove();
           },
-          error: function(result) {
-            alert("Löschen fehlgeschlagen: " + result);
+          error: function(request, message, exception) {
+            show_error("Löschen fehlgeschlagen", message);
           }
         });
       }
@@ -393,8 +413,8 @@ render_project = function(project) {
           build_button.unbind('click');
           build_button.addClass("disabled");
         },
-        error: function(result) {
-          alert("Trigger Build fehlgeschlagen: " + result);
+        error: function(request, message, exception) {
+          show_error("Trigger Build fehlgeschlagen", message);
         }
       });
     });
@@ -444,11 +464,11 @@ update_projects = function() {
       update_search(true);
       setTimeout("update_projects();", 10000);
     },
-    error: function(result) {
-      // FIXME schönere Fehlermeldung
-      // FIXME ggf. neues setTimeout (OK → retry, Abbrechen → sein lassen)
-      alert("Projekte holen fehlgeschlagen." + result.response);
+    error: function(request, message, exception) {
       $('#spinner').fadeOut(100);
+      show_error("Projekte holen fehlgeschlagen", message, function() {
+        setTimeout("update_projects();", 10000);
+      });
     }
   });
 };

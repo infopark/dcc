@@ -1,5 +1,12 @@
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+
 body {
-  font: 100% Verdana, Arial, Helvetica, sans-serif;
+  font: 100% sans-serif;
   background: #666 url(<%= asset_path 'bg_blue.png' %>) fixed 0 0;
   margin: 0;
   padding: 0;
@@ -234,6 +241,57 @@ pre.log {
 
 .overlay .close {
   background-image: url(<%= asset_path 'close.png' %>);
+  position: absolute;
+  right: -15px;
+  top: -15px;
+  cursor: pointer;
+  height: 35px;
+  width: 35px;
+  z-index: 9000;
+}
+
+.error_overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  color: #ffffff;
+  font-size: 20px;
+  text-shadow: 1px 1px 2px #000000;
+  display: none;
+}
+
+.error_overlay h1 {
+  margin-top: 10%;
+}
+
+.error_overlay .messages_background {
+  background-color: rgba(100, 100, 100, 0.8);
+  position: absolute;
+  width: 80%;
+  height: 60%;
+  border-radius: 20px;
+  left: 10%;
+}
+
+.error_overlay .messages_crop {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.error_overlay .messages {
+  overflow: auto;
+  height: 100%;
+  width: 100%;
+}
+
+.error_overlay .close {
+  background-image: url(<%= asset_data_uri 'close.png' %>);
   position: absolute;
   right: -15px;
   top: -15px;
