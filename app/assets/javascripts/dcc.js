@@ -101,6 +101,8 @@ escape_html = function(str)
 };
 
 
+// FIXME Logik, die aus identifier automatisch Klasse oder ID bestimmt und dem erzeugten Element
+// setzt → kein händisches reinrühren in den Aufrufern mehr
 provide_element = function(identifier, container, default_content, create_callback) {
   var element = $(container).find(identifier).first();
   if (element.length == 0) {
@@ -111,6 +113,7 @@ provide_element = function(identifier, container, default_content, create_callba
 };
 
 
+// FIXME das muss auch den title-span von Buckets aktualisieren (da kommt der hostname dazu…)
 update_status = function(box, thing)
 {
   var stat = provide_element('.status', box, "<span class='status'></span>");
@@ -144,7 +147,7 @@ update_status = function(box, thing)
 
 render_title_span = function(box, title, details, click)
 {
-  return $("<span title='" + escape_html(details) + "' class='link'>" + escape_html(title) +
+  return $("<span title='" + escape_html(details) + "' class='title link'>" + escape_html(title) +
       "</span>").appendTo(box).click(click);
 };
 
@@ -221,12 +224,6 @@ find_bucket_element = function(id, specifier)
 };
 
 
-find_build_element = function(id)
-{
-  return $("#" + build_html_id(id));
-};
-
-
 find_project_element = function(id, specifier)
 {
   return $("#" + project_html_id(id, specifier));
@@ -244,7 +241,7 @@ id_from_element = function(clazz, e)
 
 build_id_from_element = function(e)
 {
-  return id_from_element('build', e);
+  return e.length == 0 ? null : id_from_element('build', e);
 };
 
 
@@ -256,82 +253,73 @@ overlay = function(click_element, overlay_element)
 };
 
 
-render_bucket = function(build_box, bucket, update)
+render_bucket = function(build_box, bucket)
 {
-  if (update) {
-    update_status(find_bucket_element(bucket.id), bucket);
-  } else {
-    var log_id = bucket_html_id(bucket.id, 'log');
-    var overlay_id = "overlay_" + log_id;
+  var bucket_box_id = bucket_html_id(bucket.id);
+  var bucket_box = provide_element("#" + bucket_box_id, build_box,
+      "<div class='box' id='" + bucket_box_id + "'></div>", function(box) {
+        var log_id = bucket_html_id(bucket.id, 'log');
+        var overlay_id = "overlay_" + log_id;
 
-    var log_overlay = $("<div class='overlay' id='" + overlay_id + "'><div class='container'>" +
-          "<pre class='log' id='" + log_id + "'></pre>" +
-        "</div></div>").appendTo($('#container'));
+        var log_overlay = $("<div class='overlay' id='" + overlay_id + "'><div class='container'>" +
+              "<pre class='log' id='" + log_id + "'></pre>" +
+            "</div></div>").appendTo($('#container'));
 
-    var box =
-        $("<div class='box' id='" + bucket_html_id(bucket.id) + "'></div>").appendTo(build_box);
-    overlay(render_title_span(box, bucket.name, "auf " + bucket.worker_hostname, function() {
-        update_log(bucket.id);
-      }), log_overlay);
-    update_status(box, bucket);
-  }
+        overlay(render_title_span(box, bucket.name, "auf " + bucket.worker_hostname, function() {
+              update_log(bucket.id);
+            }), log_overlay);
+      });
+  update_status(bucket_box, bucket);
 };
 
 
-render_build = function(div, build, css_class, insert_before)
+render_build = function(div, build, css_class)
 {
-  var build_box = find_build_element(build.id);
-  update = build_box.length > 0;
-  if (update) {
-    update_status(build_box, build);
-  } else {
-    build_box = $("<div class='box " + css_class + "' id='" + build_html_id(build.id) + "'></div>");
-    if (insert_before) {
-      build_box.insertBefore(insert_before);
-    } else {
-      build_box.appendTo(div);
-    }
-    title_box = $("<div class='title'>").appendTo(build_box);
-    bucket_box = $("<div class='box buckets'>").appendTo(build_box).hide();
-    render_title_span(title_box, build.short_identifier,
-      build.identifier + " verwaltet von " + build.leader_hostname,
-      function() {
-        build_box.find('.buckets').toggle();
-      }
-    );
-    update_status(title_box, build);
-    if (build.gitweb_url) {
-      $("<a href='" + build.gitweb_url +
-          "' class='button' target='_blank'>Commit anschauen</a>").appendTo(title_box);
-    }
-  }
-  _.each(_.sortBy(build.in_work_buckets, function(b) { return b.name; }), function(bucket) {
-    render_bucket(bucket_box, bucket, update);
-  });
-  _.each(_.sortBy(build.failed_buckets, function(b) { return b.name; }), function(bucket) {
-    render_bucket(bucket_box, bucket, update);
-  });
-  _.each(_.sortBy(build.pending_buckets, function(b) { return b.name; }), function(bucket) {
-    render_bucket(bucket_box, bucket, update);
-  });
+  var build_box_id = build_html_id(build.id);
+  var build_box = provide_element("#" + build_box_id, div,
+      "<div class='box " + css_class + "' id='" + build_box_id + "'></div>", function(box) {
+        var title_box = $("<div class='title'>").appendTo(box);
+        var bucket_box = $("<div class='box buckets'>").appendTo(box).hide();
+        render_title_span(title_box, build.short_identifier,
+          build.identifier + " verwaltet von " + build.leader_hostname,
+          function() { box.find('.buckets').toggle(); }
+        );
+        update_status(title_box, build);
+        if (build.gitweb_url) {
+          $("<a href='" + build.gitweb_url +
+              "' class='button' target='_blank'>Commit anschauen</a>").appendTo(title_box);
+        }
+        _.each(_.sortBy(build.in_work_buckets, function(b) { return b.name; }), function(bucket) {
+          render_bucket(bucket_box, bucket);
+        });
+        _.each(_.sortBy(build.failed_buckets, function(b) { return b.name; }), function(bucket) {
+          render_bucket(bucket_box, bucket);
+        });
+        _.each(_.sortBy(build.pending_buckets, function(b) { return b.name; }), function(bucket) {
+          render_bucket(bucket_box, bucket);
+        });
+      });
+  update_status(build_box, build);
+  _.each(build.done_buckets, function(bucket) { find_bucket_element(bucket.id).remove(); });
 };
 
-render_builds = function(container, project, update)
+render_builds = function(container, project)
 {
   var builds_box = provide_element('.builds', container, "<div class='builds'></div>",
       function(element) { element.hide(); });
   var last_build = project.last_build;
   if (last_build) {
-    var last_build_box = builds_box.find('.last_build');
-    if (update && last_build.id != build_id_from_element(last_build_box)) {
-      builds_box.empty();
-      update = false;
+    var builds_container = provide_element('.container', builds_box,
+        "<span class='container'></span>");
+    var previous_last_build_id = build_id_from_element(builds_container.find('.last_build'));
+
+    if (last_build.id != previous_last_build_id) {
+      builds_container.empty();
     }
-    render_build(builds_box, last_build, 'last_build');
-    if (update) {
-      _.each(last_build.done_buckets,
-          function(bucket) { find_bucket_element(bucket.id).remove(); });
-    } else if (project.previous_build_id) {
+
+    render_build(builds_container, last_build, 'last_build');
+
+    if (last_build.id != previous_last_build_id && project.previous_build_id) {
       $("<span class='link' id='" + build_html_id(project.previous_build_id) +
           "'>mehr anzeigen</span>").appendTo(builds_box).click(function() {
         var show_more = $(this);
@@ -345,7 +333,7 @@ render_builds = function(container, project, update)
               show_more.remove();
               show_more = null;
             }
-            render_build(builds_box, result.build, '', show_more);
+            render_build(builds_container, result.build, '');
           },
           error: function(result) {
             alert("Build holen fehlgeschlagen." + result.response);
@@ -359,7 +347,6 @@ render_builds = function(container, project, update)
 
 render_project = function(project) {
   var box = find_project_element(project.id);
-  var update = true;
   var build_button;
   var title;
   if (box.length > 0) {
@@ -388,8 +375,10 @@ render_project = function(project) {
     build_button = $("<div class='button green build'>Bauen</div>").appendTo(buttons);
     overlay($("<a title='Stats' class='button yellow stats' onclick='show_stats(" +
         project.id + ")'>◔</a>").appendTo(buttons), $('#overlay'));
-    update = false;
+    render_title_span(title, project.name, "URL: " + project.url + "; " + project.branch,
+        function() { box.find('.builds').toggle(); });
   }
+
   if (project.build_requested) {
     build_button.addClass('disabled');
   } else {
@@ -409,15 +398,9 @@ render_project = function(project) {
         }
       });
     });
-  };
-  var build = project.last_build;
-  if (!update) {
-    render_title_span(title, project.name, "URL: " + project.url + "; " + project.branch,
-      function() {
-        box.find('.builds').toggle();
-      }
-    );
   }
+
+  var build = project.last_build;
   if (build) {
     update_status(title, build);
     var span = provide_element('.indicator', title, "<span class='indicator'></span>");
@@ -440,7 +423,7 @@ render_project = function(project) {
     system_error.remove();
   }
 
-  render_builds(box, project, update);
+  render_builds(box, project);
 };
 
 
