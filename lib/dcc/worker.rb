@@ -359,7 +359,7 @@ private
     log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
     bucket = options[:bucket]
     msg = "uri: #{uri} (#{Socket.gethostname})\n" +
-        "leader_uri: #{leader_uri}#{bucket && " (#{bucket.leader_hostname})"}\n\n" +
+        "leader_uri: #{leader_uri}#{bucket && " (#{bucket.build.leader_hostname})"}\n\n" +
         "#{e.message}\n\n#{e.backtrace.join("\n")}"
     log.error "#{subject}\n#{msg}"
     if bucket
