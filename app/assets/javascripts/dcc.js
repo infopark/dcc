@@ -434,10 +434,12 @@ render_projects = function(projects) {
 
 
 update_projects = function() {
+  $('#spinner').fadeIn(300);
   $.ajax({
     url: '/project/list',
     dataType: 'json',
     success: function(result) {
+      $('#spinner').fadeOut(500);
       render_projects(result.projects);
       update_search(true);
       setTimeout("update_projects();", 10000);
@@ -446,6 +448,7 @@ update_projects = function() {
       // FIXME schönere Fehlermeldung
       // FIXME ggf. neues setTimeout (OK → retry, Abbrechen → sein lassen)
       alert("Projekte holen fehlgeschlagen." + result.response);
+      $('#spinner').fadeOut(100);
     }
   });
 };

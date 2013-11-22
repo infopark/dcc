@@ -252,15 +252,16 @@ pre.log {
 }
 
 #spinner {
-  height: 100%;
-  position: fixed;
+  height: 40px;
+  position: absolute;
   background: white url(<%= asset_path 'loader.gif' %>) no-repeat center center;
   opacity: 0.5;
-  left: 0;
-  top: 0;
+  right: 120px;
+  top: 25px;
   z-index: 100;
-  width: 100%;
+  width: 40px;
   display: none;
+  border-radius: 20px;
 }
 
 #search {
