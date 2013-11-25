@@ -141,42 +141,50 @@ show_error = function(headline, message, ok_action) {
 };
 
 
-// FIXME das muss auch den title-span von Buckets aktualisieren (da kommt der hostname dazu…)
-update_status = function(box, thing)
+render_title = function(box, title, details, thing, click, title_span_create_callback)
 {
-  var stat = provide_element('.status', box, "<span></span>");
-  var href;
-  if (thing.bucket_state_counts) {
-    href = "/project/show_build/" + thing.id;
-  } else {
-    href = "/project/show_bucket/" + thing.id;
-  }
-  stat.empty();
-  var s = "<a href='" + href + "' target='_blank'>" +
-      "<span class='" + status_css_class(thing.status) + "'>" + status_message(thing.status);
-  if (thing.bucket_state_counts) {
-    s += " (";
-    var prepend_comma = false;
-    _.each(thing.bucket_state_counts, function(value, key) {
-      if (value > 0) {
-        if (prepend_comma) {
-          s += ", ";
+  var title_box = provide_element(".title", box, "<div></div>");
+  var title_span = provide_element(".title", title_box, "<span class='link'>" + escape_html(title) +
+      "</span>", function(element) {
+        element.click(click);
+        if (title_span_create_callback) {
+          title_span_create_callback(element);
         }
-        s += value + " " + status_message(parseInt(key));
-        prepend_comma = true;
-      }
-    });
-    s += ")";
+      });
+  title_span.attr("title", details);
+
+  var stat = provide_element('.status', title_box, "<span></span>");
+  if (thing) {
+    var href;
+    if (thing.bucket_state_counts) {
+      href = "/project/show_build/" + thing.id;
+    } else {
+      href = "/project/show_bucket/" + thing.id;
+    }
+    var stat_link = provide_element('.link', stat, "<a href='" + href + "' target='_blank'></a");
+    stat_link.empty();
+
+    var s = "<span class='" + status_css_class(thing.status) + "'>" + status_message(thing.status);
+    if (thing.bucket_state_counts) {
+      s += " (";
+      var prepend_comma = false;
+      _.each(thing.bucket_state_counts, function(value, key) {
+        if (value > 0) {
+          if (prepend_comma) {
+            s += ", ";
+          }
+          s += value + " " + status_message(parseInt(key));
+          prepend_comma = true;
+        }
+      });
+      s += ")";
+    }
+    s += duration(thing);
+    s += "</span>"
+    $(s).appendTo(stat_link);
   }
-  s += duration(thing) + "</a></span>";
-  $(s).appendTo(stat);
-};
 
-
-render_title_span = function(box, title, details, click)
-{
-  return $("<span title='" + escape_html(details) + "' class='title link'>" + escape_html(title) +
-      "</span>").appendTo(box).click(click);
+  return title_box;
 };
 
 
@@ -284,50 +292,46 @@ overlay = function(click_element, overlay_element)
 render_bucket = function(build_box, bucket)
 {
   var bucket_box_id = bucket_html_id(bucket.id);
-  var bucket_box = provide_element("#" + bucket_box_id, build_box, "<div class='box'></div>",
-      function(box) {
-        var log_id = bucket_html_id(bucket.id, 'log');
-        var overlay_id = "overlay_" + log_id;
+  var bucket_box = provide_element("#" + bucket_box_id, build_box, "<div class='box'></div>");
 
-        var log_overlay = $("<div class='overlay' id='" + overlay_id + "'><div class='container'>" +
-              "<pre class='log' id='" + log_id + "'></pre>" +
-            "</div></div>").appendTo($('#container'));
+  var log_id = bucket_html_id(bucket.id, 'log');
+  var overlay_id = "overlay_" + log_id;
+  var log_overlay = provide_element("#" + overlay_id, "#container",
+      "<div class='overlay'><div class='container'>" +
+        "<pre class='log' id='" + log_id + "'></pre>" +
+      "</div></div>");
 
-        overlay(render_title_span(box, bucket.name, "auf " + bucket.worker_hostname, function() {
-              update_log(bucket.id);
-            }), log_overlay);
-      });
-  update_status(bucket_box, bucket);
+  render_title(bucket_box, bucket.name, "auf " + bucket.worker_hostname, bucket,
+      function() { update_log(bucket.id); },
+      function(title_span) { overlay(title_span, log_overlay); });
 };
 
 
 render_build = function(div, build, css_class)
 {
   var build_box_id = build_html_id(build.id);
-  var build_box = provide_element("#" + build_box_id, div,
-      "<div class='box " + css_class + "'></div>", function(box) {
-        var title_box = $("<div class='title'>").appendTo(box);
-        var bucket_box = $("<div class='box buckets'>").appendTo(box).hide();
-        render_title_span(title_box, build.short_identifier,
-          build.identifier + " verwaltet von " + build.leader_hostname,
-          function() { box.find('.buckets').toggle(); }
-        );
-        update_status(title_box, build);
-        if (build.gitweb_url) {
-          $("<a href='" + build.gitweb_url +
-              "' class='button' target='_blank'>Commit anschauen</a>").appendTo(title_box);
-        }
-        _.each(_.sortBy(build.in_work_buckets, function(b) { return b.name; }), function(bucket) {
-          render_bucket(bucket_box, bucket);
-        });
-        _.each(_.sortBy(build.failed_buckets, function(b) { return b.name; }), function(bucket) {
-          render_bucket(bucket_box, bucket);
-        });
-        _.each(_.sortBy(build.pending_buckets, function(b) { return b.name; }), function(bucket) {
-          render_bucket(bucket_box, bucket);
-        });
-      });
-  update_status(build_box, build);
+  var build_box = provide_element("#" + build_box_id, div, "<div class='box " + css_class + "'/>");
+
+  var title_box = render_title(build_box, build.short_identifier,
+      build.identifier + " verwaltet von " + build.leader_hostname, build,
+      function() { build_box.find('.buckets').toggle(); });
+  if (build.gitweb_url) {
+    provide_element(".vcslink", title_box,
+        "<a href='" + build.gitweb_url + "' class='button' target='_blank'>Commit anschauen</a>");
+  }
+
+  var bucket_box = provide_element(".buckets", build_box, "<div class='box'/>", function(box) {
+    box.hide();
+  });
+  _.each(_.sortBy(build.in_work_buckets, function(b) { return b.name; }), function(bucket) {
+    render_bucket(bucket_box, bucket);
+  });
+  _.each(_.sortBy(build.failed_buckets, function(b) { return b.name; }), function(bucket) {
+    render_bucket(bucket_box, bucket);
+  });
+  _.each(_.sortBy(build.pending_buckets, function(b) { return b.name; }), function(bucket) {
+    render_bucket(bucket_box, bucket);
+  });
   _.each(build.done_buckets, function(bucket) { find_bucket_element(bucket.id).remove(); });
 };
 
@@ -373,25 +377,21 @@ render_builds = function(container, project)
 
 
 render_project = function(project) {
-  var box = find_project_element(project.id);
-  var build_button;
-  var title;
-  if (box.length > 0) {
-    build_button = box.find('.buttons').find('.build');
-    title = box.find('.title');
-  } else {
-    box = $("<div class='box' id='" + project_html_id(project.id) +
-        "'></div>").appendTo(this);
-    title = $("<div class='title'></div>)").appendTo(box);
-    var buttons = $("<div class='buttons'></div>").appendTo(title);
-    $("<div class='button red'>Löschen</div>").appendTo(buttons).click(function() {
+  var project_box = provide_element("#" + project_html_id(project.id), this,
+      "<div class='box'/>");
+  var title_box = render_title(project_box, project.name,
+      "URL: " + project.url + "; " + project.branch, project.last_build,
+      function() { project_box.find('.builds').toggle(); });
+
+  var buttons = provide_element(".buttons", title_box, "<div/>", function(element) {
+    $("<div class='button red'>Löschen</div>").appendTo(element).click(function() {
       if (confirm("Soll das Projekt „" + project.name + "“ wirklich gelöscht werden?")) {
         $.ajax({
           url: '/project/delete/' + project.id,
           type: 'POST',
           dataType: 'json',
           success: function(result) {
-            box.remove();
+            project_box.remove();
           },
           error: function(request, message, exception) {
             show_error("Löschen fehlgeschlagen", message);
@@ -399,12 +399,12 @@ render_project = function(project) {
         });
       }
     });
-    build_button = $("<div class='button green build'>Bauen</div>").appendTo(buttons);
-    overlay($("<a title='Stats' class='button yellow stats' onclick='show_stats(" +
-        project.id + ")'>◔</a>").appendTo(buttons), $('#overlay'));
-    render_title_span(title, project.name, "URL: " + project.url + "; " + project.branch,
-        function() { box.find('.builds').toggle(); });
-  }
+  });
+  var build_button = provide_element(".build", buttons, "<div class='button green'>Bauen</div>");
+  var stats_button = provide_element(".stats", buttons,
+      "<a title='Stats' class='button yellow'>◔</a>");
+  stats_button.click(function() { show_stats(project.id); });
+  overlay(stats_button, $('#overlay'));
 
   if (project.build_requested) {
     build_button.addClass('disabled');
@@ -429,8 +429,7 @@ render_project = function(project) {
 
   var build = project.last_build;
   if (build) {
-    update_status(title, build);
-    var span = provide_element('.indicator', title, "<span></span>");
+    var span = provide_element('.indicator', title_box, "<span></span>");
     span.empty();
     if (unfinished_buckets_count(build) > 0) {
       $("<span class='progress_indicator'>" +
@@ -442,15 +441,15 @@ render_project = function(project) {
   var system_error = find_project_element(project.id, 'error');
   if (project.last_system_error) {
     if (system_error.length == 0) {
-      system_error =
-          $("<pre id='" + project_html_id(project.id, 'error') + "'></pre>").appendTo(box);
+      system_error = $("<pre id='" + project_html_id(project.id, 'error') +
+          "'></pre>").appendTo(project_box);
       render_log(system_error, project.last_system_error);
     }
   } else {
     system_error.remove();
   }
 
-  render_builds(box, project);
+  render_builds(project_box, project);
 };
 
 
