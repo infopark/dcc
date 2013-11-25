@@ -103,12 +103,18 @@ escape_html = function(str)
 };
 
 
-// FIXME Logik, die aus identifier automatisch Klasse oder ID bestimmt und dem erzeugten Element
-// setzt → kein händisches reinrühren in den Aufrufern mehr
 provide_element = function(identifier, container, default_content, create_callback) {
   var element = $(container).find(identifier).first();
   if (element.length == 0) {
     element = $(default_content).appendTo($(container));
+    if (identifier[0] == "#") {
+      element.attr("id", identifier.substring(1));
+    } else if (identifier[0] == '.') {
+      var clazz = identifier.substring(1);
+      if (!element.hasClass(clazz)) {
+        element.addClass(clazz);
+      }
+    }
     if (create_callback) { create_callback(element); }
   }
   return element;
@@ -124,7 +130,7 @@ show_error = function(headline, message, ok_action) {
   messages.append(": ");
   messages.append(escape_html(message));
   messages.append("<br/>");
-  provide_element('.close', messages, "<div class='close'></div>",
+  provide_element('.close', messages, "<div></div>",
       function(button) { button.click(function() {
         messages.empty();
         overlay.hide();
@@ -138,7 +144,7 @@ show_error = function(headline, message, ok_action) {
 // FIXME das muss auch den title-span von Buckets aktualisieren (da kommt der hostname dazu…)
 update_status = function(box, thing)
 {
-  var stat = provide_element('.status', box, "<span class='status'></span>");
+  var stat = provide_element('.status', box, "<span></span>");
   var href;
   if (thing.bucket_state_counts) {
     href = "/project/show_build/" + thing.id;
@@ -269,7 +275,7 @@ build_id_from_element = function(e)
 
 overlay = function(click_element, overlay_element)
 {
-    provide_element('.close', overlay_element, "<div class='close'></div>",
+    provide_element('.close', overlay_element, "<div></div>",
         function(element) { element.click(function() { overlay_element.toggle(); }); });
     click_element.click(function() { overlay_element.toggle(); });
 };
@@ -278,8 +284,8 @@ overlay = function(click_element, overlay_element)
 render_bucket = function(build_box, bucket)
 {
   var bucket_box_id = bucket_html_id(bucket.id);
-  var bucket_box = provide_element("#" + bucket_box_id, build_box,
-      "<div class='box' id='" + bucket_box_id + "'></div>", function(box) {
+  var bucket_box = provide_element("#" + bucket_box_id, build_box, "<div class='box'></div>",
+      function(box) {
         var log_id = bucket_html_id(bucket.id, 'log');
         var overlay_id = "overlay_" + log_id;
 
@@ -299,7 +305,7 @@ render_build = function(div, build, css_class)
 {
   var build_box_id = build_html_id(build.id);
   var build_box = provide_element("#" + build_box_id, div,
-      "<div class='box " + css_class + "' id='" + build_box_id + "'></div>", function(box) {
+      "<div class='box " + css_class + "'></div>", function(box) {
         var title_box = $("<div class='title'>").appendTo(box);
         var bucket_box = $("<div class='box buckets'>").appendTo(box).hide();
         render_title_span(title_box, build.short_identifier,
@@ -327,12 +333,11 @@ render_build = function(div, build, css_class)
 
 render_builds = function(container, project)
 {
-  var builds_box = provide_element('.builds', container, "<div class='builds'></div>",
+  var builds_box = provide_element('.builds', container, "<div></div>",
       function(element) { element.hide(); });
   var last_build = project.last_build;
   if (last_build) {
-    var builds_container = provide_element('.container', builds_box,
-        "<span class='container'></span>");
+    var builds_container = provide_element('.container', builds_box, "<span></span>");
     var previous_last_build_id = build_id_from_element(builds_container.find('.last_build'));
 
     if (last_build.id != previous_last_build_id) {
@@ -425,7 +430,7 @@ render_project = function(project) {
   var build = project.last_build;
   if (build) {
     update_status(title, build);
-    var span = provide_element('.indicator', title, "<span class='indicator'></span>");
+    var span = provide_element('.indicator', title, "<span></span>");
     span.empty();
     if (unfinished_buckets_count(build) > 0) {
       $("<span class='progress_indicator'>" +
@@ -450,7 +455,7 @@ render_project = function(project) {
 
 
 render_projects = function(projects) {
-  var projects_element = provide_element("#projects", "#mainContent", "<div id='projects'></div>");
+  var projects_element = provide_element("#projects", "#mainContent", "<div></div>");
   _.each(_.sortBy(projects, function(p) { return p.name; }), render_project, projects_element);
 };
 
