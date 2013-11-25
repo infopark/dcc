@@ -3,6 +3,8 @@
  * DCC Client
  */
 
+window.onbeforeunload = function() { show_error = function() {}; };
+
 status_message = function(status)
 {
   switch(status) {
