@@ -22,8 +22,6 @@ class Dcc < DaemonSpawn::Base
     ActiveRecord::Base.establish_connection(
         YAML::load(File.read('config/database.yml'))[config[:environment]])
 
-    # FIXME
-    #require 'lazy_attributes'
     require 'dcc/worker'
     require 'dcc/mailer'
 

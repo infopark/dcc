@@ -21,8 +21,8 @@ describe Bucket do
   end
 
   it "may have a log text" do
-    @bucket.log.should be_nil
-    Bucket.find(2).log.should == "bucket's log"
+    Bucket.select(:log).find(1).log.should be_nil
+    Bucket.select(:log).find(2).log.should == "bucket's log"
   end
 
   it "may have a worker uri" do
@@ -46,8 +46,8 @@ describe Bucket do
   end
 
   it "may have an error log" do
-    @bucket.error_log.should be_nil
-    Bucket.find(2).error_log.should == "bucket's error log"
+    Bucket.select(:error_log).find(1).error_log.should be_nil
+    Bucket.select(:error_log).find(2).error_log.should == "bucket's error log"
   end
 
   describe "when being sorted" do

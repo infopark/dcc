@@ -27,7 +27,7 @@ class ProjectController < ApplicationController
   end
 
   def log
-    bucket = Bucket.find(params[:id])
+    bucket = Bucket.select(:log).find(params[:id])
     render :json => {
       :log => bucket.log,
       :logs => bucket.logs.map {|l| l.log}

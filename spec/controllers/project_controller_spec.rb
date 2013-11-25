@@ -117,15 +117,24 @@ context "when requesting all projects" do
 end
 
 context "when requesting a bucket log" do
+  let(:log_scope) { Bucket.select(:log) }
   before do
-    Bucket.stub(:find).and_return double(
+    log_scope
+    Bucket.stub(:select).and_return log_scope
+    log_scope.stub(:find).and_return double(
       log: "the complete log",
       logs: %w(some log fragments).map {|l| double(log: l) }
     )
   end
 
+  it "explicitly asks for the bucket log" do
+    Bucket.should_receive(:select).with(:log).ordered.and_return log_scope
+    log_scope.should_receive(:find).ordered
+    get "log", id: 666
+  end
+
   it "uses the requested bucket" do
-    Bucket.should_receive(:find).with("666").and_return Bucket.new
+    log_scope.should_receive(:find).with("666").and_return Bucket.new
     get "log", :id => 666
   end
 

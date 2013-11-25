@@ -6,8 +6,9 @@ end
 class Bucket < ActiveRecord::Base
   has_many :logs, :dependent => :delete_all
   belongs_to :build
-  # FIXME wie in Rails 3?
-  #attr_lazy :log
+
+  default_scope { select_without_log }
+  scope :select_without_log, lambda { select(column_names - %w[log error_log]) }
 
   def to_s
     "#<Bucket; ID: #{id}, Task: #{name}, Build: #{build.identifier}, Project: #{build.project.name}>"
