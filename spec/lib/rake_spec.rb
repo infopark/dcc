@@ -6,7 +6,7 @@ require 'dcc/rake'
 module DCC
 
 describe Rake do
-  let(:rake) {Rake.new("project path")}
+  let(:rake) {Rake.new("project path", "log file")}
 
   describe "when performing rake" do
     before do

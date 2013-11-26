@@ -25,19 +25,29 @@ end
 class TestRake < Rake
   def initialize
     FileUtils.mkdir_p self.class.path
-    super(self.class.path)
+    super(self.class.path, File.join(self.class.path, "rake.log"))
   end
 
   def self.path
     'tmp'
   end
 
+  def self.log_files
+    @log_files ||= []
+  end
+
   def self.cleanup
     FileUtils.rm_rf path
+    log_files.each {|file| FileUtils.rm_f file }
+  end
+
+  def log_file=(log_file)
+    self.class.log_files << log_file
+    @log_file = log_file
   end
 
   def rake(*args)
-    File.open(log_file, "w:iso-8859-1") do |f|
+    File.open(@log_file, "w:iso-8859-1") do |f|
       # angebissenes € am Ende
       f.write "first fünf rake output\n€".force_encoding('ISO8859-1')[0..-2]
       f.flush
@@ -494,7 +504,10 @@ describe Worker, "when running as follower" do
     describe "when performing rake task" do
       before do
         @rake = TestRake.new
-        Rake.stub(:new).and_return @rake
+        Rake.stub(:new) do |path, log_file|
+          @rake.log_file = log_file
+          @rake
+        end
       end
 
       after do
@@ -512,8 +525,22 @@ describe Worker, "when running as follower" do
         end
         File.stub(:read)
 
-        Rake.should_receive(:new).with('path').and_return @rake
+        Rake.should_receive(:new) do |path, log_file|
+          path.should == 'path'
+          @rake.log_file = log_file
+          @rake
+        end
         @rake.should_receive(:rake).with('task')
+        @worker.perform_rake_task('path', 'task', nil)
+      end
+
+      it "should use a log file in its log dir" do
+        Rake.should_receive(:new) do |path, log_file|
+          log_file.should be_start_with("#{File.expand_path("../../../log", __FILE__)}/")
+          @rake.log_file = log_file
+          @rake
+        end
+        @rake.stub(:rake)
         @worker.perform_rake_task('path', 'task', nil)
       end
 

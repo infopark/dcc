@@ -7,19 +7,15 @@ module DCC
 class Rake
   include CommandLine
 
-  def initialize(path)
+  def initialize(path, log_file)
     @path = path
-  end
-
-  def log_file
-    @log_file ||= File.join(@path, "rake.log")
+    @log_file = log_file
   end
 
   def rake(task, options = {})
-    options = {:dir => @path, :stdout => log_file, :stderr => log_file}.merge(options)
-    FileUtils.rm_f(log_file)
-    FileUtils.mkdir_p(File.dirname(log_file))
-    FileUtils.touch(log_file)
+    options = {:dir => @path, :stdout => @log_file, :stderr => @log_file}.merge(options)
+    FileUtils.mkdir_p(File.dirname(@log_file))
+    FileUtils.touch(@log_file)
     command = []
     if File.exists?(File.join(@path, 'Gemfile'))
       command << 'bundle'

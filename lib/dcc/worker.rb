@@ -5,6 +5,8 @@ require 'monitor'
 require 'set'
 require 'timeout'
 require 'socket'
+require 'active_support'
+require 'fileutils'
 
 require 'models/project'
 require 'models/build'
@@ -171,7 +173,8 @@ class Worker
 
   def _perform_rake_task(path, task, logs)
     log.debug "performing rake task #{task}"
-    rake = Rake.new(path)
+    log_file = File.expand_path("../../../log/rake_#{SecureRandom.hex(8)}.log", __FILE__)
+    rake = Rake.new(path, log_file)
     old_connection_pool = close_db_connections
     pid = fork do
       ActiveRecord::Base.establish_connection(old_connection_pool.spec.config)
@@ -185,10 +188,11 @@ class Worker
     ActiveRecord::Base.establish_connection(old_connection_pool.spec.config)
     log_length = 0
     while !Process.waitpid(pid, Process::WNOHANG)
-      log_length += read_log_into_db(rake.log_file, log_length, logs)
+      log_length += read_log_into_db(log_file, log_length, logs)
       sleep log_polling_intervall
     end
-    read_log_into_db(rake.log_file, log_length, logs)
+    read_log_into_db(log_file, log_length, logs)
+    FileUtils.rm_rf log_file
     $?
   end
 
