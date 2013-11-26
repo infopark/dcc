@@ -216,11 +216,25 @@ describe Worker, "when running as follower" do
       @project.stub(:bucket_tasks).with('t1').and_return(['rt1'])
       @project.stub(:bucket_tasks).with('t2').and_return(['rt21', 'rt22'])
       @logs = [double('l1', :log => 'log1'), double('l2', :log => 'log2')]
-      @bucket = double('bucket', :name => "t2", :log= => nil, :finished_at= => nil,
-          :build => double('build', :id => 123, :identifier => 'the commit.666',
-          :project => @project, :commit => 'the commit', :build_number => 666),
-          :save => nil, :logs => @logs, :status= => nil, :log => "nothing to say here",
-          :build_error_log => nil, :error_log => nil)
+      @bucket = double('bucket',
+        :name => "t2",
+        :log= => nil,
+        :finished_at= => nil,
+        :error_log= => nil,
+        :error_log => nil,
+        :save => nil,
+        :logs => @logs,
+        :status= => nil,
+        :log => "nothing to say here",
+        :build_error_log => nil,
+        :build => double('build',
+          :id => 123,
+          :identifier => 'the commit.666',
+          :project => @project,
+          :commit => 'the commit',
+          :build_number => 666
+        ),
+      )
     end
 
     describe "when performing task" do
@@ -534,13 +548,32 @@ describe Worker, "when running as follower with fixtures" do
   fixtures :buckets, :builds
 
   before do
-    @bucket = double('bucket', :logs => [], :name => 'task', :log= => nil, :status= => nil,
-        :finished_at= => nil, :save => nil, :build => double('build', :id => 1000,
-        :commit => 'commit', :project => double('project', :bucket_tasks => [], :id => 33,
-        :before_all_tasks => [], :before_bucket_tasks => [], :after_bucket_tasks => [],
-        :before_all_code => nil, :before_each_bucket_group_code => nil,
-        :bucket_group => 'default', :last_build => nil,
-        :git => double('git', :update => nil, :path => '/nix', :current_commit => nil))))
+    @bucket = double('bucket',
+      :logs => [],
+      :name => 'task',
+      :log= => nil,
+      :status= => nil,
+      :finished_at= => nil,
+      :save => nil,
+      :error_log => nil,
+      :error_log= => nil,
+      :build => double('build',
+        :id => 1000,
+        :commit => 'commit',
+        :project => double('project',
+          :bucket_tasks => [],
+          :id => 33,
+          :before_all_tasks => [],
+          :before_bucket_tasks => [],
+          :after_bucket_tasks => [],
+          :before_all_code => nil,
+          :before_each_bucket_group_code => nil,
+          :bucket_group => 'default',
+          :last_build => nil,
+          :git => double('git', :update => nil, :path => '/nix', :current_commit => nil)
+        )
+      )
+    )
     @worker = Worker.new('dcc_test', nil, :log_level => ::Logger::ERROR)
     @worker.stub(:execute)
   end

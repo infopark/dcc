@@ -140,6 +140,7 @@ class Worker
       whole_log << log.log
     end
     bucket.log = whole_log
+    bucket.error_log = nil
     bucket.status = succeeded ? 10 : 40
     bucket.finished_at = Time.now
     bucket.save
