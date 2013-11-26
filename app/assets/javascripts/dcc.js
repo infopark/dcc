@@ -341,13 +341,13 @@ render_builds = function(container, project)
       function(element) { element.hide(); });
   var last_build = project.last_build;
   if (last_build) {
-    var builds_container = provide_element('.container', builds_box, "<span></span>");
-    var previous_last_build_id = build_id_from_element(builds_container.find('.last_build'));
+    var previous_last_build_id = build_id_from_element(builds_box.find('.last_build'));
 
     if (last_build.id != previous_last_build_id) {
-      builds_container.empty();
+      builds_box.empty();
     }
 
+    var builds_container = provide_element('.container', builds_box, "<span></span>");
     render_build(builds_container, last_build, 'last_build');
 
     if (last_build.id != previous_last_build_id && project.previous_build_id) {
