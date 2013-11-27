@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+gem 'honeybadger'
+
 gem 'daemon-spawn'
 gem 'rails', '~>3.2'
 gem 'mysql', '~>2.8'
