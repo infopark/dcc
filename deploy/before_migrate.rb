@@ -15,6 +15,7 @@ end
 Chef::Log.info('= Building app config')
 
 {
+  'config/initializers/dcc_credentials.rb' => nil,
   'config/initializers/crm_credentials.rb' => %Q@
     Infopark::Crm.configure do |config|
       config.url = '#{node[:deploy][:dcc][:webcrm][:url]}'
@@ -36,22 +37,24 @@ Chef::Log.info('= Building app config')
     action :delete
   end
 
-  Chef::Log.info("= Writing config file to #{shared_config_path}")
-  file shared_config_path do
-    owner node[:opsworks][:deploy_user][:user]
-    group node[:opsworks][:deploy_user][:group]
-    action :create
-    content config_content
-  end
-
   Chef::Log.info("= Deleting default app config #{released_config_path}")
   file released_config_path do
     action :delete
   end
 
-  Chef::Log.info("= Link app config #{released_config_path} to #{shared_config_path}")
-  link released_config_path do
-    to shared_config_path
-    owner node[:opsworks][:deploy_user][:user]
+  if config_content
+    Chef::Log.info("= Writing config file to #{shared_config_path}")
+    file shared_config_path do
+      owner node[:opsworks][:deploy_user][:user]
+      group node[:opsworks][:deploy_user][:group]
+      action :create
+      content config_content
+    end
+
+    Chef::Log.info("= Link app config #{released_config_path} to #{shared_config_path}")
+    link released_config_path do
+      to shared_config_path
+      owner node[:opsworks][:deploy_user][:user]
+    end
   end
 end
