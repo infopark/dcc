@@ -8,6 +8,7 @@ gem 'jquery-rails'
 gem 'underscore-rails'
 gem 'infopark-politics', '>= 0.5.0'
 gem 'thin'
+gem 'infopark_crm_connector'
 
 # Gems used only for assets and not required
 # in production environments by default.

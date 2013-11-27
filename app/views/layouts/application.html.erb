@@ -15,10 +15,18 @@
 <body>
   <div id="container">
     <div id="headerContent">
-      <%= link_to image_tag('logo.png', :class => 'logo'), :action => 'index' %>
+      <%= link_to image_tag('logo.png', :class => 'logo'), root_path %>
       <%= yield(:header_content) %>
     </div>
     <div id="mainContent">
+      <div id="login">
+        <% if logged_in? %>
+          <%= t('user.logged_in_as') + ": " + @current_user.login %>
+          &nbsp;|&nbsp;
+          <%= link_to(t('user.logout'), logout_path, :class => :standard) %>
+          <br />
+        <% end %>
+      </div>
       <%= yield %>
     </div>
     <% unless (extra_content = yield(:extra_content)).blank? -%>

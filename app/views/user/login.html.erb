@@ -1,0 +1,10 @@
+<%= form_for :user, :url => login_url do |f| -%>
+  <%= hidden_field_tag :return_to, params[:return_to] %>
+  <%= f.label :login, t('user.login') %>
+  <%= f.text_field :login %>
+  <%= f.label :password, t('user.password') %>
+  <%= f.password_field :password %>
+  <br />
+  <%= button_tag(t('user.login_submit'),
+                  :name => :login, :class => 'btn btn-primary') %>
+<% end -%>

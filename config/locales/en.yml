@@ -1,5 +1,7 @@
-# Sample localization file for English. Add more files in this directory for other locales.
-# See https://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
-
 en:
-  hello: "Hello world"
+  user:
+    login: Login (E-Mail)
+    password: Password
+    logged_in_as: Logged in as
+    logout: Logout
+    login_submit: Log me into dcc
