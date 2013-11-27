@@ -1,0 +1,3 @@
+'^git@github.com:(.*?)(\.git)?$': 'http://github.com/#{$1}/commit/#{commit}'
+'^git://github.com/(.*?)(\.git)?$': 'http://github.com/#{$1}/commit/#{commit}'
+'^http://github.com/(.*?)(\.git)?$': 'http://github.com/#{$1}/commit/#{commit}'
