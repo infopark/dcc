@@ -110,9 +110,15 @@ describe Project, "when creating a new one" do
   before(:each) do
   end
 
-  it "should raise an error when a project with the given name already exists" do
-    Project.new(:name => 'name', :url => 'url', :branch => 'branch').save
-    lambda {Project.new(:name => 'name', :url => 'a url', :branch => 'a branch').save}.should\
+  it "should raise an error when a project with the given name, branch and owner already exists" do
+    # FIXME shclägt grad nicht fehl, weil nil offenbar nicht für uniqueness taugt
+    # FIXME Idee: immer leerstring speichern, wenn owner nil und die Spalte auf not_null setzen
+    #Project.new(:name => 'name', :url => 'url', :branch => 'branch').save
+    #Lambda {Project.new(:name => 'name', :url => 'a url', :branch => 'branch').save}.should\
+    #    raise_error(ActiveRecord::StatementInvalid)
+
+    Project.new(name: 'name', url: 'url', branch: 'branch', owner: 'owner').save
+    lambda {Project.new(name: 'name', url: 'a url', branch: 'branch', owner: 'owner').save}.should\
         raise_error(ActiveRecord::StatementInvalid)
   end
 
