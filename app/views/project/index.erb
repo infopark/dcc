@@ -1,9 +1,10 @@
 <% content_for :extra_content do -%>
   <%= form_for :project, :url => {:action => :create} do |f| -%>
-    Name: <%= f.text_field :name %>
-    URL: <%= f.text_field :url %>
-    Branch: <%= f.text_field :branch %>
-    <%= submit_tag 'Anlegen' %>
+    <%= f.label :name, t('project.name') %>: <%= f.text_field :name %>
+    <%= f.label :url, t('project.url') %>: <%= f.text_field :url %>
+    <%= f.label :branch, t('project.branch') %>: <%= f.text_field :branch %>
+    <%= f.check_box :personal, checked: true %><%= f.label :personal, t('project.personal') %>
+    <%= submit_tag t('project.create') %>
   <% end -%>
 <% end -%>
 

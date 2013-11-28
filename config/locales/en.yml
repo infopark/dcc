@@ -4,4 +4,10 @@ en:
     password: Password
     logged_in_as: Logged in as
     logout: Logout
-    login_submit: Log me into dcc
+    login_submit: Log me in
+  project:
+    name: Name
+    url: Repository URL
+    branch: Branch
+    personal: Personal
+    create: Create Project

@@ -385,8 +385,11 @@ render_builds = function(container, project)
 render_project = function(project) {
   var project_box = provide_element("#" + project_html_id(project.id), this,
       "<div class='box'/>");
-  var title_box = render_title(project_box, project.name, true,
-      "URL: " + project.url + "; Branch: " + project.branch,
+  var details = "URL: " + project.url + "; Branch: " + project.branch;
+  if (project.owner) {
+    details += "; Owner: " + project.owner;
+  }
+  var title_box = render_title(project_box, project.name, details, true,
       project.last_build, function() { project_box.find('.builds').toggle(); });
 
   var buttons = provide_element(".buttons", title_box, "<div/>", function(element) {

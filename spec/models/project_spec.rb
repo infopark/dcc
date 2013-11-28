@@ -24,6 +24,11 @@ describe Project do
     @project.branch.should == "project branch"
   end
 
+  it "may have an owner" do
+    @project.owner.should be_nil
+    Project.find(2).owner.should == "project owner"
+  end
+
   it "may have a last_commit" do
     @project.last_commit.should be_nil
     Project.find(2).last_commit.should == "project's last commit"
@@ -94,7 +99,8 @@ describe Project do
         build_requested: nil,
         last_build: nil,
         previous_build_id: nil,
-        last_system_error: nil
+        last_system_error: nil,
+        owner: nil
       }.with_indifferent_access
     end
   end

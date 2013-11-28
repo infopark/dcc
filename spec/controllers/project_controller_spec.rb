@@ -24,6 +24,12 @@ context "when creating a project" do
     post 'create', {:project => {:name => 'the name', :url => 'the url', :branch => 'the branch'}}
     response.should redirect_to(:action => :index)
   end
+
+  it "should set the owner to the currently logged in user when “personal” is true" do
+    Project.should_receive(:new).with(hash_including(owner: "thomas.witt@infopark.de")).
+        and_return mock_model(Project, save: nil)
+    post 'create', project: {name: 'foo', url: 'bar', branch: 'master', personal: true}
+  end
 end
 
 context "when deleting a project" do

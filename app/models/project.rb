@@ -13,7 +13,7 @@ class Project < ActiveRecord::Base
   has_many :builds, :dependent => :destroy
   has_many :dependencies, :dependent => :destroy
   validate :must_have_name, :must_have_url, :must_have_branch
-  attr_accessible :name, :url, :branch
+  attr_accessible :name, :url, :branch, :owner
 
   attr_writer :before_all_tasks
 
@@ -218,16 +218,17 @@ class Project < ActiveRecord::Base
 
   def as_json(*args)
     lb = last_build
-    pb = last_build(:before_build => lb)
+    pb = last_build(before_build: lb)
     {
-      :name => name,
-      :id => id,
-      :url => url,
-      :branch => branch,
-      :build_requested => build_requested,
-      :last_build => lb.as_json(*args),
-      :previous_build_id => pb ? pb.id : nil,
-      :last_system_error => last_system_error
+      name: name,
+      id: id,
+      url: url,
+      branch: branch,
+      build_requested: build_requested,
+      last_build: lb.as_json(*args),
+      previous_build_id: pb ? pb.id : nil,
+      last_system_error: last_system_error,
+      owner: owner,
     }
   end
 
