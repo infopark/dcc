@@ -141,7 +141,7 @@ show_error = function(headline, message, ok_action) {
 };
 
 
-render_title = function(box, title, details, thing, click, title_span_create_callback)
+render_title = function(box, title, details, show_details, thing, click, title_span_create_callback)
 {
   var title_box = provide_element(".title", box, "<div></div>");
   var title_span = provide_element(".title", title_box, "<span class='link'>" + escape_html(title) +
@@ -151,7 +151,13 @@ render_title = function(box, title, details, thing, click, title_span_create_cal
           title_span_create_callback(element);
         }
       });
-  title_span.attr("title", details);
+  if (show_details) {
+    var details_span = provide_element(".details", title_box, "<span/>");
+    details_span.empty();
+    details_span.append(escape_html(details));
+  } else {
+    title_span.attr("title", details);
+  }
 
   var stat = provide_element('.status', title_box, "<span></span>");
   if (thing) {
@@ -301,7 +307,7 @@ render_bucket = function(build_box, bucket)
         "<pre class='log' id='" + log_id + "'></pre>" +
       "</div></div>");
 
-  render_title(bucket_box, bucket.name, "auf " + bucket.worker_hostname, bucket,
+  render_title(bucket_box, bucket.name, "auf " + bucket.worker_hostname, false, bucket,
       function() { update_log(bucket.id); },
       function(title_span) { overlay(title_span, log_overlay); });
 };
@@ -313,7 +319,7 @@ render_build = function(div, build, css_class)
   var build_box = provide_element("#" + build_box_id, div, "<div class='box " + css_class + "'/>");
 
   var title_box = render_title(build_box, build.short_identifier,
-      build.identifier + " verwaltet von " + build.leader_hostname, build,
+      build.identifier + " verwaltet von " + build.leader_hostname, false, build,
       function() { build_box.find('.buckets').toggle(); });
   if (build.gitweb_url) {
     provide_element(".vcslink", title_box,
@@ -379,9 +385,9 @@ render_builds = function(container, project)
 render_project = function(project) {
   var project_box = provide_element("#" + project_html_id(project.id), this,
       "<div class='box'/>");
-  var title_box = render_title(project_box, project.name,
-      "URL: " + project.url + "; " + project.branch, project.last_build,
-      function() { project_box.find('.builds').toggle(); });
+  var title_box = render_title(project_box, project.name, true,
+      "URL: " + project.url + "; Branch: " + project.branch,
+      project.last_build, function() { project_box.find('.builds').toggle(); });
 
   var buttons = provide_element(".buttons", title_box, "<div/>", function(element) {
     $("<div class='button red'>Löschen</div>").appendTo(element).click(function() {
