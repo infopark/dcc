@@ -12,7 +12,7 @@ test: &TEST
   timeout: 5000
 
 production:
-  adapter: mysql
+  adapter: mysql2
   host: mysql-server
   database: dcc
   username: dcc
