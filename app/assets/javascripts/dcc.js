@@ -382,6 +382,25 @@ render_builds = function(container, project)
 };
 
 
+perform_project_action = function(project, action, error_message, success_handler)
+{
+  var post_params = {};
+  post_params[$('meta[name=csrf-param]').attr('content')] =
+      $('meta[name=csrf-token]').attr('content');
+
+  $.ajax({
+    url: '/project/' + action + '/' + project.id,
+    type: 'POST',
+    data: post_params,
+    dataType: 'json',
+    success: success_handler,
+    error: function(request, message, exception) {
+      show_error(error_message, message);
+    }
+  });
+};
+
+
 render_project = function(project) {
   var project_box = provide_element("#" + project_html_id(project.id), this,
       "<div class='box'/>");
@@ -395,17 +414,8 @@ render_project = function(project) {
   var buttons = provide_element(".buttons", title_box, "<div/>", function(element) {
     $("<div class='button red'>Löschen</div>").appendTo(element).click(function() {
       if (confirm("Soll das Projekt „" + project.name + "“ wirklich gelöscht werden?")) {
-        $.ajax({
-          url: '/project/delete/' + project.id,
-          type: 'POST',
-          dataType: 'json',
-          success: function(result) {
-            project_box.remove();
-          },
-          error: function(request, message, exception) {
-            show_error("Löschen fehlgeschlagen", message);
-          }
-        });
+        perform_project_action(project, 'delete', "Löschen fehlgeschlagen",
+            function(result) { project_box.remove(); });
       }
     });
   });
@@ -421,18 +431,11 @@ render_project = function(project) {
     build_button.removeClass('disabled');
     build_button.unbind('click');
     build_button.click(function() {
-      $.ajax({
-        url: '/project/build/' + project.id,
-        type: 'POST',
-        dataType: 'json',
-        success: function(result) {
-          build_button.unbind('click');
-          build_button.addClass("disabled");
-        },
-        error: function(request, message, exception) {
-          show_error("Trigger Build fehlgeschlagen", message);
-        }
-      });
+      perform_project_action(project, 'build', "Trigger Build fehlgeschlagen",
+          function(result) {
+            build_button.unbind('click');
+            build_button.addClass("disabled");
+          });
     });
   }
 
