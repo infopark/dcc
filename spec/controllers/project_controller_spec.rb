@@ -26,7 +26,7 @@ context "when creating a project" do
   end
 
   it "should set the owner to the currently logged in user when “personal” is true" do
-    Project.should_receive(:new).with(hash_including(owner: "thomas.witt@infopark.de")).
+    Project.should_receive(:new).with(hash_including(owner: "dummy")).
         and_return mock_model(Project, save: nil)
     post 'create', project: {name: 'foo', url: 'bar', branch: 'master', personal: true}
   end
