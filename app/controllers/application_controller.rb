@@ -14,9 +14,12 @@ class ApplicationController < ActionController::Base
   private
 
   def ensure_and_set_user
-    if logged_in?
-      user_session = session[:user].dup
-      @current_user ||= Infopark::Crm::Contact.new(user_session || {})
+    if !Rails.application.config.need_authorization
+      # Automatically log in as thomas.witt
+      @current_user ||= Infopark::Crm::Contact.find('dd19b203c0fb60519823d1a4d349ccbf')
+      session[:user] ||= @current_user.attributes
+    elsif logged_in?
+      @current_user ||= Infopark::Crm::Contact.new(session[:user].dup || {})
     else
       redirect_to login_path(:return_to => request.path)
     end
