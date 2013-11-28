@@ -141,7 +141,8 @@ show_error = function(headline, message, ok_action) {
 };
 
 
-render_title = function(box, title, details, show_details, thing, click, title_span_create_callback)
+render_title = function(box, title, title_css_class, details, show_details, thing, click,
+    title_span_create_callback)
 {
   var title_box = provide_element(".title", box, "<div></div>");
   var title_span = provide_element(".title", title_box, "<span class='link'>" + escape_html(title) +
@@ -151,6 +152,9 @@ render_title = function(box, title, details, show_details, thing, click, title_s
           title_span_create_callback(element);
         }
       });
+  if (title_css_class) {
+    title_span.addClass(title_css_class);
+  }
   if (show_details) {
     var details_span = provide_element(".details", title_box, "<span/>");
     details_span.empty();
@@ -307,7 +311,7 @@ render_bucket = function(build_box, bucket)
         "<pre class='log' id='" + log_id + "'></pre>" +
       "</div></div>");
 
-  render_title(bucket_box, bucket.name, "auf " + bucket.worker_hostname, false, bucket,
+  render_title(bucket_box, bucket.name, null, "auf " + bucket.worker_hostname, false, bucket,
       function() { update_log(bucket.id); },
       function(title_span) { overlay(title_span, log_overlay); });
 };
@@ -318,7 +322,7 @@ render_build = function(div, build, css_class)
   var build_box_id = build_html_id(build.id);
   var build_box = provide_element("#" + build_box_id, div, "<div class='box " + css_class + "'/>");
 
-  var title_box = render_title(build_box, build.short_identifier,
+  var title_box = render_title(build_box, build.short_identifier, null,
       build.identifier + " verwaltet von " + build.leader_hostname, false, build,
       function() { build_box.find('.buckets').toggle(); });
   if (build.gitweb_url) {
@@ -402,13 +406,18 @@ perform_project_action = function(project, action, error_message, success_handle
 
 
 render_project = function(project) {
-  var project_box = provide_element("#" + project_html_id(project.id), this,
-      "<div class='box'/>");
+  var project_box = provide_element("#" + project_html_id(project.id), this, "<div class='box'/>");
   var details = "URL: " + project.url + "; Branch: " + project.branch;
+  var title_css_class = 'public';
   if (project.owner) {
-    details += "; Owner: " + project.owner;
+    if (project.owner == $("#user").attr('data-login')) {
+      title_css_class = 'my';
+    } else {
+      title_css_class = 'other';
+      details += "; Owner: " + project.owner;
+    }
   }
-  var title_box = render_title(project_box, project.name, details, true,
+  var title_box = render_title(project_box, project.name, title_css_class, details, true,
       project.last_build, function() { project_box.find('.builds').toggle(); });
 
   var buttons = provide_element(".buttons", title_box, "<div/>", function(element) {

@@ -21,10 +21,10 @@
     <div id="mainContent">
       <div id="login">
         <% if logged_in? %>
-          <%= t('user.logged_in_as') + ": " + @current_user.login %>
-          &nbsp;|&nbsp;
+          <span id='user' data-login='<%= @current_user.login %>'>
+            <%= t('user.logged_in_as') + ": " + @current_user.login %>
+          </span>
           <%= link_to(t('user.logout'), logout_path, :class => :standard) %>
-          <br />
         <% end %>
       </div>
       <%= yield %>
