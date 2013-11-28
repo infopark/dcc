@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
   protect_from_forgery
 
+  before_filter :set_locale
   before_filter :ensure_and_set_user, :except => [:login, :logout]
 
   helper_method :logged_in?
@@ -12,6 +13,15 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def set_locale
+    languages = http_accept_language.user_preferred_languages || []
+    # workaround for bug in http_accept_language
+    languages = [] if (languages.size == 1 && !(languages.first =~ /^[-a-z]$/))
+    languages << "en"
+    http_accept_language.user_preferred_languages = languages.map {|l| l.split("-").first }.uniq
+    I18n.locale = http_accept_language.preferred_language_from I18n.available_locales
+  end
 
   def ensure_and_set_user
     if !Rails.application.config.need_authorization
