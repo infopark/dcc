@@ -529,8 +529,8 @@ var show_stats = function(project_id) {
   });
 };
 
-$(document).ready(function() {
+render_gui = function() {
   init_search();
   update_search();
   update_projects();
-});
+};
