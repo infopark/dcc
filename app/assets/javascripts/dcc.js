@@ -103,10 +103,14 @@ escape_html = function(str)
 };
 
 
-provide_element = function(identifier, container, default_content, create_callback) {
+_provide_element = function(identifier, container, prepend, default_content, create_callback) {
   var element = $(container).find(identifier).first();
   if (element.length == 0) {
-    element = $(default_content).appendTo($(container));
+    if (prepend) {
+      element = $(default_content).prependTo($(container));
+    } else {
+      element = $(default_content).appendTo($(container));
+    }
     if (identifier[0] == "#") {
       element.attr("id", identifier.substring(1));
     } else if (identifier[0] == '.') {
@@ -118,6 +122,16 @@ provide_element = function(identifier, container, default_content, create_callba
     if (create_callback) { create_callback(element); }
   }
   return element;
+};
+
+
+provide_element = function(identifier, container, default_content, create_callback) {
+  return _provide_element(identifier, container, false, default_content, create_callback);
+};
+
+
+provide_first_element = function(identifier, container, default_content, create_callback) {
+  return _provide_element(identifier, container, true, default_content, create_callback);
 };
 
 
@@ -288,6 +302,12 @@ id_from_element = function(clazz, e)
 build_id_from_element = function(e)
 {
   return e.length == 0 ? null : id_from_element('build', e);
+};
+
+
+project_id_from_element = function(e)
+{
+  return e.length == 0 ? null : id_from_element('project', e);
 };
 
 
@@ -479,15 +499,45 @@ render_project = function(project) {
 };
 
 
-render_projects = function(projects) {
+var show_all_projects = false;
+var render_projects = function(projects) {
+  provide_first_element("#show_all_projects", "#mainContent",
+      "<div><label>alle anzeigen</label></div>", function(div) {
+        provide_first_element("input", div, "<input type='checkbox'/>", function(checkbox) {
+          checkbox.change(function() {
+            show_all_projects = checkbox.prop('checked');
+            update_projects();
+          });
+        });
+      });
   var projects_element = provide_element("#projects", "#mainContent", "<div></div>");
-  _.each(_.sortBy(_.filter(projects, function(p) {
-    return p.owner == null || p.owner == current_user();
-  }), function(p) { return p.name; }), render_project, projects_element);
+
+  if (!show_all_projects) {
+    projects = _.filter(projects, function(p) {
+      return p.owner == null || p.owner == current_user();
+    });
+  }
+  _.each($("#projects > div"), function(project_element) {
+    project_element = $(project_element);
+    var id = project_id_from_element(project_element);
+    if (!_.find(projects, function(p) { return p.id == id; })) {
+      project_element.remove();
+    }
+  });
+  _.each(_.sortBy(projects, function(p) { return p.name; }), render_project, projects_element);
 };
 
 
-update_projects = function() {
+var update_projects_timeout = null;
+var schedule_update_projects = function() {
+  if (update_projects_timeout) {
+    clearTimeout(update_projects_timeout);
+  }
+  update_projects_timeout = setTimeout("update_projects();", 10000);
+};
+
+
+var update_projects = function() {
   $('#spinner').fadeIn(300);
   $.ajax({
     url: '/project/list',
@@ -496,12 +546,12 @@ update_projects = function() {
       $('#spinner').fadeOut(500);
       render_projects(result.projects);
       update_search(true);
-      setTimeout("update_projects();", 10000);
+      schedule_update_projects();
     },
     error: function(request, message, exception) {
       $('#spinner').fadeOut(100);
       show_error("Projekte holen fehlgeschlagen", message, function() {
-        setTimeout("update_projects();", 10000);
+        schedule_update_projects();
       });
     }
   });
