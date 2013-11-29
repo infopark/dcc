@@ -405,12 +405,17 @@ perform_project_action = function(project, action, error_message, success_handle
 };
 
 
+current_user = function() {
+  return $("#user").attr('data-login');
+};
+
+
 render_project = function(project) {
   var project_box = provide_element("#" + project_html_id(project.id), this, "<div class='box'/>");
   var details = "URL: " + project.url + "; Branch: " + project.branch;
   var title_css_class = 'public';
   if (project.owner) {
-    if (project.owner == $("#user").attr('data-login')) {
+    if (project.owner == current_user()) {
       title_css_class = 'my';
     } else {
       title_css_class = 'other';
@@ -476,7 +481,9 @@ render_project = function(project) {
 
 render_projects = function(projects) {
   var projects_element = provide_element("#projects", "#mainContent", "<div></div>");
-  _.each(_.sortBy(projects, function(p) { return p.name; }), render_project, projects_element);
+  _.each(_.sortBy(_.filter(projects, function(p) {
+    return p.owner == null || p.owner == current_user();
+  }), function(p) { return p.name; }), render_project, projects_element);
 };
 
 
