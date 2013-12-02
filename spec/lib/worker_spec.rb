@@ -105,15 +105,21 @@ describe Worker, "when running as follower" do
     @worker.stub(:loop?).and_return true, true, false
     @worker.send(:log).level = ::Logger::FATAL
     Bucket.stub(:find)
-    Bucket.stub(:find).with("b_id1").and_return("bucket 1")
-    Bucket.stub(:find).with("b_id2").and_return("bucket 2")
-    Bucket.stub(:find).with("b_id3").and_return("bucket 3")
+    @buckets = {}
+    [1, 2, 3].each do |i|
+      Bucket.stub(:find).with("b_id#{i}").and_return(@buckets[i] = mock_model(Bucket,
+        name: "bucket #{i}",
+        build: mock_model(Build,
+          project: mock_model(Project, ruby_version: nil)
+        )
+      ))
+    end
   end
 
   it "should perform all tasks given from leader" do
-    @worker.should_receive(:perform_task).with("bucket 1")
-    @worker.should_receive(:perform_task).with("bucket 2")
-    @worker.should_receive(:perform_task).with("bucket 3")
+    @worker.should_receive(:perform_task).with(@buckets[1])
+    @worker.should_receive(:perform_task).with(@buckets[2])
+    @worker.should_receive(:perform_task).with(@buckets[3])
     @worker.run
   end
 
@@ -192,8 +198,17 @@ describe Worker, "when running as follower" do
   describe 'when perform_task fails' do
     before do
       @worker.stub(:loop?).and_return false
-      Bucket.stub(:find).and_return(@bucket = double('bucket', :status= => nil, :save => nil,
-          :log= => nil, :log => 'old_log', :build => double('build', :leader_hostname => nil)))
+      Bucket.stub(:find).and_return(@bucket = double('bucket',
+        :name => 'bucket',
+        :status= => nil,
+        :save => nil,
+        :log= => nil,
+        :log => 'old_log',
+        :build => double('build',
+          :leader_hostname => nil,
+          :project => double('project', ruby_version: nil)
+        )
+      ))
       @worker.stub(:perform_task).and_raise("an error")
     end
 
@@ -222,7 +237,7 @@ describe Worker, "when running as follower" do
       @git = double('git', :path => 'git path', :update => nil, :current_commit => nil)
       @project = double('project', :name => "project's name", :before_all_tasks => [], :git => @git,
           :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [], :id => 1,
-          :last_build => nil)
+          :last_build => nil, :ruby_version => nil)
       @project.stub(:bucket_tasks).with('t1').and_return(['rt1'])
       @project.stub(:bucket_tasks).with('t2').and_return(['rt21', 'rt22'])
       @logs = [double('l1', :log => 'log1'), double('l2', :log => 'log2')]
@@ -245,6 +260,14 @@ describe Worker, "when running as follower" do
           :build_number => 666
         ),
       )
+    end
+
+    it "should perform the task with the configured ruby version if any" do
+      Bucket.stub(:find).and_return @bucket
+      @project.stub(:ruby_version).with("t2").and_return "1.2.3-p4"
+      @worker.stub(:perform_task) { @perform_task_env = ENV.to_hash }
+      @worker.run
+      @perform_task_env['RBENV_VERSION'].should == '1.2.3-p4'
     end
 
     describe "when performing task" do
@@ -304,14 +327,31 @@ describe Worker, "when running as follower" do
           @worker.perform_task(@bucket)
         end
 
-        describe "when project is bundled" do
+        context "when project is bundled" do
+          before do
+            File.stub(:exists?).with('git path/Gemfile').and_return true
+          end
+
           it "should not perform bundle install" do
             @worker.should_not_receive(:execute)
             @worker.perform_task(@bucket)
           end
+
+          context "when bundle was not installed for the requested ruby version" do
+            it "should perform bundle install but not the before_all_tasks" do
+              @project.should_receive(:ruby_version).with(@bucket.name).and_return '1.2.3-p4'
+              @worker.should_receive(:execute).with(%w(bundle install), {dir: 'git path'})
+              @worker.should_not_receive(:perform_rake_task).with('git path', 'bb_1', @logs)
+              @worker.perform_task(@bucket)
+            end
+          end
         end
 
         describe "when project is not bundled" do
+          before do
+            File.stub(:exists?).with('git path/Gemfile').and_return false
+          end
+
           it "should not perform bundle install" do
             @worker.should_not_receive(:execute)
             @worker.perform_task(@bucket)
@@ -597,6 +637,7 @@ describe Worker, "when running as follower with fixtures" do
           :before_each_bucket_group_code => nil,
           :bucket_group => 'default',
           :last_build => nil,
+          :ruby_version => nil,
           :git => double('git', :update => nil, :path => '/nix', :current_commit => nil)
         )
       )

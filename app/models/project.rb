@@ -58,6 +58,11 @@ class Project < ActiveRecord::Base
     @e_mail_receivers[bucket_group(bucket_identifier)] || @e_mail_receivers[nil] || []
   end
 
+  def ruby_version(bucket_identifier)
+    read_config
+    @ruby_versions[bucket_group(bucket_identifier)] || @ruby_versions[nil]
+  end
+
   def update_dependencies
     read_config
     Dependency.where(:project_id => id).each do |d|
@@ -137,6 +142,10 @@ class Project < ActiveRecord::Base
       receivers = receiver_map[:default] unless receivers
     end
     @e_mail_receivers[bucket_group_name] = receivers ? Array(receivers) : nil
+  end
+
+  def set_ruby_version(bucket_group_name, version)
+    @ruby_versions[bucket_group_name] = version
   end
 
   def set_rake_tasks(bucket_name, bucket_group_name, rake_tasks)
@@ -244,6 +253,10 @@ private
     set_e_mail_receivers(nil, *args)
   end
 
+  def run_with_ruby_version(version)
+    set_ruby_version(nil, version)
+  end
+
   def before_all(&block)
     @before_all_code = block if block
     Class.new(super_class = @@inner_class) do
@@ -287,6 +300,10 @@ private
 
       def send_notifications_to(*args)
         @project.set_e_mail_receivers(@name, *args)
+      end
+
+      def run_with_ruby_version(version)
+        @project.set_ruby_version(@name, version)
       end
 
       def before_all
@@ -342,6 +359,7 @@ private
           commit changed: #{git.current_commit != @config_commit})"
       @buckets_tasks = {}
       @e_mail_receivers = {}
+      @ruby_versions = {}
       @logged_deps = {}
       @before_all_tasks = []
       @buckets_groups = {}

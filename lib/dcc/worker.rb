@@ -38,6 +38,7 @@ class Worker
     @admin_e_mail_address = options[:admin_e_mail_address]
     @succeeded_before_all_tasks = []
     @prepared_bucket_groups = Set.new
+    @bundled_ruby_versions = Set.new
     @currently_processed_bucket_id = nil
     if options[:tyrant]
       log.debug { "become tyrant" }
@@ -89,13 +90,44 @@ class Worker
               bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
               log_bucket_error_on_failure(bucket, "processing bucket failed") do
                 Timeout::timeout(7200) do
-                  perform_task bucket
+                  with_environment(RBENV_VERSION: bucket.build.project.ruby_version(bucket.name)) do
+                    perform_task bucket
+                  end
                 end
               end
             end
           end
         end
       end
+    end
+  end
+
+  def prepare_task(bucket)
+    build = bucket.build
+    project = build.project
+    git = project.git
+
+    if @last_handled_build != build.id
+      @prepared_bucket_groups.clear
+      @bundled_ruby_versions.clear
+
+      if (code = project.before_all_code)
+        Dir.chdir(git.path) {code.call}
+      end
+    end
+
+    ruby_version = project.ruby_version bucket.name
+    unless @bundled_ruby_versions.include?(ruby_version)
+      execute(%w(bundle install), :dir => git.path) if File.exists?(File.join(git.path, "Gemfile"))
+      @bundled_ruby_versions.add ruby_version
+    end
+
+    bucket_group = project.bucket_group(bucket.name)
+    unless @prepared_bucket_groups.include?(bucket_group)
+      if (code = project.before_each_bucket_group_code)
+        Dir.chdir(git.path) {code.call}
+      end
+      @prepared_bucket_groups.add(bucket_group)
     end
   end
 
@@ -107,21 +139,7 @@ class Worker
     git = project.git
     git.update :commit => build.commit, :make_pristine => git.current_commit != build.commit
 
-    if @last_handled_build != build.id
-      if (code = project.before_all_code)
-        Dir.chdir(git.path) {code.call}
-      end
-      execute(%w(bundle install), :dir => git.path) if File.exists?(File.join(git.path, "Gemfile"))
-    end
-
-    bucket_group = project.bucket_group(bucket.name)
-    @prepared_bucket_groups.clear if @last_handled_build != build.id
-    unless @prepared_bucket_groups.include?(bucket_group)
-      if (code = project.before_each_bucket_group_code)
-        Dir.chdir(git.path) {code.call}
-      end
-      @prepared_bucket_groups.add(bucket_group)
-    end
+    prepare_task(bucket)
 
     succeeded = true
     @succeeded_before_all_tasks = [] if @last_handled_build != build.id
@@ -404,7 +422,8 @@ private
 
   def with_environment(additional_env, &block)
     original_env = ENV.to_hash
-    string_only_version = additional_env.stringify_keys.merge(additional_env) do |k, v|
+    additional_env = additional_env.stringify_keys
+    string_only_version = additional_env.merge(additional_env) do |k, v|
       v.nil? ? nil : v.to_s
     end
     ENV.update(string_only_version)
