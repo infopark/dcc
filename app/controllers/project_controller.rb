@@ -1,7 +1,8 @@
 # encoding: utf-8
 class ProjectController < ApplicationController
   def create
-    personal = params[:project].delete :personal
+    personal = ActiveRecord::ConnectionAdapters::Column.value_to_boolean(
+        params[:project].delete :personal)
     params[:project][:owner] = @current_user.login if personal
     p = Project.new(params[:project])
     p.save

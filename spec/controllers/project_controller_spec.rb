@@ -25,10 +25,45 @@ context "when creating a project" do
     response.should redirect_to(:action => :index)
   end
 
-  it "should set the owner to the currently logged in user when “personal” is true" do
-    Project.should_receive(:new).with(hash_including(owner: "dummy")).
-        and_return mock_model(Project, save: nil)
-    post 'create', project: {name: 'foo', url: 'bar', branch: 'master', personal: true}
+  shared_examples_for "creating a personal project" do
+    it "sets the owner to the currently logged in user" do
+      Project.should_receive(:new).with(hash_including(owner: "dummy")).
+          and_return mock_model(Project, save: nil)
+      post 'create', project: {name: 'foo', url: 'bar', branch: 'master', personal: personal_value}
+    end
+  end
+
+  context "when “personal” is true" do
+    let(:personal_value) { true }
+    it_should_behave_like "creating a personal project"
+  end
+
+  context "when “personal” is “1”" do
+    let(:personal_value) { "1" }
+    it_should_behave_like "creating a personal project"
+  end
+
+  shared_examples_for "creating a non personal project" do
+    it "does not set the owner" do
+      Project.should_receive(:new).with(hash_excluding(:owner)).
+          and_return mock_model(Project, save: nil)
+      post 'create', project: {name: 'foo', url: 'bar', branch: 'master', personal: personal_value}
+    end
+  end
+
+  context "when “personal” is false" do
+    let(:personal_value) { false }
+    it_should_behave_like "creating a non personal project"
+  end
+
+  context "when “personal” is nil" do
+    let(:personal_value) { nil }
+    it_should_behave_like "creating a non personal project"
+  end
+
+  context "when “personal” is “0”" do
+    let(:personal_value) { "0" }
+    it_should_behave_like "creating a non personal project"
   end
 end
 
