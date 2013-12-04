@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 gem 'honeybadger'
 
 gem 'daemon-spawn'
-gem 'rails', '~>3.2'
+gem 'rails', '~>3.2.16'
 gem 'mysql2'
 gem 'json'
 gem 'jquery-rails'
