@@ -1,13 +1,55 @@
 de:
+  prefs:
+    show_all_projects: Alle Projekte anzeigen
   user:
     login: Login (E-Mail)
     password: Passwort
     logged_in_as: Angemeldet als
     logout: Abmelden
     login_submit: Anmelden
+    welcome: Willkommen
   project:
     name: Name
     url: Repository-URL
     branch: Branch
     personal: Persönlich
+    shared: Geteilt
     create: Projekt anlegen
+    new: Projekt hinzufügen
+    stats:
+      link_title: Statistiken
+      title: Projektstatistiken für %{name}
+      chart:
+        date: Datum
+        slowest: Langsamster
+        fastest: Schnellster
+        name_prefix: Bearbeitungsdauer grüner Cruises
+    builds:
+      title: Builds für %{name}
+  dialog:
+    yes: Ja
+    no: Nein
+    button:
+      create: Anlegen
+      cancel: Abbrechen
+      close: Schliessen
+      delete: Löschen
+      build: Bauen
+  status:
+    done: fertig
+    pending: wartend
+    in_work: in Arbeit
+    processing_failed: Fehler bei der Bearbeitung
+    failed: fehlgeschlagen
+  error:
+    unknown_status: unbekannter Status
+    occured: Es sind Fehler aufgetreten
+    fetch_log_failed: Log holen fehlgeschlagen
+    fetch_build_failed: Build holen fehlgeschlagen
+    fetch_builds_failed: Builds holen fehlgeschlagen
+    fetch_projects_failed: Projekte holen fehlgeschlagen
+    delete_failed: Löschen fehlgeschlagen
+    trigger_build_failed: Trigger Build fehlgeschlagen
+    create_project_failed: Projekt anlegen fehlgeschlagen
+  confirm:
+    project_delete: Soll das Project „%{name}“ wirklich gelöscht werden?

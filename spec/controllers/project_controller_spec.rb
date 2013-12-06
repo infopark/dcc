@@ -27,7 +27,7 @@ context "when creating a project" do
 
   shared_examples_for "creating a personal project" do
     it "sets the owner to the currently logged in user" do
-      Project.should_receive(:new).with(hash_including(owner: "dummy")).
+      Project.should_receive(:new).with(hash_including(owner: "max@muster.de")).
           and_return mock_model(Project, save: nil)
       post 'create', project: {name: 'foo', url: 'bar', branch: 'master', personal: personal_value}
     end

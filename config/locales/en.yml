@@ -1,13 +1,55 @@
 en:
+  prefs:
+    show_all_projects: Show All Projects
   user:
     login: Login (E-Mail)
     password: Password
     logged_in_as: Logged in as
     logout: Logout
     login_submit: Log me in
+    welcome: Welcome
   project:
     name: Name
     url: Repository URL
     branch: Branch
     personal: Personal
+    shared: Shared
     create: Create Project
+    new: Add Project
+    stats:
+      link_title: Statistics
+      title: Statistics for Project %{name}
+      chart:
+        date: Date
+        slowest: Slowest
+        fastest: Fastest
+        name_prefix: Cruise Duration by Green Commit
+    builds:
+      title: Builds for %{name}
+  dialog:
+    yes: Yes
+    no: No
+    button:
+      create: Create
+      cancel: Cancel
+      close: Close
+      delete: Delete
+      build: Build
+  status:
+    done: done
+    pending: pending
+    in_work: in work
+    processing_failed: processing failed
+    failed: failed
+  error:
+    unknown_status: unknown state
+    occured: following errors occured
+    fetch_log_failed: failed to fetch log
+    fetch_build_failed: failed to fetch build
+    fetch_builds_failed: failed to fetch builds
+    fetch_projects_failed: failed to fetch projects
+    delete_failed: delete project failed
+    trigger_build_failed: failed to trigger build
+    create_project_failed: create project failed
+  confirm:
+    project_delete: Do you really want to delete the project “%{name}”?

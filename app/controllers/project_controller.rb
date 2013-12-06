@@ -6,7 +6,7 @@ class ProjectController < ApplicationController
     params[:project][:owner] = @current_user.login if personal
     p = Project.new(params[:project])
     p.save
-    redirect_to :action => :index
+    render :json => p
   end
 
   def delete
@@ -38,6 +38,17 @@ class ProjectController < ApplicationController
   end
 
   # FIXME test
+  def previous_builds
+    b = Build.find(params[:id])
+    previous_builds = b.project.builds_before b, 11
+    render json: {
+      previous_builds: previous_builds[0, 10],
+      continuation_handle: previous_builds.size == 11 ? previous_builds[9].id : nil
+    }
+  end
+
+  # FIXME test
+  # FIXME delete
   def old_build
     b = Build.find(params[:id])
     pb = b.project.last_build(:before_build => b)
@@ -50,9 +61,11 @@ class ProjectController < ApplicationController
   # alt für statische Links (z.B. für Pull-Requests)
   def show_build
     @build = Build.find(params[:id])
+    render :layout => 'classic'
   end
 
   def show_bucket
     @bucket = Bucket.find(params[:id])
+    render :layout => 'classic'
   end
 end

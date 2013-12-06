@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Distributed Cruise Control - <%= controller.controller_name %></title>
+  <%= stylesheet_link_tag    "application", :media => "all" %>
+  <%= javascript_include_tag "application" %>
+  <%= csrf_meta_tags %>
+  <link rel="shortcut icon" href="<%= asset_path 'diccr-favicon-medium.ico' %>" type="image/x-icon">
+  <link rel="icon" href="<%= asset_path 'diccr-favicon-medium.ico' %>" type="image/x-icon">
+  <script type="text/javascript" src="//www.google.com/jsapi"></script>
+  <script type="text/javascript">
+    google.load('visualization', '1', {packages: ['corechart']});
+  </script>
+</head>
+<body>
+  <div id="container">
+    <div id="headerContent">
+      <%= link_to image_tag('logo.png', :class => 'logo'), root_path %>
+      <%= yield(:header_content) %>
+    </div>
+    <div id="mainContent">
+      <div id="login">
+        <% if logged_in? %>
+          <span id='user' data-login='<%= @current_user.login %>'>
+            <%= t('user.logged_in_as') + ": " + @current_user.login %>
+          </span>
+          <%= link_to(t('user.logout'), logout_path, :class => :standard) %>
+        <% end %>
+      </div>
+      <%= yield %>
+    </div>
+    <% unless (extra_content = yield(:extra_content)).blank? -%>
+      <div id="extraContent">
+        <%= extra_content %>
+      </div>
+    <% end -%>
+  </div>
+  <div id="overlay" class="overlay">
+    <div class="details">
+    </div>
+  </div>
+  <div id="error_overlay" class="error_overlay">
+    <h1>Es sind Fehler aufgetreten:</h1>
+    <div class="messages_background">
+      <div class="messages_crop">
+        <div id="error_messages" class="messages">
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

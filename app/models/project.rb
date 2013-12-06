@@ -83,13 +83,21 @@ class Project < ActiveRecord::Base
     end
   end
 
-  def last_build(options = {})
-    conditions = options[:before_build] ? " AND id < #{options[:before_build].id}" : nil
-    Build.where("project_id = ?#{conditions}", id).last
+  def last_build
+    Build.where(project_id: id).last
+  end
+
+  def build_before(build)
+    builds_before(build, 1).first
+  end
+
+  def builds_before(build, count)
+    build ?
+        Build.where("project_id = ? AND id < ?", id, build.id).order("id DESC").first(count) : []
   end
 
   def next_build_number
-    build = builds.where(:commit_hash => current_commit).order("build_number").last
+    build = builds.where(commit_hash: current_commit).order(:build_number).last
     build ? build.build_number + 1 : 1
   end
 
@@ -227,7 +235,6 @@ class Project < ActiveRecord::Base
 
   def as_json(*args)
     lb = last_build
-    pb = last_build(before_build: lb)
     {
       name: name,
       id: id,
@@ -235,7 +242,6 @@ class Project < ActiveRecord::Base
       branch: branch,
       build_requested: build_requested,
       last_build: lb.as_json(*args),
-      previous_build_id: pb ? pb.id : nil,
       last_system_error: last_system_error,
       owner: owner,
     }

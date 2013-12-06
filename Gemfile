@@ -12,6 +12,13 @@ gem 'infopark-politics', '>= 0.5.0'
 gem 'thin'
 gem 'infopark_crm_connector'
 gem 'http_accept_language'
+# bootstrap from a gem
+gem 'anjlab-bootstrap-rails', '~> 3.0.2.0', :require => 'bootstrap-rails'
+# bootstrap-switch from a gem
+# newer versions suffer from 'missing bootstrap-switch' on assets:precompile
+gem "bootstrap-switch-rails", "1.8.1"
+# bootbox from a gem
+gem 'bootbox-rails', '~> 0.2'
 
 # Gems used only for assets and not required
 # in production environments by default.

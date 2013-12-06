@@ -98,7 +98,7 @@ describe Project do
         branch: "project branch",
         build_requested: nil,
         last_build: nil,
-        previous_build_id: nil,
+        previous_build_ids: [],
         last_system_error: nil,
         owner: nil
       }.with_indifferent_access
@@ -155,26 +155,29 @@ describe Project do
     @project = Project.new(:name => "name", :url => "url", :branch => "branch")
   end
 
-  describe "when determining the last build" do
+  describe "when determining" do
     before do
       @project.stub(:id).and_return 'p_id'
-      Build.stub(:find_last_by_project_id).and_return nil
     end
 
-    it "should return nil if it has no builds" do
-      @project.last_build.should be_nil
+    describe "the last build" do
+      it "should return nil if it has no builds" do
+        @project.last_build.should be_nil
+      end
+
+      it "should return the last build of the available builds" do
+        Build.stub(:where).with(project_id: 'p_id').
+            and_return ['predator', 'terminator', 'last action hero']
+        @project.last_build.should == 'last action hero'
+      end
     end
 
-    it "should return the last build of the available builds" do
-      Build.stub(:where).with("project_id = ?", 'p_id').
-          and_return ['predator', 'terminator', 'last action hero']
-      @project.last_build.should == 'last action hero'
-    end
-
-    it "should be able to return the last build before a specified build" do
-      Build.stub(:where).with("project_id = ? AND id < 12345", 'p_id').
-          and_return ['first in a row', 'somewhere in the middle', 'last man standing']
-      @project.last_build(:before_build => double(:id => 12345)).should == 'last man standing'
+    describe "the build before another build" do
+      it "returns the build before the specified build" do
+        Build.stub(:where).with("project_id = ? AND id < ?", 'p_id', 12345).
+            and_return ['first in a row', 'somewhere in the middle', 'last man standing']
+        @project.build_before(double(:id => 12345)).should == 'last man standing'
+      end
     end
   end
 
@@ -765,7 +768,7 @@ describe Project do
       builds.stub(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
           :order => "build_number DESC").and_return(double('build', :build_number => 5))
       builds.stub(:where).with(commit_hash: 'the current commit').and_return(double.tap do |result|
-        result.stub(:order).with('build_number').and_return ["foo", "bar", double(build_number: 5)]
+        result.stub(:order).with(:build_number).and_return ["foo", "bar", double(build_number: 5)]
       end)
 
       @project.next_build_number.should == 6

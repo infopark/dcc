@@ -1,0 +1,17 @@
+<script>
+//<!--
+  $(document).ready(function() {
+    DCC.Localizer.init(
+      <%== YAML.load_file(File.expand_path("config/locales/#{I18n.locale}.yml", Rails.root)).to_json %>,
+      <%== "'#{I18n.locale}'" %>
+    );
+    new DCC(
+      new DCC.User(
+        <%== "'#{@current_user.login.gsub(/'/, "\\'")}'" %>,
+        <%== "'#{@current_user.first_name.gsub(/'/, "\\'")}'" %>,
+        <%== "'#{@current_user.last_name.gsub(/'/, "\\'")}'" %>
+      )
+    ).render();
+  });
+//-->
+</script>

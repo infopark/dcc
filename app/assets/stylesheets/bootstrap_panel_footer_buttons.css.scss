@@ -1,0 +1,23 @@
+.panel-footer.btn-group {
+  width: 100%;
+  padding: 0;
+}
+
+.panel-footer.btn-group > .btn {
+  margin: 0;
+  border: 0 none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.panel-footer.btn-group > .btn.btn-2 {
+  width: 20%;
+}
+
+.panel-footer.btn-group > .btn.btn-4 {
+  width: 40%;
+}
+
+.panel-footer.btn-group > .btn.btn-5 {
+  width: 50%;
+}

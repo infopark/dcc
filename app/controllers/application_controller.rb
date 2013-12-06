@@ -36,7 +36,15 @@ class ApplicationController < ActionController::Base
 
   class DummyUser
     def login
-      "dummy"
+      "max@muster.de"
+    end
+
+    def first_name
+      "Max"
+    end
+
+    def last_name
+      "Muster"
     end
 
     def attributes

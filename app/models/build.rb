@@ -17,6 +17,10 @@ class Build < ActiveRecord::Base
     "#{commit}.#{build_number}"
   end
 
+  def short_identifier
+    "#{commit[0..7]}.#{build_number}"
+  end
+
   def to_s
     "#<Build; ID: #{id}, Identifier: #{identifier}, Project: #{project.name}>"
   end
@@ -64,7 +68,7 @@ class Build < ActiveRecord::Base
       },
       started_at: started_at,
       finished_at: finished_at,
-      short_identifier: "#{commit[0..7]}.#{build_number}",
+      short_identifier: short_identifier,
       leader_uri: leader_uri,
       leader_hostname: leader_hostname,
       commit: commit,
