@@ -196,38 +196,45 @@ describe Worker, "when running as follower" do
   end
 
   describe 'when perform_task fails' do
+    let(:log_scope) { Bucket.select([:log, :error_log]) }
+
+    let(:bucket) { double('bucket',
+      :name => 'bucket',
+      :id => 'some',
+      :status= => nil,
+      :save => nil,
+      :log= => nil,
+      :log => 'old_log',
+      :build => double('build',
+        :leader_hostname => nil,
+        :project => double('project', ruby_version: nil)
+      )
+    ) }
+
     before do
       @worker.stub(:loop?).and_return false
-      Bucket.stub(:find).and_return(@bucket = double('bucket',
-        :name => 'bucket',
-        :status= => nil,
-        :save => nil,
-        :log= => nil,
-        :log => 'old_log',
-        :build => double('build',
-          :leader_hostname => nil,
-          :project => double('project', ruby_version: nil)
-        )
-      ))
+      log_scope.stub(:find).and_return bucket
+      Bucket.stub(:find).and_return bucket
+      Bucket.stub(:select).and_return log_scope
       @worker.stub(:perform_task).and_raise("an error")
     end
 
     it "should set bucket's status to 'processing failed'" do
-      @bucket.should_receive(:status=).with(35).ordered
-      @bucket.should_receive(:save).ordered
+      bucket.should_receive(:status=).with(35).ordered
+      bucket.should_receive(:save).ordered
       @worker.run
     end
 
     it "should set the error into the database" do
-      @bucket.should_receive(:log=).with(/old_log.*processing bucket failed.*an error/m).ordered
-      @bucket.should_receive(:save).ordered
+      bucket.should_receive(:log=).with(/old_log.*processing bucket failed.*an error/m).ordered
+      bucket.should_receive(:save).ordered
       @worker.run
     end
 
     it "should set the error into the database even if no log exists" do
-      @bucket.stub(:log).and_return nil
-      @bucket.should_receive(:log=).with(/.*processing bucket failed.*an error/m).ordered
-      @bucket.should_receive(:save).ordered
+      bucket.stub(:log).and_return nil
+      bucket.should_receive(:log=).with(/.*processing bucket failed.*an error/m).ordered
+      bucket.should_receive(:save).ordered
       @worker.run
     end
   end

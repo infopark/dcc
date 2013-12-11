@@ -380,7 +380,8 @@ private
     log.debug "leaving protected block (->#{@@pbl -= 1})"
   rescue Exception => e
     log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
-    bucket = options[:bucket]
+    bucket = options[:bucket] &&
+        retry_on_mysql_failure { Bucket.select([:log, :error_log]).find(options[:bucket].id) }
     msg = "uri: #{uri} (#{Socket.gethostname})\n" +
         "leader_uri: #{leader_uri}#{bucket && " (#{bucket.build.leader_hostname})"}\n\n" +
         "#{e.message}\n\n#{e.backtrace.join("\n")}"
