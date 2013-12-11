@@ -5,6 +5,7 @@ require_relative 'platform'
 require_relative '../cruise_control/log'
 
 require 'English'
+require 'tempfile'
 
 module DCC
 # borrowed (with modifications) from the RSCM project
@@ -63,6 +64,8 @@ module CommandLine
   #
   # See the unit test for more examples.
   def execute(cmd, options={}, &proc)
+    tempfile = nil
+
     raise "Can't have newline in cmd" if cmd =~ /\n/
     options = {
         :dir => Dir.pwd,
@@ -71,10 +74,22 @@ module CommandLine
         :exitstatus => 0 }.merge(options)
 
     options[:stdout] = escape(File.expand_path(options[:stdout])) if options[:stdout]
-    options[:stderr] = escape(File.expand_path(options[:stderr])) if options[:stderr]
+
+    if options[:stderr]
+      options[:stderr] = escape(File.expand_path(options[:stderr]))
+    else
+      tempfile = Tempfile.new('dcc_execute')
+      options[:stderr] = tempfile.path
+      options[:private_stderr] = true
+    end
 
     Dir.chdir(options[:dir]) do
       return e(cmd, options, &proc)
+    end
+  ensure
+    if tempfile
+      tempfile.close
+      tempfile.unlink
     end
   end
   module_function :execute
@@ -143,10 +158,12 @@ module CommandLine
           if options[:stderr]
             if File.exist?(options[:stderr])
               File.open(options[:stderr]) do |errio|
-                begin
-                  errio.seek(-1200, IO::SEEK_END)
-                rescue Errno::EINVAL
-                  # ignore - it just means we didn't have 400 bytes.
+                unless options[:private_stderr]
+                  begin
+                    errio.seek(-1200, IO::SEEK_END)
+                  rescue Errno::EINVAL
+                    # ignore - it just means we didn't have 400 bytes.
+                  end
                 end
                 errio.read
               end
