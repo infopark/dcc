@@ -53,6 +53,6 @@ class ProjectController < ApplicationController
   end
 
   def show_bucket
-    @bucket = Bucket.find(params[:id])
+    @bucket = Bucket.select([:log, :error_log]).find(params[:id])
   end
 end

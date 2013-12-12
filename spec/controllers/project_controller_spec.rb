@@ -98,12 +98,15 @@ context "when showing a build" do
 end
 
 context "when showing a bucket" do
+  let(:log_scope) { Bucket.select([:log, :error_log]) }
   before do
-    Bucket.stub(:find).and_return nil
+    log_scope
+    Bucket.stub(:select).and_return log_scope
+    log_scope.stub(:find).and_return nil
   end
 
   it "should fetch the bucket and assign it for the view" do
-    Bucket.should_receive(:find).with("666").and_return "the bucket"
+    log_scope.should_receive(:find).with("666").and_return "the bucket"
     get 'show_bucket', :id => 666
     assigns[:bucket].should == "the bucket"
   end
