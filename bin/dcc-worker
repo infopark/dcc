@@ -47,7 +47,7 @@ class Dcc < DaemonSpawn::Base
   end
 end
 
-working_dir = log_dir = pid_file = nil
+working_dir = log_dir = tmp_dir = pid_file = nil
 FileUtils.chdir("#{File.dirname(__FILE__)}/..") do
   working_dir = FileUtils.pwd
   FileUtils.mkdir_p(log_dir = "#{working_dir}/log")
@@ -57,6 +57,12 @@ FileUtils.chdir("#{File.dirname(__FILE__)}/..") do
     puts "removing orphaned pid file"
     FileUtils.rm_f pid_file
   end
+end
+
+lock_file = "#{tmp_dir}/worker.lock"
+lock = File.open(lock_file, File::RDWR|File::CREAT)
+unless lock.flock(File::LOCK_EX | File::LOCK_NB)
+  raise "Another dcc-worker request is currently being processed"
 end
 
 command = ARGV.first
@@ -76,3 +82,6 @@ if command == 'start'
   end
   puts " #{File.read pid_file}"
 end
+
+lock.flock(File::LOCK_UN)
+lock.close
