@@ -58,7 +58,21 @@ FileUtils.chdir("#{File.dirname(__FILE__)}/..") do
     FileUtils.rm_f pid_file
   end
 end
+
+command = ARGV.first
+
 Dcc.spawn!(:log_file => "#{log_dir}/worker.log",
     :pid_file => pid_file,
     :working_dir => working_dir,
     :sync_log => true)
+
+if command == 'start'
+  print "Wait for startup"
+  $stdout.flush
+  while !File.exists?(pid_file) || File.size(pid_file) == 0
+    print "."
+    $stdout.flush
+    sleep 1
+  end
+  puts " #{File.read pid_file}"
+end
