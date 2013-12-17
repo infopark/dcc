@@ -189,4 +189,48 @@ context "when requesting a bucket log" do
   end
 end
 
+context "when using the API" do
+  before do
+    Rails.application.config.stub need_authorization: true
+    ENV["DCC_API_KEY"] = "GOOD_KEY"
+    Build.stub :find
+  end
+
+  let(:show_build_response) { get "show_build", id: 666 }
+
+  context "w/o credentials" do
+    subject { show_build_response }
+    it { should be_redirect }
+  end
+
+  context "with HTTP auth" do
+    let(:credentials) { ActionController::HttpAuthentication::Basic.encode_credentials user, "x" }
+    before { request.env["HTTP_AUTHORIZATION"] = credentials }
+
+    context "using wrong credentials" do
+      let(:user) { "BAD_KEY" }
+      subject { show_build_response }
+      it { should be_redirect }
+    end
+
+    context "using good credentials" do
+      let(:user) { "GOOD_KEY" }
+
+      subject { show_build_response }
+      it { should be_ok }
+
+      context "non-public action" do
+        subject { get "show_bucket", id: 666 }
+        it { should be_redirect }
+      end
+
+      describe "session" do
+        before { get "show_build", id: 666 }
+        subject { session }
+        its([:user]) { should be_blank }
+      end
+    end
+  end
+end
+
 end
