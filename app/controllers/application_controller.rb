@@ -25,10 +25,10 @@ class ApplicationController < ActionController::Base
 
   def ensure_and_set_user
     if !Rails.application.config.need_authorization
-      @current_user ||= DummyUser.new
+      @current_user = DummyUser.new
       session[:user] ||= @current_user.attributes
     elsif logged_in?
-      @current_user ||= Infopark::Crm::Contact.new(session[:user].dup || {})
+      @current_user = Infopark::Crm::Contact.new(session[:user].dup || {})
     else
       redirect_to login_path(:return_to => request.path)
     end
@@ -41,6 +41,10 @@ class ApplicationController < ActionController::Base
 
     def attributes
       {login: "dummy"}
+    end
+
+    def to_s
+      "the dummy user"
     end
   end
 
