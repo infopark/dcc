@@ -68,6 +68,6 @@ class ProjectController < ApplicationController
   end
 
   def api_key_valid?
-    authenticate_with_http_basic { |user| ENV['DCC_API_KEY'] == user }
+    authenticate_with_http_basic { |user| Rails.configuration.dcc_api_key == user }
   end
 end

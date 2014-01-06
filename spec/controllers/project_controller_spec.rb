@@ -192,7 +192,7 @@ end
 context "when using the API" do
   before do
     Rails.application.config.stub need_authorization: true
-    ENV["DCC_API_KEY"] = "GOOD_KEY"
+    Rails.configuration.dcc_api_key = "GOOD_KEY"
     Build.stub :find
   end
 
