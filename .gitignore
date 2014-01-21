@@ -1,6 +1,7 @@
 /.bundle
 /config/database.yml
 /config/worker.yml
+/config/initializers/my_crm_credentials.rb
 /db/*.*
 /Gemfile.lock
 /log/*
