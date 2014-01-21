@@ -186,7 +186,7 @@ render_title = function(box, title, title_css_class, details, show_details, thin
     } else {
       href = "/project/show_bucket/" + thing.id;
     }
-    var stat_link = provide_element('.link', stat, "<a href='" + href + "' target='_blank'></a");
+    var stat_link = provide_element('.link', stat, "<a href='" + href + "' target='_blank'></a>");
     stat_link.empty();
 
     var s = "<span class='" + status_css_class(thing.status) + "'>" + status_message(thing.status);
