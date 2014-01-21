@@ -178,6 +178,7 @@ render_title = function(box, title, title_css_class, details, show_details, thin
   }
 
   var stat = provide_element('.status', title_box, "<span></span>");
+  stat.empty();
   if (thing) {
     var href;
     if (thing.bucket_state_counts) {
