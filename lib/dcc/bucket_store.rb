@@ -38,8 +38,8 @@ class BucketStore
     @workers_to_projects[worker_id] = project
     @projects_to_workers[project].add worker_id
     log.debug "#{worker_id} is in #{@workers_to_projects[worker_id]} which has #{workers.inspect}"
-    log.debug "popping out of #{@buckets[project].inspect}"
-    @buckets[project].pop
+    log.debug "shifting out of #{@buckets[project].inspect}"
+    @buckets[project].shift
   end
 
   def empty?(project = nil)

@@ -13,12 +13,12 @@ describe BucketStore do
     @store.set_buckets 'my_project', %w(my buckets)
   end
 
-  it "should deliver buckets one by one" do
+  it "should deliver buckets one by one in the order specified" do
     @store.set_buckets 'my_project', [1, 2, 3, 4]
-    @store.next_bucket('1').should == 4
-    @store.next_bucket('1').should == 3
-    @store.next_bucket('1').should == 2
     @store.next_bucket('1').should == 1
+    @store.next_bucket('1').should == 2
+    @store.next_bucket('1').should == 3
+    @store.next_bucket('1').should == 4
   end
 
   it "should deliver nil when no more buckets are available" do
@@ -90,22 +90,22 @@ describe BucketStore do
       @store.set_buckets 'p1', [11, 12]
       @store.set_buckets 'p2', [21, 22]
       buckets = [@store.next_bucket('1'), @store.next_bucket('2')]
-      buckets.should include(12)
-      buckets.should include(22)
-      buckets = [@store.next_bucket('3'), @store.next_bucket('4')]
       buckets.should include(11)
       buckets.should include(21)
+      buckets = [@store.next_bucket('3'), @store.next_bucket('4')]
+      buckets.should include(12)
+      buckets.should include(22)
     end
 
     it "should deliver buckets from alternating projects including newly added ones" do
       @store.set_buckets 'p1', [11, 12, 13]
-      @store.next_bucket('1').should == 13
+      @store.next_bucket('1').should == 11
       @store.set_buckets 'p2', [21, 22]
-      @store.next_bucket('2').should == 22
+      @store.next_bucket('2').should == 21
       buckets = [@store.next_bucket('3'), @store.next_bucket('4')]
       buckets.should include(12)
-      buckets.should include(21)
-      @store.next_bucket('5').should == 11
+      buckets.should include(22)
+      @store.next_bucket('5').should == 13
     end
 
     it "should deliver remaining buckets from other projects when a project has no more buckets" do
@@ -113,30 +113,30 @@ describe BucketStore do
       @store.set_buckets 'p2', [21]
       @store.set_buckets 'p3', nil
       buckets = [@store.next_bucket('1'), @store.next_bucket('2')]
-      buckets.should include(13)
+      buckets.should include(11)
       buckets.should include(21)
       @store.next_bucket('3').should == 12
-      @store.next_bucket('4').should == 11
+      @store.next_bucket('4').should == 13
     end
 
     it "should try to give all projects the same amount of workers" do
       @store.set_buckets 'p1', [10, 11, 12, 13, 14, 15, 16]
       @store.set_buckets 'p2', [20, 21, 22, 23, 24, 25, 26]
       buckets = [@store.next_bucket('1'), @store.next_bucket('2')]
-      buckets.should include(16)
-      buckets.should include(26)
+      buckets.should include(10)
+      buckets.should include(20)
       buckets = [@store.next_bucket('3'), @store.next_bucket('4')]
-      buckets.should include(15)
-      buckets.should include(25)
+      buckets.should include(11)
+      buckets.should include(21)
       buckets = [@store.next_bucket('5'), @store.next_bucket('6')]
-      buckets.should include(14)
-      buckets.should include(24)
+      buckets.should include(12)
+      buckets.should include(22)
 
       # Zunächst bekommt p3 alle worker, um die Balance herzustellen
       @store.set_buckets 'p3', [30, 31, 32, 33, 34, 35, 36]
-      @store.next_bucket('7').should == 36
-      @store.next_bucket('8').should == 35
-      @store.next_bucket('9').should == 34
+      @store.next_bucket('7').should == 30
+      @store.next_bucket('8').should == 31
+      @store.next_bucket('9').should == 32
 
       # Jetzt bekommt immer ein Projekt aus der Menge derer, die am wenigsten worker haben
       buckets = [
@@ -149,22 +149,22 @@ describe BucketStore do
       buckets.should be_include(33)
 
       # Freigewordene Worker gehen im Balancefall an den hergebenden …
-      @store.next_bucket('12').should == buckets[2] - 1
-      @store.next_bucket('10').should == buckets[0] - 1
-      @store.next_bucket('11').should == buckets[1] - 1
+      @store.next_bucket('12').should == buckets[2] + 1
+      @store.next_bucket('10').should == buckets[0] + 1
+      @store.next_bucket('11').should == buckets[1] + 1
 
       # … ansonsten an einen aus der Menge derer, die am wenigsten worker haben
       @store.set_buckets 'p4', [41, 42, 43, 44, 45, 46]
-      @store.next_bucket('10').should == 46
-      @store.next_bucket('11').should == 45
-      @store.next_bucket('12').should == 44
-      @store.next_bucket('10').should == 43
+      @store.next_bucket('10').should == 41
+      @store.next_bucket('11').should == 42
+      @store.next_bucket('12').should == 43
+      @store.next_bucket('10').should == 44
 
       # wird ein Projekt reinitialisiert, fängt es wieder bei 0 an
       @store.set_buckets 'p1', [1, 2, 3, 4, 5, 6]
-      @store.next_bucket('a').should == 6
-      @store.next_bucket('b').should == 5
-      @store.next_bucket('c').should == 4
+      @store.next_bucket('a').should == 1
+      @store.next_bucket('b').should == 2
+      @store.next_bucket('c').should == 3
     end
   end
 end
