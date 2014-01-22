@@ -19,6 +19,3 @@ production:
   password: secret_pass
   encoding: utf8
   pool: 50
-
-cucumber:
-  <<: *TEST
