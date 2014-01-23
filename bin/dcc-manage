@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'active_record'
+require 'memcache'
+require 'yaml'
+
+ACTIONS = %w(get_leader reset_leader restart_workers)
+
+unless ARGV.size == 1 && (ARGV - ACTIONS).empty?
+  puts "Usage:"
+  puts "  #{$0} (#{ACTIONS.join '|'})"
+  exit 1
+end
+
+def config
+  YAML::load(File.read('config/worker.yml')).symbolize_keys
+end
+
+def memcache
+  MemCache.new(config[:memcache_servers])
+end
+
+def get_leader
+  puts memcache.get('dcc_token')
+end
+
+def reset_leader
+  memcache.delete('dcc_token')
+end
+
+def restart_workers
+  memcache.add('dcc_restart', true)
+end
+
+send ARGV.first
+
+exit 0
