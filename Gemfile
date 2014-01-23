@@ -4,7 +4,7 @@ gem 'honeybadger'
 
 gem 'daemon-spawn'
 gem 'rails', '~>3.2.16'
-gem 'mysql2'
+gem 'mysql2', '>= 0.3.14'
 gem 'json'
 gem 'jquery-rails'
 gem 'underscore-rails'
