@@ -612,17 +612,39 @@ describe Project do
             end
           end
 
-          it "should use the github user's address if none is given prior to the default address" do
-            @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
-            http = double('http')
-            http.should_receive(:use_ssl=).with(true).ordered
-            http.should_receive(:get).with('/users/phorsuedzie').ordered.and_return(
-              double('response', :body => %|{
-                "email": "me@github.com"
-              }|)
-            )
-            Net::HTTP.should_receive(:new).with('api.github.com', 443).and_return http
-            @project.e_mail_receivers('default:one').should == %w(me@github.com)
+          context "when github user has public available e-mail address an no address is given" do
+            let(:github_email_address) { "me@github.com" }
+
+            before do
+              http = double('http')
+              http.should_receive(:use_ssl=).with(true).ordered
+              http.should_receive(:get).with('/users/phorsuedzie').ordered.and_return(
+                double('response', :body => %|{"email": #{github_email_address.to_json}}|)
+              )
+              Net::HTTP.should_receive(:new).with('api.github.com', 443).and_return http
+
+              @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
+            end
+
+            it "should use the github e-mail address prior to the default address" do
+              @project.e_mail_receivers('default:one').should == %w(me@github.com)
+            end
+
+            context "that is nil" do
+              let(:github_email_address) { nil }
+
+              it "should use the default address" do
+                @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
+              end
+            end
+
+            context "that is empty" do
+              let(:github_email_address) { "" }
+
+              it "should use the default address" do
+                @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
+              end
+            end
           end
         end
       end
