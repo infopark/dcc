@@ -434,7 +434,13 @@ private
   end
 
   def without_bundler(&block)
-    with_environment({"RUBYOPT" => nil, "BUNDLE_GEMFILE" => nil, "BUNDLE_BIN_PATH" => nil}, &block)
+    with_environment({
+      "RUBYOPT" => nil,
+      "RUBYLIB" => nil,
+      "BUNDLE_GEMFILE" => nil,
+      "BUNDLE_BIN_PATH" => nil,
+      "BUNDLE_ORIG_MANPATH" => nil,
+    }, &block)
   end
 
   def with_reset_rails_env(&block)
