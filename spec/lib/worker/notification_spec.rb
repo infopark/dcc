@@ -30,7 +30,7 @@ module DCC
       double('bucket',
         :id => 1234,
         :logs => [],
-        :name => 'my bucket',
+        :name => 'my_bucket',
         :log= => nil,
         :status= => nil,
         :finished_at= => nil,
@@ -77,13 +77,13 @@ module DCC
       it 'returns the hipchat user, when github user is known' do
         project = double(github_user: 'github_x')
 
-        expect(worker.hipchat_user(project)).to eq ' @random123'
+        expect(worker.hipchat_user(project)).to eq ' /cc @random123'
       end
     end
 
     describe "when build failed" do
       before do
-        bucket.build.project.stub(:bucket_tasks).with('my bucket').and_return(['my bucket'])
+        bucket.build.project.stub(:bucket_tasks).with('my_bucket').and_return(['my_bucket'])
         worker.stub(:perform_rake_task).and_return false
         Mailer.stub(:failure_message).and_return double(deliver: nil)
         bucket.stub(:build_error_log)
@@ -107,8 +107,8 @@ module DCC
       it 'sends a hipchat message to a global channel' do
         worker.hipchat_room.should_receive(:send) do |user, message, options|
           expect(user).to eq 'DCC'
-          expect(message).to eq '[My Project] my bucket failed ' +
-              '(build: very lon.2342; xy://somewhere/project/show_bucket/1234).'
+          expect(message).to eq '[My Project] my_bucket failed - ' +
+              'xy://somewhere/project/show_bucket/1234'
           expect(options[:color]).to eq 'red'
           expect(options[:notify]).to be
           expect(options[:message_format]).to eq 'text'
@@ -120,12 +120,12 @@ module DCC
       context 'when a hipchat user is configured' do
         before do
           worker.should_receive(:hipchat_user).with(bucket.build.project).and_return(
-              ' @thehipchatuser')
+              '<output_of_hipchat_user>')
         end
 
         it 'names the hipchat user in the massage' do
           worker.hipchat_room.should_receive(:send) do |user, message, options|
-            expect(message).to match /Project\] @thehipchatuser my bucket/
+            expect(message).to match /show_bucket\/1234<output_of_hipchat_user>/
           end
 
           worker.perform_task(bucket)
@@ -172,7 +172,7 @@ module DCC
     context 'when build was fixed' do
       before do
         buckets = double
-        buckets.should_receive(:find_by_name).with('my bucket').and_return(double(status: 40))
+        buckets.should_receive(:find_by_name).with('my_bucket').and_return(double(status: 40))
         last_build = double(buckets: buckets)
 
         bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
@@ -191,8 +191,8 @@ module DCC
       it 'sends a hipchat message to a global channel' do
         worker.hipchat_room.should_receive(:send) do |user, message, options|
           expect(user).to eq 'DCC'
-          expect(message).to eq '[My Project] my bucket repaired ' +
-              '(build: very lon.2342; xy://somewhere/project/show_bucket/1234).'
+          expect(message).to eq '[My Project] my_bucket repaired - ' +
+              'xy://somewhere/project/show_bucket/1234'
           expect(options[:color]).to eq 'green'
           expect(options[:notify]).to be
           expect(options[:message_format]).to eq 'text'

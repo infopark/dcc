@@ -191,7 +191,7 @@ class Worker
 
   def hipchat_user(project)
     if hipchat_user = (@hipchat_config[:user_mapping] || {})[project.github_user]
-      " @#{hipchat_user}"
+      " /cc @#{hipchat_user}"
     end
   end
 
@@ -208,8 +208,8 @@ class Worker
 
     bucket_gui_url = "#{@gui_base_url}/project/show_bucket/#{bucket.id}"
     project = bucket.build.project
-    message = "[#{project.name}]#{hipchat_user(project)} #{bucket.name}" +
-        " #{event} (build: #{bucket.build.short_identifier}; #{bucket_gui_url})."
+    message = "[#{project.name}] #{bucket.name} #{event} - " +
+        "#{bucket_gui_url}#{hipchat_user(project)}"
 
     hipchat_room.send(user, message, {
       notify: true,
