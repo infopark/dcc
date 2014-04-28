@@ -28,6 +28,7 @@ module DCC
       ))
 
       double('bucket',
+        :id => 1234,
         :logs => [],
         :name => 'my bucket',
         :log= => nil,
@@ -43,6 +44,7 @@ module DCC
     let(:worker) {
       Worker.new('dcc_test', nil, {
         log_level: ::Logger::ERROR,
+        gui_base_url: 'xy://somewhere',
         hipchat: {
           token: 'cooler_hipchat_token',
           room: 'cooler_hipchat_room',
@@ -105,7 +107,8 @@ module DCC
       it 'sends a hipchat message to a global channel' do
         worker.hipchat_room.should_receive(:send) do |user, message, options|
           expect(user).to eq 'DCC'
-          expect(message).to eq '[My Project] my bucket failed (Build: very lon.2342).'
+          expect(message).to eq '[My Project] my bucket failed ' +
+              '(build: very lon.2342; xy://somewhere/project/show_bucket/1234).'
           expect(options[:color]).to eq 'red'
           expect(options[:notify]).to be
           expect(options[:message_format]).to eq 'text'
@@ -188,7 +191,8 @@ module DCC
       it 'sends a hipchat message to a global channel' do
         worker.hipchat_room.should_receive(:send) do |user, message, options|
           expect(user).to eq 'DCC'
-          expect(message).to eq '[My Project] my bucket repaired (Build: very lon.2342).'
+          expect(message).to eq '[My Project] my bucket repaired ' +
+              '(build: very lon.2342; xy://somewhere/project/show_bucket/1234).'
           expect(options[:color]).to eq 'green'
           expect(options[:notify]).to be
           expect(options[:message_format]).to eq 'text'

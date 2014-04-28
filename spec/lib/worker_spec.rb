@@ -233,6 +233,7 @@ describe Worker, "when running as follower" do
       @project.stub(:bucket_tasks).with('t2').and_return(['rt21', 'rt22'])
       @logs = [double('l1', :log => 'log1'), double('l2', :log => 'log2')]
       @bucket = double('bucket',
+        :id => 2342,
         :name => "t2",
         :log= => nil,
         :finished_at= => nil,
