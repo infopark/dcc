@@ -35,4 +35,10 @@ RSpec.configure do |config|
   # the seed, which is printed after each run.
   #     --seed 1234
   config.order = "random"
+
+  config.before(:each) do
+    room = double(HipChat::Room, send: nil)
+    client = double(HipChat::Client, :[] => room)
+    HipChat::Client.stub(:new).and_return(client)
+  end
 end

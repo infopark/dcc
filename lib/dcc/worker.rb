@@ -7,6 +7,7 @@ require 'timeout'
 require 'socket'
 require 'active_support'
 require 'fileutils'
+require 'hipchat'
 
 require 'models/project'
 require 'models/build'
@@ -29,6 +30,7 @@ class Worker
 
   def initialize(group_name, memcached_servers, options = {})
     super()
+    @hipchat_config = options[:hipchat] || {}
     options = {:log_level => ::Logger::WARN, :servers => memcached_servers}.merge(options)
     log.level = options[:log_level]
     log.formatter = ::Logger::Formatter.new()
@@ -168,13 +170,43 @@ class Worker
     if !succeeded
       bucket.build_error_log
       Mailer.failure_message(bucket).deliver
+      notify_hipchat(bucket, succeeded)
     else
       last_build = project.last_build(:before_build => build)
       if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
             last_bucket.status != 10
         Mailer.fixed_message(bucket).deliver
+        notify_hipchat(bucket, succeeded)
       end
     end
+  end
+
+  def hipchat_room
+    token = @hipchat_config[:token]
+    room_id = @hipchat_config[:room]
+
+    HipChat::Client.new(token, api_version: 'v1')[room_id]
+  end
+
+  def notify_hipchat(bucket, succeeded)
+    user = 'DCC'
+
+    if succeeded
+      color = 'green'
+      event = 'repaired'
+    else
+      color = 'red'
+      event = 'failed'
+    end
+
+    message = "[#{bucket.build.project.name}] #{bucket.name} #{event}" +
+        " (Build: #{bucket.build.short_identifier})."
+
+    hipchat_room.send(user, message, {
+      notify: true,
+      message_format: 'text',
+      color: color
+    })
   end
 
   def perform_rake_task(path, task, logs)
