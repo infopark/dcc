@@ -4,6 +4,8 @@ require 'spec_helper'
 module DCC
 
   describe Worker, "Notifications" do
+    fixtures :buckets, :builds
+
     let(:bucket) {
       build = Build.new()
       build.id = 1000
