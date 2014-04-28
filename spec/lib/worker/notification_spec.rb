@@ -94,20 +94,30 @@ module DCC
       end
     end
 
-    it "should send no email if build succeeded again" do
-      bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
-          and_return Build.find(330)
-      Mailer.should_not_receive(:failure_message)
-      Mailer.should_not_receive(:fixed_message)
-      worker.perform_task(bucket)
+    context 'when build succeeded again' do
+      before do
+        bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
+            and_return Build.find(330)
+      end
+
+      it "sends no email" do
+        Mailer.should_not_receive(:failure_message)
+        Mailer.should_not_receive(:fixed_message)
+        worker.perform_task(bucket)
+      end
     end
 
-    it "should send no email if first build ever succeeded" do
-      bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
-          and_return nil
-      Mailer.should_not_receive(:failure_message)
-      Mailer.should_not_receive(:fixed_message)
-      worker.perform_task(bucket)
+    context 'when first build ever succeeded' do
+      before do
+        bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
+            and_return nil
+      end
+
+      it "sends no email" do
+        Mailer.should_not_receive(:failure_message)
+        Mailer.should_not_receive(:fixed_message)
+        worker.perform_task(bucket)
+      end
     end
 
     context 'when build was fixed' do
