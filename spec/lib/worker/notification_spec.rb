@@ -111,16 +111,22 @@ module DCC
       worker.perform_task(bucket)
     end
 
-    it "should send an email if build was fixed" do
-      buckets = double
-      buckets.should_receive(:find_by_name).with('my bucket').and_return(double(status: 40))
-      last_build = double(buckets: buckets)
+    context 'when build was fixed' do
+      before do
+        buckets = double
+        buckets.should_receive(:find_by_name).with('my bucket').and_return(double(status: 40))
+        last_build = double(buckets: buckets)
 
-      bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
-          and_return last_build
-      Mailer.should_receive(:fixed_message).with(bucket).and_return(message = double)
-      message.should_receive(:deliver)
-      worker.perform_task(bucket)
+        bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
+            and_return last_build
+      end
+
+      it "should send an email if build was fixed" do
+        message = double
+        Mailer.should_receive(:fixed_message).with(bucket).and_return(message)
+        message.should_receive(:deliver)
+        worker.perform_task(bucket)
+      end
     end
   end
 
