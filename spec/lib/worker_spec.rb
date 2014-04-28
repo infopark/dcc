@@ -248,7 +248,8 @@ describe Worker, "when running as follower" do
           :identifier => 'the commit.666',
           :project => @project,
           :commit => 'the commit',
-          :build_number => 666
+          :build_number => 666,
+          :short_identifier => 'very sho'
         ),
       )
     end
