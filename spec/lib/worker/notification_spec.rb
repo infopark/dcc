@@ -105,6 +105,11 @@ module DCC
         Mailer.should_not_receive(:fixed_message)
         worker.perform_task(bucket)
       end
+
+      it "sends no hipchat message" do
+        worker.hipchat_room.should_not_receive(:send)
+        worker.perform_task(bucket)
+      end
     end
 
     context 'when first build ever succeeded' do
@@ -116,6 +121,11 @@ module DCC
       it "sends no email" do
         Mailer.should_not_receive(:failure_message)
         Mailer.should_not_receive(:fixed_message)
+        worker.perform_task(bucket)
+      end
+
+      it "sends no hipchat message" do
+        worker.hipchat_room.should_not_receive(:send)
         worker.perform_task(bucket)
       end
     end
