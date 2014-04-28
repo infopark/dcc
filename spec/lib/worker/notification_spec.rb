@@ -23,7 +23,8 @@ module DCC
         bucket_group: 'default',
         last_build: nil,
         ruby_version: nil,
-        git: double('git', update: nil, path: '/nix', current_commit: nil)
+        git: double('git', update: nil, path: '/nix', current_commit: nil),
+        github_user: 'foobar user'
       ))
 
       double('bucket',
@@ -41,10 +42,14 @@ module DCC
 
     let(:worker) {
       Worker.new('dcc_test', nil, {
-        :log_level => ::Logger::ERROR,
+        log_level: ::Logger::ERROR,
         hipchat: {
           token: 'cooler_hipchat_token',
           room: 'cooler_hipchat_room',
+          user_mapping: {
+            "github_x" => :random123,
+            "github_y" => :hipchat_y
+          }
         }
       }).tap { |w| w.stub(:execute) }
     }
@@ -58,6 +63,20 @@ module DCC
       client.should_receive(:[]).with('cooler_hipchat_room').and_return(room)
 
       expect(worker.hipchat_room).to equal(room)
+    end
+
+    describe 'worker#hipchat_user' do
+      it 'returns nil, when github user is not known' do
+        project = double(github_user: 'random_unknown_user')
+
+        expect(worker.hipchat_user(project)).to be nil
+      end
+
+      it 'returns the hipchat user, when github user is known' do
+        project = double(github_user: 'github_x')
+
+        expect(worker.hipchat_user(project)).to eq ' @random123'
+      end
     end
 
     describe "when build failed" do
@@ -93,6 +112,21 @@ module DCC
         end
 
         worker.perform_task(bucket)
+      end
+
+      context 'when a hipchat user is configured' do
+        before do
+          worker.should_receive(:hipchat_user).with(bucket.build.project).and_return(
+              ' @thehipchatuser')
+        end
+
+        it 'names the hipchat user in the massage' do
+          worker.hipchat_room.should_receive(:send) do |user, message, options|
+            expect(message).to match /Project\] @thehipchatuser my bucket/
+          end
+
+          worker.perform_task(bucket)
+        end
       end
     end
 

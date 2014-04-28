@@ -188,6 +188,12 @@ class Worker
     HipChat::Client.new(token, api_version: 'v1')[room_id]
   end
 
+  def hipchat_user(project)
+    if hipchat_user = (@hipchat_config[:user_mapping] || {})[project.github_user]
+      " @#{hipchat_user}"
+    end
+  end
+
   def notify_hipchat(bucket, succeeded)
     user = 'DCC'
 
@@ -199,8 +205,9 @@ class Worker
       event = 'failed'
     end
 
-    message = "[#{bucket.build.project.name}] #{bucket.name} #{event}" +
-        " (Build: #{bucket.build.short_identifier})."
+    project = bucket.build.project
+    message = "[#{project.name}]#{hipchat_user(project)} #{bucket.name}" +
+        " #{event} (Build: #{bucket.build.short_identifier})."
 
     hipchat_room.send(user, message, {
       notify: true,

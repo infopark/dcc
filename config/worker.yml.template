@@ -12,3 +12,6 @@ email_sender: dcc@domain
 hipchat:
   token: put_your_token_here
   room: your_room_id_here
+  user_mapping:
+    github_x: hipchat_x
+    github_y: y_hipchat
