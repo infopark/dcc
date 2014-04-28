@@ -85,6 +85,7 @@ module DCC
           room.should_receive(:send) do |user, message, options|
             expect(user).to eq 'DCC'
             expect(message).to eq '[My Project] my bucket failed (Build: very lon.2342).'
+            expect(options[:color]).to eq 'red'
             expect(options[:notify]).to be
             expect(options[:message_format]).to eq 'text'
           end

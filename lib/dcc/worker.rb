@@ -186,9 +186,15 @@ class Worker
     user = 'DCC'
 
     client = HipChat::Client.new(token, api_version: 'v1')
+
+    color = succeeded ? 'green' : 'red'
     message = "[#{bucket.build.project.name}] #{bucket.name} " +
         "failed (Build: #{bucket.build.short_identifier})."
-    client[room_id].send(user, message, notify: true, message_format: 'text')
+    client[room_id].send(user, message, {
+      notify: true,
+      message_format: 'text',
+      color: color
+    })
   end
 
   def perform_rake_task(path, task, logs)
