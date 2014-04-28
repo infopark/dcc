@@ -1,26 +1,10 @@
 # encoding: utf-8
-require File.dirname(__FILE__) + '/../spec_helper'
+require 'spec_helper'
 
 require 'dcc/rake'
-require 'dcc/worker'
+require 'support/worker_spec_support'
 
 module DCC
-
-class Worker
-  attr_accessor :buckets
-  attr_reader :memcache_client
-
-  def cleanup
-  end
-
-  def log_polling_intervall
-    return 0.1
-  end
-
-  def as_dictator
-    yield
-  end
-end
 
 class TestRake < Rake
   def initialize
