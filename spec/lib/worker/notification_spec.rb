@@ -118,12 +118,26 @@ module DCC
 
         bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
             and_return last_build
+
+        Mailer.stub(:fixed_message).and_return double(deliver: nil)
       end
 
       it "should send an email if build was fixed" do
         message = double
         Mailer.should_receive(:fixed_message).with(bucket).and_return(message)
         message.should_receive(:deliver)
+        worker.perform_task(bucket)
+      end
+
+      it 'sends a hipchat message to a global channel' do
+        worker.hipchat_room.should_receive(:send) do |user, message, options|
+          expect(user).to eq 'DCC'
+          expect(message).to eq '[My Project] my bucket repaired (Build: very lon.2342).'
+          expect(options[:color]).to eq 'green'
+          expect(options[:notify]).to be
+          expect(options[:message_format]).to eq 'text'
+        end
+
         worker.perform_task(bucket)
       end
     end

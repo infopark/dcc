@@ -176,6 +176,7 @@ class Worker
       if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
             last_bucket.status != 10
         Mailer.fixed_message(bucket).deliver
+        notify_hipchat(bucket, succeeded)
       end
     end
   end
@@ -189,9 +190,17 @@ class Worker
 
   def notify_hipchat(bucket, succeeded)
     user = 'DCC'
-    color = succeeded ? 'green' : 'red'
-    message = "[#{bucket.build.project.name}] #{bucket.name} " +
-        "failed (Build: #{bucket.build.short_identifier})."
+
+    if succeeded
+      color = 'green'
+      event = 'repaired'
+    else
+      color = 'red'
+      event = 'failed'
+    end
+
+    message = "[#{bucket.build.project.name}] #{bucket.name} #{event}" +
+        " (Build: #{bucket.build.short_identifier})."
 
     hipchat_room.send(user, message, {
       notify: true,
