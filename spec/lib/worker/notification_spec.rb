@@ -47,6 +47,17 @@ module DCC
       }).tap { |w| w.stub(:execute) }
     }
 
+    it 'configures the hipchat_room correctly' do
+      client = double(HipChat::Client)
+      room = double(HipChat::Room)
+
+      HipChat::Client.should_receive(:new).with(
+          'cooler_hipchat_token', api_version: 'v1').and_return(client)
+      client.should_receive(:[]).with('cooler_hipchat_room').and_return(room)
+
+      expect(worker.hipchat_room).to equal(room)
+    end
+
     describe "when build failed" do
       before do
         bucket.build.project.stub(:bucket_tasks).with('my bucket').and_return(['my bucket'])
@@ -71,12 +82,7 @@ module DCC
       end
 
       it 'sends a hipchat message to a global channel' do
-        client = double(HipChat::Client)
-        room = double(HipChat::Room)
-        HipChat::Client.should_receive(:new).with(
-            'cooler_hipchat_token', api_version: 'v1').and_return(client)
-        client.should_receive(:[]).with('cooler_hipchat_room').and_return(room)
-        room.should_receive(:send) do |user, message, options|
+        worker.hipchat_room.should_receive(:send) do |user, message, options|
           expect(user).to eq 'DCC'
           expect(message).to eq '[My Project] my bucket failed (Build: very lon.2342).'
           expect(options[:color]).to eq 'red'
