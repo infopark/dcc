@@ -70,28 +70,21 @@ module DCC
         worker.perform_task(bucket)
       end
 
-      context 'hipchat notifications' do
-        let(:client) {
-          double(HipChat::Client)
-        }
-        let(:room) {
-          double(HipChat::Room)
-        }
-
-        it 'sends a message to a global channel' do
-          HipChat::Client.should_receive(:new).with(
-              'cooler_hipchat_token', api_version: 'v1').and_return(client)
-          client.should_receive(:[]).with('cooler_hipchat_room').and_return(room)
-          room.should_receive(:send) do |user, message, options|
-            expect(user).to eq 'DCC'
-            expect(message).to eq '[My Project] my bucket failed (Build: very lon.2342).'
-            expect(options[:color]).to eq 'red'
-            expect(options[:notify]).to be
-            expect(options[:message_format]).to eq 'text'
-          end
-
-          worker.perform_task(bucket)
+      it 'sends a hipchat message to a global channel' do
+        client = double(HipChat::Client)
+        room = double(HipChat::Room)
+        HipChat::Client.should_receive(:new).with(
+            'cooler_hipchat_token', api_version: 'v1').and_return(client)
+        client.should_receive(:[]).with('cooler_hipchat_room').and_return(room)
+        room.should_receive(:send) do |user, message, options|
+          expect(user).to eq 'DCC'
+          expect(message).to eq '[My Project] my bucket failed (Build: very lon.2342).'
+          expect(options[:color]).to eq 'red'
+          expect(options[:notify]).to be
+          expect(options[:message_format]).to eq 'text'
         end
+
+        worker.perform_task(bucket)
       end
     end
 
