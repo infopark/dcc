@@ -228,11 +228,12 @@ describe Worker, "when running as follower" do
       @git = double('git', :path => 'git path', :update => nil, :current_commit => nil)
       @project = double('project', :name => "project's name", :before_all_tasks => [], :git => @git,
           :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [], :id => 1,
-          :last_build => nil, :ruby_version => nil)
+          :last_build => nil, :ruby_version => nil, :github_user => 'foobar')
       @project.stub(:bucket_tasks).with('t1').and_return(['rt1'])
       @project.stub(:bucket_tasks).with('t2').and_return(['rt21', 'rt22'])
       @logs = [double('l1', :log => 'log1'), double('l2', :log => 'log2')]
       @bucket = double('bucket',
+        :id => 2342,
         :name => "t2",
         :log= => nil,
         :finished_at= => nil,
@@ -248,7 +249,8 @@ describe Worker, "when running as follower" do
           :identifier => 'the commit.666',
           :project => @project,
           :commit => 'the commit',
-          :build_number => 666
+          :build_number => 666,
+          :short_identifier => 'very sho'
         ),
       )
     end

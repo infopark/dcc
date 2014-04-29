@@ -9,6 +9,10 @@ iteration_length: 60
 dictatorship_length: 1800
 admin_e_mail_address: me@domain
 email_sender: dcc@domain
+gui_base_url: https://dcc.infopark.de
 hipchat:
   token: put_your_token_here
   room: your_room_id_here
+  user_mapping:
+    github_x: hipchat_x
+    github_y: y_hipchat

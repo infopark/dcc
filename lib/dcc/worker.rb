@@ -31,6 +31,7 @@ class Worker
   def initialize(group_name, memcached_servers, options = {})
     super()
     @hipchat_config = options[:hipchat] || {}
+    @gui_base_url = options[:gui_base_url]
     options = {:log_level => ::Logger::WARN, :servers => memcached_servers}.merge(options)
     log.level = options[:log_level]
     log.formatter = ::Logger::Formatter.new()
@@ -188,6 +189,12 @@ class Worker
     HipChat::Client.new(token, api_version: 'v1')[room_id]
   end
 
+  def hipchat_user(project)
+    if hipchat_user = (@hipchat_config[:user_mapping] || {})[project.github_user]
+      " /cc @#{hipchat_user}"
+    end
+  end
+
   def notify_hipchat(bucket, succeeded)
     user = 'DCC'
 
@@ -199,8 +206,10 @@ class Worker
       event = 'failed'
     end
 
-    message = "[#{bucket.build.project.name}] #{bucket.name} #{event}" +
-        " (Build: #{bucket.build.short_identifier})."
+    bucket_gui_url = "#{@gui_base_url}/project/show_bucket/#{bucket.id}"
+    project = bucket.build.project
+    message = "[#{project.name}] #{bucket.name} #{event} - " +
+        "#{bucket_gui_url}#{hipchat_user(project)}"
 
     hipchat_room.send(user, message, {
       notify: true,
