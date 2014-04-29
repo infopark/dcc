@@ -37,6 +37,7 @@ class Worker
       log_level: ::Logger::WARN,
       servers: memcached_servers,
     }.with_indifferent_access.merge(options)
+    options[:log_level] = eval(options[:log_level]) if String === options[:log_level]
     log.level = options[:log_level]
     log.formatter = ::Logger::Formatter.new()
     Logger.setLog(log)
