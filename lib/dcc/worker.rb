@@ -527,6 +527,10 @@ private
   def find_workers
     EC2.neighbours.map {|i| i.tags[uri_tag_name] }
   end
+
+  def cleanup
+    EC2.add_tag(uri_tag_name, nil)
+  end
 end
 
 end
