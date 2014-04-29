@@ -32,15 +32,15 @@ def memcache
 end
 
 def get_leader
-  puts memcache.get('dcc_token')
+  puts memcache.get("#{config[:group_name]}_token")
 end
 
 def reset_leader
-  memcache.delete('dcc_token')
+  memcache.delete("#{config[:group_name]}_token")
 end
 
 def restart_workers
-  memcache.add('dcc_restart', true)
+  memcache.add("#{config[:group_name]}_restart", true)
 end
 
 def cleanup_data
