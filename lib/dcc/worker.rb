@@ -15,6 +15,7 @@ require 'models/build'
 require 'models/bucket'
 require 'models/log'
 
+require_relative 'ec2'
 require_relative 'command_line'
 require_relative 'rake'
 require_relative 'mailer'
@@ -42,6 +43,7 @@ class Worker
     log.formatter = ::Logger::Formatter.new()
     Logger.setLog(log)
     register_worker group_name, 0, options
+    EC2.add_tag(uri_tag_name, uri)
     @buckets = BucketStore.new
     @admin_e_mail_address = options[:admin_e_mail_address]
     @succeeded_before_all_tasks = []
@@ -516,6 +518,10 @@ private
       end
       pool.disconnect!
     end
+  end
+
+  def uri_tag_name
+    "dcc:#{group_name}:uri"
   end
 end
 
