@@ -1,13 +1,14 @@
 # encoding: utf-8
-require 'politics'
-require 'politics/static_queue_worker'
-require 'monitor'
-require 'set'
-require 'timeout'
-require 'socket'
 require 'active_support'
+require 'active_support/core_ext/hash/indifferent_access'
 require 'fileutils'
 require 'hipchat'
+require 'monitor'
+require 'politics'
+require 'politics/static_queue_worker'
+require 'set'
+require 'socket'
+require 'timeout'
 
 require 'models/project'
 require 'models/build'
@@ -32,7 +33,10 @@ class Worker
     super()
     @hipchat_config = options[:hipchat] || {}
     @gui_base_url = options[:gui_base_url]
-    options = {:log_level => ::Logger::WARN, :servers => memcached_servers}.merge(options)
+    options = {
+      log_level: ::Logger::WARN,
+      servers: memcached_servers,
+    }.with_indifferent_access.merge(options)
     log.level = options[:log_level]
     log.formatter = ::Logger::Formatter.new()
     Logger.setLog(log)
