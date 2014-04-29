@@ -523,6 +523,10 @@ private
   def uri_tag_name
     "dcc:#{group_name}:uri"
   end
+
+  def find_workers
+    EC2.neighbours.map {|i| i.tags[uri_tag_name] }
+  end
 end
 
 end

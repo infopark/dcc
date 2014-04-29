@@ -10,6 +10,11 @@ module EC2
       instance.add_tag(name, value: value)
     end
 
+    def neighbours
+      ec2.instances.tagged('opsworks:stack').tagged_values(instance.tags["opsworks:stack"]).
+          reject {|i| i.id == instance.id }
+    end
+
     private
 
     def meta_data

@@ -40,6 +40,7 @@ RSpec.configure do |config|
     room = double(HipChat::Room, send: nil)
     client = double(HipChat::Client, :[] => room)
     HipChat::Client.stub(:new).and_return(client)
+    DCC::EC2.stub(:neighbours)
     DCC::EC2.stub(:add_tag)
   end
 end
