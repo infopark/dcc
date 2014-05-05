@@ -42,47 +42,12 @@ var DCC = (function() {
       );
     };
 
-    var toggle_add_project_form = function() {
-      var container = $('#add_project');
-      container.find(".form").toggle();
-      container.find('a.btn').toggle();
-      container.find('.panel-footer').toggleClass("hidden");
-      container.find('.panel-body').toggleClass('unobtrusive');
-    };
-
-    var reset_add_project_form = function() {
-      var form = $("#add_project form");
-      form.find("input[type=text]").prop("value", null);
-      form.find(".make-switch").bootstrapSwitch('setState', true);
-      toggle_add_project_form();
-    };
-
-    var init_add_project = function() {
-      var container = $('#add_project');
-      container.find('a.btn').click(function() { toggle_add_project_form(); });
-      container.find('form button[type=button]').click(function() { reset_add_project_form(); });
-      container.find('.make-switch').bootstrapSwitch();
-      container.find("form").submit(function() {
-        var params = {};
-        _.each($(this).serializeArray(), function(param) {
-          if (params[param.name]) {
-            params[param.name] = _.flatten([params[param.name], param.value]);
-          } else {
-            params[param.name] = param.value;
-          }
-        });
-        DCC.Project.create(params, function() { reset_add_project_form() });
-        return false;
-      });
-    };
-
     var render_container = function() {
       $("body").append(
         '<div class="container">' +
           '<div id="projects" class="row"></div>' +
         '</div>'
       );
-      init_add_project();
     };
 
     var render_modal = function(html_id) {
@@ -134,6 +99,11 @@ var DCC = (function() {
       projects_container().on("add_project.dcc", handle_add_project);
     };
 
+    var refresh_data = function() {
+      DCC.Project.fetch_all();
+      setTimeout(function() { refresh_data(); }, 10000);
+    };
+
     this.render = function() {
       render_menubar();
       render_container();
@@ -147,7 +117,8 @@ var DCC = (function() {
       // TODO stattdessen add-Event auf DCC.Project triggern und ProjectView via init darauf
       // abonnieren → keine register_event_handlers und keine handle_add_project
       DCC.Project.init(projects_container());
-      DCC.Project.fetch_all();
+
+      refresh_data();
     };
   };
 
@@ -527,6 +498,40 @@ DCC.ProjectView = (function() {
     };
   };
 
+  var toggle_add_project_form = function() {
+    var container = $('#add_project');
+    container.find(".form").toggle();
+    container.find('a.btn').toggle();
+    container.find('.panel-footer').toggleClass("hidden");
+    container.find('.panel-body').toggleClass('unobtrusive');
+  };
+
+  var reset_add_project_form = function() {
+    var form = $("#add_project form");
+    form.find("input[type=text]").prop("value", null);
+    form.find(".make-switch").bootstrapSwitch('setState', true);
+    toggle_add_project_form();
+  };
+
+  var init_add_project = function() {
+    var container = $('#add_project');
+    container.find('a.btn').click(function() { toggle_add_project_form(); });
+    container.find('form button[type=button]').click(function() { reset_add_project_form(); });
+    container.find('.make-switch').bootstrapSwitch();
+    container.find("form").submit(function() {
+      var params = {};
+      _.each($(this).serializeArray(), function(param) {
+        if (params[param.name]) {
+          params[param.name] = _.flatten([params[param.name], param.value]);
+        } else {
+          params[param.name] = param.value;
+        }
+      });
+      DCC.Project.create(params, function() { reset_add_project_form() });
+      return false;
+    });
+  };
+
   clazz.render_add_project = function(container) {
     $(container).append(
       '<div id="add_project" class="' + card_css_class + '">' +
@@ -573,6 +578,8 @@ DCC.ProjectView = (function() {
         '</form>' +
       '</div>'
     );
+
+      init_add_project();
   };
 
   return clazz;
