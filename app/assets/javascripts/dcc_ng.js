@@ -394,6 +394,15 @@ DCC.Project = (function() {
         $(that).trigger("delete.dcc");
       });
     };
+
+    var set_data = function(new_project_data) {
+      project_data = new_project_data;
+    };
+
+    this.update_data = function(new_project_data) {
+      set_data(new_project_data);
+      $(that).trigger("update.dcc");
+    };
   };
 
   var container;
@@ -410,10 +419,24 @@ DCC.Project = (function() {
   clazz.fetch_all = function() {
     perform_get(null, 'list', {}, DCC.Localizer.t("error.fetch_projects_failed"), function(result) {
       _.each(result.projects, function(project_data) {
-        if (!loaded_projects[project_data.id]) {
+        var loaded_project = loaded_projects[project_data.id];
+        if (!loaded_project) {
           handle_new_project(project_data);
+          // FIXME build.id()
+          // FIXME update on status change
+        } else if (
+          project_data.build_requested != loaded_project.build_requested() ||
+          (
+            project_data.last_build &&
+            (
+              !loaded_project.last_build() ||
+              loaded_project.last_build().id != project_data.last_build.id ||
+              loaded_project.last_build().status != project_data.last_build.status
+            )
+          )
+        ) {
+          loaded_project.update_data(project_data);
         }
-        // FIXME update_project gdw. vorhanden & status change
       });
     });
   };
@@ -437,6 +460,8 @@ DCC.ProjectView = (function() {
     var html_id = DCC.HtmlUtils.compute_id(project.id());
 
     $(project).on("delete.dcc", function() { $("#" + html_id).remove(); });
+
+    $(project).on("update.dcc", function() { that.render(); });
 
     this.render = function() {
       var project_column = DCC.HtmlUtils.provide_first_element("#" + html_id,
