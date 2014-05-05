@@ -389,10 +389,15 @@ DCC.Project = (function() {
     this.last_build = function() { return project_data.last_build; };
 
     this.destroy = function() {
-      perform_post(that, 'delete', {}, DCC.Localizer.t("error.delete_failed"), function(result) {
+      perform_post(that, 'delete', {}, DCC.Localizer.t("error.delete_failed"), function() {
         delete loaded_projects[that.id()];
         $(that).trigger("delete.dcc");
       });
+    };
+
+    this.request_build = function(options = {}) {
+      perform_post(that, 'build', {}, DCC.Localizer.t("error.trigger_build_failed"),
+          options.on_success, options.on_error);
     };
 
     var set_data = function(new_project_data) {
@@ -484,26 +489,32 @@ DCC.ProjectView = (function() {
           "</div>");
       DCC.HtmlUtils.update_panel_status(project_panel, project.last_build());
 
-      var buttons = DCC.HtmlUtils.provide_element(".panel-footer", project_panel, "<div class='btn-group'/>",
-          function(element) {
-        $("<button class='btn btn-4 btn-danger'>" + DCC.Localizer.t("dialog.button.delete") + "</button>").
-            appendTo(element).click(function() {
-          bootbox.confirm(DCC.Localizer.t("confirm.project_delete").replace('%{name}', project.name),
-              function(confirmed) {
-                if (confirmed) {
-                  project.destroy();
-                }
-              });
+      var buttons = DCC.HtmlUtils.provide_element(".panel-footer", project_panel,
+          "<div class='btn-group'/>", function(element) {
+        $("<button class='btn btn-4 btn-danger'>" +
+          DCC.Localizer.t("dialog.button.delete") +
+        "</button>").appendTo(element).click(function() {
+          bootbox.confirm(
+            DCC.Localizer.t("confirm.project_delete").replace('%{name}', project.name),
+            function(confirmed) {
+              if (confirmed) {
+                project.destroy();
+              }
+            }
+          );
         });
       });
       var build_button = DCC.HtmlUtils.provide_first_element(".build", buttons,
           "<button class='btn btn-4 btn-info'>" + DCC.Localizer.t("dialog.button.build") +
           "</button>");
       var stats_button = DCC.HtmlUtils.provide_first_element(".stats", buttons,
-          "<button title='" + DCC.HtmlUtils.escape(DCC.Localizer.t("project.stats.link_title")) +
-          "' data-project_id='" + project.id() +
-          "' data-project_name='" + DCC.HtmlUtils.escape(project.name()) +
-          "' class='btn btn-2 btn-default' data-toggle='modal' data-target='#stats_dialog'>◔</button>");
+        "<button title='" + DCC.HtmlUtils.escape(DCC.Localizer.t("project.stats.link_title")) +
+            "' data-project_id='" + project.id() +
+            "' data-project_name='" + DCC.HtmlUtils.escape(project.name()) +
+            "' class='btn btn-2 btn-default' data-toggle='modal' data-target='#stats_dialog'>" +
+          "◔" +
+        "</button>"
+      );
 
       if (project.build_requested()) {
         build_button.prop("disabled", true);
@@ -512,12 +523,7 @@ DCC.ProjectView = (function() {
         build_button.unbind('click');
         build_button.click(function() {
           build_button.prop("disabled", true);
-          // FIXME
-          perform_project_action(project, 'build', DCC.Localizer.t("error.trigger_build_failed"),
-              null,
-              function(result) {
-                build_button.prop("disabled", false);
-              });
+          project.request_build({on_error: function() { build_button.prop("disabled", false); }});
         });
       }
     };
