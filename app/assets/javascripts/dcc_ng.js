@@ -400,12 +400,8 @@ DCC.Project = (function() {
           options.on_success, options.on_error);
     };
 
-    var set_data = function(new_project_data) {
-      project_data = new_project_data;
-    };
-
     this.update_data = function(new_project_data) {
-      set_data(new_project_data);
+      project_data = new_project_data;
       $(that).trigger("update.dcc");
     };
   };
