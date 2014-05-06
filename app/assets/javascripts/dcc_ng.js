@@ -52,29 +52,6 @@ var DCC = (function() {
       );
     };
 
-    var render_modal = function(html_id) {
-      $("body").append(
-        '<div class="modal fade" id="' + html_id + '">' +
-          '<div class="modal-dialog">' +
-            '<div class="modal-content">' +
-              '<div class="modal-header">' +
-                '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">' +
-                  '×' +
-                '</button>' +
-                '<h3 class="modal-title"></h3>' +
-              '</div>' +
-              '<div class="modal-body"></div>' +
-              '<div class="modal-footer">' +
-                '<button class="btn btn-default" type="button" data-dismiss="modal">' +
-                  DCC.Localizer.t("dialog.button.close") +
-                '</button>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>'
-      );
-    };
-
     var render_error_overlay = function() {
       $("body").append(
         '<div id="error_overlay" class="error_overlay">' +
@@ -110,8 +87,8 @@ var DCC = (function() {
       render_menubar();
       render_container();
       DCC.ProjectView.render_add_project(projects_container());
-      render_modal("stats_dialog");
-      render_modal("build_dialog");
+      DCC.HtmlUtils.render_modal("stats_dialog");
+      DCC.ProjectBuildsView.render();
       render_error_overlay();
 
       register_event_handlers();
@@ -258,7 +235,7 @@ DCC.HtmlUtils = (function() {
     }
   };
 
-  var status_css_class = function(status) {
+  clazz.status_css_class = function(status) {
     if (status <= 10) {
       return 'success';
     } else if (status <= 30) {
@@ -288,7 +265,7 @@ DCC.HtmlUtils = (function() {
   var append_status = function(element, status_code, value) {
     if (value != 0) {
       $("<span title='" + status_message(status_code) +
-          "' class='" + status_css_class(status_code) + "'>" +
+          "' class='" + clazz.status_css_class(status_code) + "'>" +
         clazz.glyphicon(status_icon(status_code), 'status_icon') +
         (value > 0 ? value : "") +
       "</span>").appendTo(element);
@@ -297,11 +274,11 @@ DCC.HtmlUtils = (function() {
 
   clazz.update_panel_status = function(panel, thing) {
     panel.removeClass("panel-danger panel-info panel-success panel-default");
-    if (!thing || !thing.status) {
+    if (!thing || !thing.status()) {
       panel.addClass("panel-default");
-    } else if (thing.status <= 10) {
+    } else if (thing.status() <= 10) {
       panel.addClass("panel-success");
-    } else if (thing.status <= 30) {
+    } else if (thing.status() <= 30) {
       panel.addClass("panel-info");
     } else {
       panel.addClass("panel-danger");
@@ -314,15 +291,38 @@ DCC.HtmlUtils = (function() {
       if (thing.bucket_state_counts) {
         var build = thing;
         _.each([40, 35, 30, 20, 10], function(status_code) {
-          var value = build.bucket_state_counts[status_code.toString()];
+          var value = build.bucket_state_counts(status_code.toString());
           append_status(panel_status, status_code, value);
         });
       } else {
-        append_status(panel_status, thing.status);
+        append_status(panel_status, thing.status());
       }
     }
   };
 
+
+  clazz.render_modal = function(html_id) {
+    return $(
+      '<div class="modal fade" id="' + html_id + '">' +
+        '<div class="modal-dialog">' +
+          '<div class="modal-content">' +
+            '<div class="modal-header">' +
+              '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">' +
+                '×' +
+              '</button>' +
+              '<h3 class="modal-title"></h3>' +
+            '</div>' +
+            '<div class="modal-body"></div>' +
+            '<div class="modal-footer">' +
+              '<button class="btn btn-default" type="button" data-dismiss="modal">' +
+                DCC.Localizer.t("dialog.button.close") +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    ).appendTo("body");
+  };
 
   return clazz;
 })();
@@ -342,8 +342,115 @@ DCC.User = (function() {
 DCC.Project = (function() {
   var loaded_projects = {};
 
-  var _perform_action =
-      function(type, project, action, params, error_message, success_handler, error_handler) {
+  var clazz = function(project_data) {
+    var that = this;
+
+    var loaded_build_ids = [];
+    var builds_continuation_handle;
+
+    this.url = function() { return project_data.url; };
+    this.branch = function() { return project_data.branch; };
+    this.owner = function() { return project_data.owner; };
+    this.name = function() { return project_data.name; };
+    this.id = function() { return project_data.id; };
+    this.build_requested = function() { return project_data.build_requested; };
+    this.loaded_build_ids = function() { return loaded_build_ids; }
+
+    var last_build;
+    this.last_build = function() { return last_build; };
+
+    // TODO Build-Model → Beim Projekt-Laden direkt ein Build-Model erzeugen → multi-model-response?
+    // → dann hat das project lediglich last_build_id und last_build() macht find auf Build
+    // → dann muss update_panel_status entsprechend Methoden verwenden
+    var load_last_build = function() {
+      // TODO Wenn multi-model-response (s.o.), dann liegt der last_build als Model vor und kann bei
+      // load_builds nicht mehr als „bitte nachladen“-Indikator verwendet werden.
+      if (project_data.last_build && !DCC.Build.find(project_data.last_build.id)) {
+        if (!last_build) {
+          builds_continuation_handle = project_data.last_build.id
+        }
+        last_build = new DCC.Build(project_data.last_build);
+        loaded_build_ids.unshift(last_build.id());
+        return 1;
+      }
+      return 0;
+    };
+    load_last_build();
+
+    this.destroy = function() {
+      perform_post(that.id(), 'delete', {}, DCC.Localizer.t("error.delete_failed"), function() {
+        delete loaded_projects[that.id()];
+        $(that).trigger("delete.dcc");
+      });
+    };
+
+    this.request_build = function(options = {}) {
+      perform_post(that.id(), 'build', {}, DCC.Localizer.t("error.trigger_build_failed"),
+          options.on_success, options.on_error);
+    };
+
+    var _finalize_update = function() {
+      var loaded_builds = load_last_build();
+      $(that).trigger("update.dcc");
+      return loaded_builds;
+    };
+
+    this.update_data = function(new_project_data) {
+      project_data = new_project_data;
+      if (project_data.last_build && last_build && project_data.last_build.id != last_build.id()) {
+        load_builds(project_data.last_build.id, true, function() { return _finalize_update(); });
+      } else {
+        _finalize_update();
+      }
+    };
+
+    var handle_loaded_builds = function(build_datas, prepend) {
+      var loaded_builds = 0;
+      _.each(prepend ? build_datas.reverse() : build_datas, function(build_data) {
+        if (!DCC.Build.find(build_data.id)) {
+          var build = new DCC.Build(build_data);
+          loaded_builds += 1;
+          if (prepend) {
+            loaded_build_ids.unshift(build.id());
+          } else {
+            loaded_build_ids.push(build.id());
+          }
+        }
+      });
+      return loaded_builds;
+    };
+
+    var load_builds = function(last_build_id, prepend, success_handler = null,
+        result_handlers = []) {
+      perform_get(last_build_id, "previous_builds", {},
+          DCC.Localizer.t("error.fetch_builds_failed"), function(result) {
+        var new_build_datas = result.previous_builds;
+        result_handlers.unshift(function() {
+          return handle_loaded_builds(new_build_datas, prepend);
+        });
+        if (prepend && new_build_datas.length &&
+              !DCC.Build.find(_.last(new_build_datas).id) && result.continuation_handle) {
+            load_builds(result.continuation_handle, true, success_handler, result_handlers);
+        } else {
+          var loaded_builds = _.reduce(result_handlers, function(x, h) { return x + h(); }, 0)
+          if (!prepend) {
+            builds_continuation_handle = result.continuation_handle;
+          }
+          if (success_handler) { loaded_builds += success_handler(); }
+          $(that).trigger("update_builds.dcc", prepend ? loaded_builds : 0);
+        }
+      });
+    };
+
+    this.load_more_builds = function() {
+      load_builds(builds_continuation_handle, false);
+    };
+
+    this.all_builds_loaded = function() { return !builds_continuation_handle; };
+  };
+
+  var perform_action =
+      function(type, identifier, action, params, error_message, success_handler, error_handler) {
     // TODO Ajax-Abstraktion mit Spinner
     if (type == "POST") {
       params = _.clone(params);
@@ -352,7 +459,7 @@ DCC.Project = (function() {
     }
 
     $.ajax({
-      url: '/project/' + action + (project ? ('/' + project.id()) : ""),
+      url: '/project/' + action + (identifier ? ('/' + identifier) : ""),
       type: type,
       data: params,
       dataType: 'json',
@@ -367,45 +474,13 @@ DCC.Project = (function() {
   };
 
   var perform_post =
-      function(project, action, params, error_message, success_handler, error_handler) {
-    _perform_action("POST", project, action, params, error_message, success_handler, error_handler);
+      function(identifier, action, params, error_message, success_handler, error_handler) {
+    perform_action("POST", identifier, action, params, error_message, success_handler,
+        error_handler);
   };
 
-  var perform_get =
-      function(project, action, params, error_message, success_handler, error_handler) {
-    _perform_action("GET", project, action, params, error_message, success_handler, error_handler);
-  };
-
-  var clazz = function(project_data) {
-    var that = this;
-    this.url = function() { return project_data.url; };
-    this.branch = function() { return project_data.branch; };
-    this.owner = function() { return project_data.owner; };
-    this.name = function() { return project_data.name; };
-    this.id = function() { return project_data.id; };
-    this.build_requested = function() { return project_data.build_requested; };
-
-    // TODO Build-Model → Beim Projekt-Laden direkt ein Build-Model erzeugen → multi-model-response?
-    // → dann hat das project lediglich last_build_id und last_build() macht find auf Build
-    // → dann muss update_panel_status entsprechend Methoden verwenden
-    this.last_build = function() { return project_data.last_build; };
-
-    this.destroy = function() {
-      perform_post(that, 'delete', {}, DCC.Localizer.t("error.delete_failed"), function() {
-        delete loaded_projects[that.id()];
-        $(that).trigger("delete.dcc");
-      });
-    };
-
-    this.request_build = function(options = {}) {
-      perform_post(that, 'build', {}, DCC.Localizer.t("error.trigger_build_failed"),
-          options.on_success, options.on_error);
-    };
-
-    this.update_data = function(new_project_data) {
-      project_data = new_project_data;
-      $(that).trigger("update.dcc");
-    };
+  var perform_get = function(identifier, action, params, error_message, success_handler) {
+    perform_action("GET", identifier, action, params, error_message, success_handler);
   };
 
   var container;
@@ -433,8 +508,8 @@ DCC.Project = (function() {
             project_data.last_build &&
             (
               !loaded_project.last_build() ||
-              loaded_project.last_build().id != project_data.last_build.id ||
-              loaded_project.last_build().status != project_data.last_build.status
+              loaded_project.last_build().id() != project_data.last_build.id ||
+              loaded_project.last_build().status() != project_data.last_build.status
             )
           )
         ) {
@@ -451,6 +526,33 @@ DCC.Project = (function() {
           success_callback();
         });
   };
+
+  return clazz;
+})();
+
+
+DCC.Build = (function() {
+  var loaded_builds = {};
+
+  var clazz = function(build_data) {
+    var that = this;
+
+    this.id = function() { return build_data.id; };
+    this.status = function() { return build_data.status; };
+    this.short_identifier = function() { return build_data.short_identifier; };
+
+    this.in_work_buckets = function() { return []; }; // TODO
+    this.failed_buckets = function() { return []; }; // TODO
+    this.pending_buckets = function() { return []; }; // TODO
+    this.done_buckets = function() { return []; }; // TODO
+
+    loaded_builds[build_data.id] = this;
+  };
+
+  clazz.find = function(id) {
+    return loaded_builds[id];
+  };
+
   return clazz;
 })();
 
@@ -615,3 +717,176 @@ DCC.ProjectView = (function() {
 })();
 
 
+DCC.ProjectBuildsView = (function() {
+  var dialog;
+  var current_view;
+  var views = {};
+
+  var clazz = function(project) {
+    var that = this;
+    var offset = 0;
+    var current;
+    var identifier = "#builds_for_" + project.id();
+    var pagination;
+
+    $(project).on("update_builds.dcc", function(e, prepended_count) {
+      if (offset > 0) {
+        offset += prepended_count;
+      }
+      render_pagination();
+    });
+
+    var register_build_click = function(build_entry, build) {
+      build_entry.click(function() {
+        // TODO schöner (instanzvariable)
+        var build_container = pagination.parent();
+
+        var active_entry = pagination.find('.active').removeClass('active');
+        register_build_click(active_entry, DCC.Build.find(current));
+        build_entry.addClass('active');
+        build_entry.unbind('click');
+        current = build.id();
+
+        // FIXME Wie View finden?
+        // → view.render()
+        // var build = render_build(build_container, pagination.data('builds')[build_id]);
+        // TODO: aktive Views finden: kann nur einer sein: Der View vom current
+        // → current_view.hide()
+        // var active_builds = build_container.find(".build:visible");
+        // active_builds.fadeToggle(150, function() { build.fadeToggle(150); });
+      });
+    };
+
+    var render_pagination = function() {
+      if (!pagination) { return; }
+      pagination.empty();
+      var has_scrolling = project.loaded_build_ids().length > 10;
+      var count = project.loaded_build_ids().length - offset;
+      var display_count = Math.min(count, 10);
+
+      if (has_scrolling) {
+        var previous_button = $("<li class='build_prev'><span>«</span></li>").appendTo(pagination);
+        if (offset > 0) {
+          previous_button.click(function() {
+            offset -= 1;
+            render_pagination();
+          });
+        } else {
+          previous_button.addClass('disabled');
+        }
+      }
+
+      for (var i = 0; i < display_count; i++) {
+        var build = DCC.Build.find(project.loaded_build_ids()[offset + i]);
+        var build_entry = $("<li class='pagination_build " +
+            DCC.HtmlUtils.status_css_class(build.status()) + "'>" +
+          "<span>" + build.short_identifier() + "</span>" +
+        "</li>").appendTo(pagination);
+        if (build.id() == current) {
+          build_entry.addClass('active');
+        } else {
+          register_build_click(build_entry, build);
+        }
+      }
+
+      if (has_scrolling) {
+        var next_button = $("<li class='build_next'><span>»</span></li>").appendTo(pagination);
+        var load_next = count == 10 && !project.all_builds_loaded();
+        if (count > 10 || load_next) {
+          next_button.click(function() {
+            offset += 1;
+            if (load_next) {
+              project.load_more_builds();
+            } else {
+              render_pagination();
+            }
+          });
+        } else {
+          next_button.addClass('disabled');
+        }
+      }
+    };
+
+    this.render = function() {
+      dialog.find('.modal-title').empty().append(
+          DCC.Localizer.t("project.builds.title").replace('%{name}',
+          DCC.HtmlUtils.escape(project.name())));
+
+      var builds_element = DCC.HtmlUtils.provide_element(identifier,
+          dialog.find(".modal-body"), '<div/>');
+      var last_build = project.last_build();
+      if (last_build && !pagination) {
+        current = last_build.id();
+        // TODO generischer Ansatz für die View-based-Spinner
+        pagination = DCC.HtmlUtils.provide_element(".pagination", builds_element,
+            "<ul><li><div class='loading'></div></li></ul>");
+        new DCC.BuildView(builds_element, last_build).render();
+        project.load_more_builds();
+      }
+      //  } else if (!builds[last_build.id()]) {
+          // FIXME update jetzt über event? → sonst passiert das nur beim aktivieren
+          //   → dann kein else-Zweig hier!
+      //    // update
+      //    load_new_builds(last_build.id, pagination, function() { render_pagination(pagination); });
+      //    builds[last_build.id] = last_build;
+      //    pagination.data('loaded_build_ids').unshift(last_build.id);
+      //    var offset = pagination.data('offset');
+      //    if (offset > 0) {
+      //      pagination.data('offset', offset + 1);
+      //    }
+      //  }
+      render_pagination();
+      builds_element.show();
+    };
+
+    this.hide = function() { $(identifier).hide(); };
+  };
+
+  clazz.for_project = function(project) {
+    if (!views[project.id()]) {
+      views[project.id()] = new DCC.ProjectBuildsView(project);
+    }
+    return views[project.id()];
+  };
+
+  clazz.render = function() {
+    dialog = DCC.HtmlUtils.render_modal("build_dialog");
+    dialog.on('show.bs.modal', function (e) {
+      current_view = DCC.ProjectBuildsView.for_project(e.relatedTarget.project);
+      current_view.render();
+    });
+
+    dialog.on('hidden.bs.modal', function (e) {
+      current_view.hide();
+    });
+  };
+
+  return clazz;
+})();
+
+
+DCC.BuildView = (function() {
+  var clazz = function(container, build) {
+    var that = this;
+
+    this.render = function() {
+      return DCC.HtmlUtils.provide_element("#build_" + build.id(), container,
+          "<div class='build panel-group'/>", function(box) {
+        _.each(_.sortBy(build.in_work_buckets(), function(b) { return b.name; }), function(bucket) {
+          // TODO render_bucket(box, bucket);
+        });
+        _.each(_.sortBy(build.failed_buckets(), function(b) { return b.name; }), function(bucket) {
+          // TODO render_bucket(box, bucket);
+        });
+        _.each(_.sortBy(build.pending_buckets(), function(b) { return b.name; }), function(bucket) {
+          // TODO render_bucket(box, bucket);
+        });
+        _.each(_.sortBy(build.done_buckets(), function(b) { return b.name; }), function(bucket) {
+          // TODO render_bucket(box, bucket);
+        });
+      });
+    };
+  };
+
+  return clazz;
+})();
