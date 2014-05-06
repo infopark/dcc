@@ -3,6 +3,9 @@ debug = "nix";
 window.onbeforeunload = function() { DCC.show_error = function() {}; };
 
 var DCC = (function() {
+  var error_actions = [];
+  var error_num = 0;
+
   var clazz = function(user) {
     var that = this;
 
@@ -66,6 +69,13 @@ var DCC = (function() {
           '</div>' +
         '</div>'
       );
+      $("#error_overlay_close").click(function() {
+        $("#error_messages").empty();
+        $("#error_overlay").hide();
+        _.each(error_actions, function(action) { action(); });
+        error_actions = [];
+      });
+
     };
 
     var projects_container = function() { return $("#projects"); };
@@ -79,8 +89,10 @@ var DCC = (function() {
     };
 
     var refresh_data = function() {
-      DCC.Project.fetch_all();
-      setTimeout(function() { refresh_data(); }, 10000);
+      var reschedule = function() {
+        setTimeout(function() { refresh_data(); }, 10000);
+      };
+      DCC.Project.fetch_all(reschedule, reschedule);
     };
 
     this.render = function() {
@@ -101,8 +113,6 @@ var DCC = (function() {
     };
   };
 
-  var error_actions = [];
-  var error_num = 0;
   clazz.show_error = function(headline, message, details, ok_action) {
     if (ok_action) { error_actions.push(ok_action); }
 
@@ -449,8 +459,8 @@ DCC.Project = (function() {
     this.all_builds_loaded = function() { return !builds_continuation_handle; };
   };
 
-  var perform_action =
-      function(type, identifier, action, params, error_message, success_handler, error_handler) {
+  var perform_action = function(type, identifier, action, params, error_message,
+      success_handler, error_handler, error_close_action) {
     // TODO Ajax-Abstraktion mit Spinner
     if (type == "POST") {
       params = _.clone(params);
@@ -465,7 +475,7 @@ DCC.Project = (function() {
       dataType: 'json',
       success: success_handler,
       error: function(request, message, exception) {
-        DCC.show_error(error_message, request.statusText, request.responseText);
+        DCC.show_error(error_message, request.statusText, request.responseText, error_close_action);
         if (error_handler) {
           error_handler();
         }
@@ -479,8 +489,10 @@ DCC.Project = (function() {
         error_handler);
   };
 
-  var perform_get = function(identifier, action, params, error_message, success_handler) {
-    perform_action("GET", identifier, action, params, error_message, success_handler);
+  var perform_get = function(identifier, action, params, error_message, success_handler,
+      error_close_action) {
+    perform_action("GET", identifier, action, params, error_message, success_handler, null,
+        error_close_action);
   };
 
   var container;
@@ -494,7 +506,7 @@ DCC.Project = (function() {
     container.trigger("add_project.dcc", project);
   };
 
-  clazz.fetch_all = function() {
+  clazz.fetch_all = function(success_callback, error_close_action) {
     perform_get(null, 'list', {}, DCC.Localizer.t("error.fetch_projects_failed"), function(result) {
       _.each(result.projects, function(project_data) {
         var loaded_project = loaded_projects[project_data.id];
@@ -516,7 +528,8 @@ DCC.Project = (function() {
           loaded_project.update_data(project_data);
         }
       });
-    });
+      if (success_callback) { success_callback(); }
+    }, error_close_action);
   };
 
   clazz.create = function(valuesToSubmit, success_callback) {
