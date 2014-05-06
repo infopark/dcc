@@ -1,5 +1,7 @@
 debug = "nix";
 
+window.onbeforeunload = function() { DCC.show_error = function() {}; };
+
 var DCC = (function() {
   var clazz = function(user) {
     var that = this;
