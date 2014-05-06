@@ -946,7 +946,42 @@ DCC.BuildView = (function() {
 
 DCC.BucketView = (function() {
   var clazz = function(container, bucket) {
+    var log_container;
+
     this.bucket = function() { return bucket; };
+
+    var render_log = function(log)
+    {
+      log_container.append(DCC.HtmlUtils.escape(log));
+    };
+
+    // TODO daten/view trennen
+    // TODO Project-Action
+    var update_log = function() {
+      $.ajax({
+        url: '/project/log/' + bucket.id(),
+        dataType: 'json',
+        success: function(result) {
+          log_container.empty();
+          if (result.log) {
+            render_log(result.log);
+          } else {
+            _.each(result.logs, function(log) { render_log(log); });
+            // FIXME nicht einschalten, wenn invisible
+            // FIXME oder gar nicht mit eigener aktualisierung sondern nur, immer wenn render builds
+            // (und visible)
+            setTimeout(function() { update_log(); }, 5000);
+          }
+        },
+        error: function(request, message, exception) {
+          DCC.show_error(DCC.Localizer.t("error.fetch_log_failed"), request.statusText,
+              request.responseText, function() {
+            // FIXME s.o.
+            setTimeout(function() { update_log(); }, 5000);
+          });
+        }
+      });
+    };
 
     this.render = function() {
       // FIXME log-HTML-ID wofür?
@@ -963,21 +998,18 @@ DCC.BucketView = (function() {
               DCC.HtmlUtils.escape(bucket.name()) +
             '</h4>' +
           '</div>' +
-          '<div id="log_' + bucket.id() + '" class="panel-collapse collapse">' +
-            '<div class="panel-body">' +
-              "<pre id='" + html_id + "'>" +
-                '<div class="loading"></div>' +
-              "</pre>" +
-            '</div>' +
-          '</div>' +
         '</div>', function(element) {
           element.on('show.bs.collapse', function (evt) {
-            // FIXME
-            //update_log(bucket.id);
+            update_log();
             element.unbind('show.bs.collapse');
           });
         }
       );
+      var bucket_segment = DCC.HtmlUtils.provide_element("#log_" + bucket.id(), bucket_box,
+          '<div class="panel-collapse collapse">');
+      var bucket_body = DCC.HtmlUtils.provide_element(".panel-body", bucket_segment, "<div/>");
+      log_container = DCC.HtmlUtils.provide_element("pre", bucket_body,
+          '<pre><div class="loading"></div></pre>');
       // FIXME kein update, wenn nicht pending/in_work
       DCC.HtmlUtils.update_panel_status(bucket_box, bucket);
       // FIXME
