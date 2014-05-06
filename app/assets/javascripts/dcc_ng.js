@@ -553,7 +553,9 @@ DCC.Build = (function() {
     this.short_identifier = function() { return build_data.short_identifier; };
 
     var load_buckets = function(bucket_datas) {
-      return _.map(bucket_datas, function(bucket_data) { return new DCC.Bucket(bucket_data); });
+      return _.map(bucket_datas, function(bucket_data) {
+        return new DCC.Bucket(that, bucket_data);
+      });
     };
 
     var buckets = load_buckets(build_data.in_work_buckets).concat(
@@ -578,10 +580,11 @@ DCC.Build = (function() {
 
 
 DCC.Bucket = (function() {
-  var clazz = function(bucket_data) {
+  var clazz = function(build, bucket_data) {
     this.id = function() { return bucket_data.id; };
     this.name = function() { return bucket_data.name; };
     this.status = function() { return bucket_data.status; };
+    this.build = function() { return build; };
   };
 
   return clazz;
@@ -896,15 +899,22 @@ DCC.BuildView = (function() {
     var buckets_container;
 
     var render_buckets = function() {
+      // TODO: das ist initial state
+      // → update entweder komplett neu rendern, oder dom sortieren
+      // → dom sortieren geht auch ohne jquery extension: views sortieren, und dann
+      //   each.view_element.parentNode.appendChild(view_element)
       // TODO Bucket-Updates:
       // - Umsortierung der Liste
       // - Aktualisierung des Status
       // - Log-Update
       // - kein Log-Update mehr, wenn fertig
       // - kein Bucket-Update von fertigen Buckets
-      _.each(bucket_views, function(bucket_view) { bucket_view.render(); });
-      // TODO: Sortierung (view→bucket→name)
-      //_.each(_.sortBy(build.in_work_buckets(), function(b) { return b.name; }), function(bucket) {
+      var sorted_views = _.sortBy(_.sortBy(bucket_views, function(bucket_view) {
+        return bucket_view.bucket().name();
+      }), function(bucket_view) {
+        return -bucket_view.bucket().status();
+      });
+      _.each(sorted_views, function(bucket_view) { bucket_view.render(); });
     };
 
     this.render = function() {
@@ -928,6 +938,8 @@ DCC.BuildView = (function() {
 
 DCC.BucketView = (function() {
   var clazz = function(container, bucket) {
+    this.bucket = function() { return bucket; };
+
     this.render = function() {
       // FIXME log-HTML-ID wofür?
       var html_id = "bucket_" + bucket.id() + "_log";
@@ -936,11 +948,9 @@ DCC.BucketView = (function() {
       var bucket_box = DCC.HtmlUtils.provide_element("#bucket_" + bucket.id(), container,
         '<div class="panel panel-default bucket ' + DCC.HtmlUtils.status_css_class(bucket) +
             '" data-bucket_id="' + bucket.id() + '">' +
-          // FIXME build-ID Über Bucket oder View ermitteln → Bucket oder View müssen was vom Build
-          // wissen
-          '<div class="panel-heading" data-toggle="collapse" data-parent="#' +
-              //build_box.prop('id') +
-              '" data-target="#log_' + bucket.id() + '">' +
+          '<div class="panel-heading" data-toggle="collapse"' +
+              ' data-parent="#build_' + bucket.build().id() + '"' +
+              ' data-target="#log_' + bucket.id() + '">' +
             '<h4 class="panel-title">' +
               DCC.HtmlUtils.escape(bucket.name()) +
             '</h4>' +
