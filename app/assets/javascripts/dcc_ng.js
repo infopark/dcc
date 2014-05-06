@@ -512,8 +512,6 @@ DCC.Project = (function() {
         var loaded_project = loaded_projects[project_data.id];
         if (!loaded_project) {
           handle_new_project(project_data);
-          // FIXME build.id()
-          // FIXME update on status change
         } else if (
           project_data.build_requested != loaded_project.build_requested() ||
           (
@@ -554,16 +552,36 @@ DCC.Build = (function() {
     this.status = function() { return build_data.status; };
     this.short_identifier = function() { return build_data.short_identifier; };
 
-    this.in_work_buckets = function() { return []; }; // TODO
-    this.failed_buckets = function() { return []; }; // TODO
-    this.pending_buckets = function() { return []; }; // TODO
-    this.done_buckets = function() { return []; }; // TODO
+    var load_buckets = function(bucket_datas) {
+      return _.map(bucket_datas, function(bucket_data) { return new DCC.Bucket(bucket_data); });
+    };
+
+    var buckets = load_buckets(build_data.in_work_buckets).concat(
+        load_buckets(build_data.failed_buckets)).concat(
+        load_buckets(build_data.pending_buckets)).concat(
+        load_buckets(build_data.done_buckets));
+    this.buckets = function() { return buckets; };
 
     loaded_builds[build_data.id] = this;
   };
 
+  // TODO Update Builds:
+  // - alle Builds, die noch nicht fertig sind, müssen regelmässig aktualisiert werden
+  // - auch ihre Buckets!
+
   clazz.find = function(id) {
     return loaded_builds[id];
+  };
+
+  return clazz;
+})();
+
+
+DCC.Bucket = (function() {
+  var clazz = function(bucket_data) {
+    this.id = function() { return bucket_data.id; };
+    this.name = function() { return bucket_data.name; };
+    this.status = function() { return bucket_data.status; };
   };
 
   return clazz;
@@ -741,6 +759,8 @@ DCC.ProjectBuildsView = (function() {
     var current;
     var identifier = "#builds_for_" + project.id();
     var pagination;
+    var build_views = {};
+    var builds_container;
 
     $(project).on("update_builds.dcc", function(e, prepended_count) {
       if (offset > 0) {
@@ -758,15 +778,15 @@ DCC.ProjectBuildsView = (function() {
         register_build_click(active_entry, DCC.Build.find(current));
         build_entry.addClass('active');
         build_entry.unbind('click');
-        current = build.id();
 
-        // FIXME Wie View finden?
-        // → view.render()
-        // var build = render_build(build_container, pagination.data('builds')[build_id]);
-        // TODO: aktive Views finden: kann nur einer sein: Der View vom current
-        // → current_view.hide()
-        // var active_builds = build_container.find(".build:visible");
-        // active_builds.fadeToggle(150, function() { build.fadeToggle(150); });
+        var previous = current;
+
+        current = build.id();
+        if (!build_views[current]) {
+          build_views[current] = new DCC.BuildView(builds_container, build);
+          build_views[current].render();
+        }
+        build_views[previous].fade_to(build_views[current]);
       });
     };
 
@@ -825,31 +845,21 @@ DCC.ProjectBuildsView = (function() {
           DCC.Localizer.t("project.builds.title").replace('%{name}',
           DCC.HtmlUtils.escape(project.name())));
 
-      var builds_element = DCC.HtmlUtils.provide_element(identifier,
+      builds_container = DCC.HtmlUtils.provide_element(identifier,
           dialog.find(".modal-body"), '<div/>');
       var last_build = project.last_build();
       if (last_build && !pagination) {
         current = last_build.id();
         // TODO generischer Ansatz für die View-based-Spinner
-        pagination = DCC.HtmlUtils.provide_element(".pagination", builds_element,
+        pagination = DCC.HtmlUtils.provide_element(".pagination", builds_container,
             "<ul><li><div class='loading'></div></li></ul>");
-        new DCC.BuildView(builds_element, last_build).render();
+        build_views[current] = new DCC.BuildView(builds_container, last_build);
+        build_views[current].render();
+        build_views[current].show();
         project.load_more_builds();
       }
-      //  } else if (!builds[last_build.id()]) {
-          // FIXME update jetzt über event? → sonst passiert das nur beim aktivieren
-          //   → dann kein else-Zweig hier!
-      //    // update
-      //    load_new_builds(last_build.id, pagination, function() { render_pagination(pagination); });
-      //    builds[last_build.id] = last_build;
-      //    pagination.data('loaded_build_ids').unshift(last_build.id);
-      //    var offset = pagination.data('offset');
-      //    if (offset > 0) {
-      //      pagination.data('offset', offset + 1);
-      //    }
-      //  }
       render_pagination();
-      builds_element.show();
+      builds_container.show();
     };
 
     this.hide = function() { $(identifier).hide(); };
@@ -882,22 +892,91 @@ DCC.BuildView = (function() {
   var clazz = function(container, build) {
     var that = this;
 
+    var bucket_views = {};
+    var buckets_container;
+
+    var render_buckets = function() {
+      // TODO Bucket-Updates:
+      // - Umsortierung der Liste
+      // - Aktualisierung des Status
+      // - Log-Update
+      // - kein Log-Update mehr, wenn fertig
+      // - kein Bucket-Update von fertigen Buckets
+      _.each(bucket_views, function(bucket_view) { bucket_view.render(); });
+      // TODO: Sortierung (view→bucket→name)
+      //_.each(_.sortBy(build.in_work_buckets(), function(b) { return b.name; }), function(bucket) {
+    };
+
     this.render = function() {
-      return DCC.HtmlUtils.provide_element("#build_" + build.id(), container,
-          "<div class='build panel-group'/>", function(box) {
-        _.each(_.sortBy(build.in_work_buckets(), function(b) { return b.name; }), function(bucket) {
-          // TODO render_bucket(box, bucket);
-        });
-        _.each(_.sortBy(build.failed_buckets(), function(b) { return b.name; }), function(bucket) {
-          // TODO render_bucket(box, bucket);
-        });
-        _.each(_.sortBy(build.pending_buckets(), function(b) { return b.name; }), function(bucket) {
-          // TODO render_bucket(box, bucket);
-        });
-        _.each(_.sortBy(build.done_buckets(), function(b) { return b.name; }), function(bucket) {
-          // TODO render_bucket(box, bucket);
-        });
+      buckets_container = DCC.HtmlUtils.provide_element("#build_" + build.id(), container,
+          "<div class='build panel-group'/>");
+      buckets_container.hide();
+      _.each(build.buckets(), function(bucket) {
+        bucket_views[bucket.id()] = new DCC.BucketView(buckets_container, bucket);
       });
+      // TODO Update via event
+      render_buckets();
+    };
+
+    this.show = function() { $(buckets_container).fadeIn(150); };
+    this.fade_to = function(other) { $(buckets_container).fadeOut(150, other.show); };
+  };
+
+  return clazz;
+})();
+
+
+DCC.BucketView = (function() {
+  var clazz = function(container, bucket) {
+    this.render = function() {
+      // FIXME log-HTML-ID wofür?
+      var html_id = "bucket_" + bucket.id() + "_log";
+      // FIXME
+      // - Zusatzinfo (auf Rechner x) mit schickem Icon (Compi) davor rechts im Header
+      var bucket_box = DCC.HtmlUtils.provide_element("#bucket_" + bucket.id(), container,
+        '<div class="panel panel-default bucket ' + DCC.HtmlUtils.status_css_class(bucket) +
+            '" data-bucket_id="' + bucket.id() + '">' +
+          // FIXME build-ID Über Bucket oder View ermitteln → Bucket oder View müssen was vom Build
+          // wissen
+          '<div class="panel-heading" data-toggle="collapse" data-parent="#' +
+              //build_box.prop('id') +
+              '" data-target="#log_' + bucket.id() + '">' +
+            '<h4 class="panel-title">' +
+              DCC.HtmlUtils.escape(bucket.name()) +
+            '</h4>' +
+          '</div>' +
+          '<div id="log_' + bucket.id() + '" class="panel-collapse collapse">' +
+            '<div class="panel-body">' +
+              "<pre id='" + html_id + "'>" +
+                '<div class="loading"></div>' +
+              "</pre>" +
+            '</div>' +
+          '</div>' +
+        '</div>', function(element) {
+          element.on('show.bs.collapse', function (evt) {
+            // FIXME
+            //update_log(bucket.id);
+            element.unbind('show.bs.collapse');
+          });
+        }
+      );
+      // FIXME kein update, wenn nicht pending/in_work
+      DCC.HtmlUtils.update_panel_status(bucket_box, bucket);
+      // FIXME
+      // FIXME wollen/brauchen wir noch die html_id-Generatoren?
+    //  var bucket_box_id = bucket_html_id(bucket.id);
+    //  var bucket_box = provide_element("#" + bucket_box_id, build_box, "<div class='box'></div>");
+    //
+    //  var log_id = bucket_html_id(bucket.id, 'log');
+    //  var overlay_id = "overlay_" + log_id;
+    //  var log_overlay = provide_element("#" + overlay_id, "body",
+    //      "<div class='overlay'><div class='container'>" +
+    //        "<pre class='log' id='" + log_id + "'></pre>" +
+    //      "</div></div>");
+    //
+    //  render_title(bucket_box, bucket.name, null, "auf " + bucket.worker_hostname, false, bucket,
+    //      function() { update_log(bucket.id); },
+    //      function(title_span) { overlay(title_span, log_overlay); });
     };
   };
 
