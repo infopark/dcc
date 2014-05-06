@@ -389,8 +389,7 @@ DCC.Project = (function() {
 
     this.destroy = function() {
       perform_post(that.id(), 'delete', {}, DCC.Localizer.t("error.delete_failed"), function() {
-        delete loaded_projects[that.id()];
-        $(that).trigger("delete.dcc");
+        handle_deleted_project(that.id());
       });
     };
 
@@ -506,8 +505,17 @@ DCC.Project = (function() {
     container.trigger("add_project.dcc", project);
   };
 
+  var handle_deleted_project = function(id) {
+    var project = loaded_projects[id];
+    $(project).trigger("delete.dcc");
+    delete loaded_projects[id];
+  };
+
   clazz.fetch_all = function(success_callback, error_close_action) {
     perform_get(null, 'list', {}, DCC.Localizer.t("error.fetch_projects_failed"), function(result) {
+      var vanished_project_ids = _.difference(_.keys(loaded_projects),
+          _.map(result.projects, function(d) { return String(d.id); }));
+      _.each(vanished_project_ids, function(id) { handle_deleted_project(id); });
       _.each(result.projects, function(project_data) {
         var loaded_project = loaded_projects[project_data.id];
         if (!loaded_project) {
