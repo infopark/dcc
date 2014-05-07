@@ -1,4 +1,13 @@
-debug = "nix";
+// TODO
+// - bei in work-status zusätzlich die anzahl der minions anzeigen
+// - bei builds/buckets irgendwo die laufzeit anzeigen
+//   → ggf. auch bei projekten (last_build)
+//
+// FIXME
+// - Buguntersuchung: neuer build verhindert laden des vorigen last_build?
+//   (build, warten bis projet blau, dann builds aufmachen)
+//   Vermutung: last_build ist da (Builds.find) aber nicht im View. Weil er da ist, kommt er nicht
+//   via nachladen in den view.
 
 window.onbeforeunload = function() { DCC.show_error = function() {}; };
 
@@ -383,15 +392,21 @@ DCC.Project = (function() {
     // → dann hat das project lediglich last_build_id und last_build() macht find auf Build
     // → dann muss update_panel_status entsprechend Methoden verwenden
     var load_last_build = function() {
-      // TODO Wenn multi-model-response (s.o.), dann liegt der last_build als Model vor und kann bei
-      // load_builds nicht mehr als „bitte nachladen“-Indikator verwendet werden.
-      if (project_data.last_build && !DCC.Build.find(project_data.last_build.id)) {
-        if (!last_build) {
-          builds_continuation_handle = project_data.last_build.id
+      if (project_data.last_build) {
+        new_last_build = DCC.Build.find(project_data.last_build.id);
+        // TODO Wenn multi-model-response (s.o.), dann liegt der last_build als Model vor und
+        // - wird das builds_continuation_handle nicht korrekt initialisiert
+        // - loaded_build_ids wird nicht passend ergänzt
+        // - der pagination offset wird nicht verschoben (return 1)
+        if (!new_last_build) {
+          if (!last_build) {
+            builds_continuation_handle = project_data.last_build.id
+          }
+          last_build = new DCC.Build(project_data.last_build);
+          loaded_build_ids.unshift(last_build.id());
+          return 1;
         }
-        last_build = new DCC.Build(project_data.last_build);
-        loaded_build_ids.unshift(last_build.id());
-        return 1;
+        new_last_build.update_data(project_data.last_build);
       }
       return 0;
     };
@@ -578,15 +593,19 @@ DCC.Build = (function() {
     this.buckets = function() { return buckets; };
 
     loaded_builds[build_data.id] = this;
+
+    this.update_data = function(new_build_data) {
+      build_data = new_build_data;
+      // FIXME bucket update
+      $(that).trigger('update.dcc');
+    };
   };
 
   // FIXME Update Builds:
   // - alle Builds, die noch nicht fertig sind, müssen regelmässig aktualisiert werden
   // - auch ihre Buckets!
 
-  clazz.find = function(id) {
-    return loaded_builds[id];
-  };
+  clazz.find = function(id) { return loaded_builds[id]; };
 
   return clazz;
 })();
@@ -809,6 +828,10 @@ DCC.ProjectView = (function() {
 })();
 
 
+// FIXME update für build abonnieren
+// → pagination neu rendern
+// → build_view neu rendern
+    //$(project).on("update.dcc", function() { that.render(); });
 DCC.ProjectBuildsView = (function() {
   var dialog;
   var current_view;
