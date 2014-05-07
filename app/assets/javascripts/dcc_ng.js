@@ -580,7 +580,7 @@ DCC.Build = (function() {
     loaded_builds[build_data.id] = this;
   };
 
-  // TODO Update Builds:
+  // FIXME Update Builds:
   // - alle Builds, die noch nicht fertig sind, müssen regelmässig aktualisiert werden
   // - auch ihre Buckets!
 
@@ -832,9 +832,6 @@ DCC.ProjectBuildsView = (function() {
 
     var register_build_click = function(build_entry, build) {
       build_entry.click(function() {
-        // TODO schöner (instanzvariable)
-        var build_container = pagination.parent();
-
         var active_entry = pagination.find('.active').removeClass('active');
         register_build_click(active_entry, DCC.Build.find(current));
         build_entry.addClass('active');
@@ -957,11 +954,11 @@ DCC.BuildView = (function() {
     var buckets_container;
 
     var render_buckets = function() {
-      // TODO: das ist initial state
+      // FIXME: das ist initial state
       // → update entweder komplett neu rendern, oder dom sortieren
       // → dom sortieren geht auch ohne jquery extension: views sortieren, und dann
       //   each.view_element.parentNode.appendChild(view_element)
-      // TODO Bucket-Updates:
+      // FIXME Bucket-Updates:
       // - Umsortierung der Liste
       // - Aktualisierung des Status
       // - Log-Update
