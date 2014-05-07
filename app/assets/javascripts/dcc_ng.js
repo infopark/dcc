@@ -184,14 +184,6 @@ DCC.HtmlUtils = (function() {
     return _provide_element(identifier, container, "prepend", default_content, create_callback);
   };
 
-  clazz.compute_id = function(class_name, id, specifier) {
-    var suffix = "";
-    if (specifier) {
-      suffix = "_" + specifier;
-    }
-    return class_name + "_" + id + suffix;
-  };
-
   clazz.escape = function(str) {
     if (str) {
       str = str
@@ -584,16 +576,16 @@ DCC.ProjectView = (function() {
 
   var clazz = function(container, project) {
     var that = this;
-    var html_id = DCC.HtmlUtils.compute_id(project.id());
+    var project_element;
 
-    $(project).on("delete.dcc", function() { $("#" + html_id).remove(); });
+    $(project).on("delete.dcc", function() { project_element.remove(); });
 
     $(project).on("update.dcc", function() { that.render(); });
 
     this.render = function() {
-      var project_column = DCC.HtmlUtils.provide_first_element("#" + html_id,
+      project_element = DCC.HtmlUtils.provide_first_element("#project_" + project.id(),
           container, "<div class='" + card_css_class + "'/>");
-      var project_panel = DCC.HtmlUtils.provide_element(".panel", project_column,
+      var project_panel = DCC.HtmlUtils.provide_element(".panel", project_element,
           "<div class='panel-default'/>");
       var project_heading = DCC.HtmlUtils.provide_element(".panel-heading", project_panel, "<div " +
           "data-toggle='modal' data-target='#build_dialog'/>").prop('project', project);
