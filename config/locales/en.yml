@@ -1,6 +1,8 @@
 en:
   prefs:
     show_all_projects: Show All Projects
+    show_other_projects: Show Projects of Other People
+    show_shared_projects: Show Shared Projects
   user:
     login: Login (E-Mail)
     password: Password

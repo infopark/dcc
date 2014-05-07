@@ -1,6 +1,8 @@
 de:
   prefs:
     show_all_projects: Alle Projekte anzeigen
+    show_other_projects: Projekte anderer anzeigen
+    show_shared_projects: Gemeinsame Projekte anzeigen
   user:
     login: Login (E-Mail)
     password: Passwort

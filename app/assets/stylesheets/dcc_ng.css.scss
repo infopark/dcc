@@ -17,6 +17,10 @@ $state-danger-background: #f2dede !default;
        font-url("types/dcc-icons.woff") format("woff");
 }
 
+.dropdown-menu .btn {
+  text-align: left;
+}
+
 .add_project .panel-body.unobtrusive {
   opacity: 0.3;
   transition: opacity 0.4s ease-in 0s;

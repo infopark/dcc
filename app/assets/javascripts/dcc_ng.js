@@ -5,97 +5,130 @@ window.onbeforeunload = function() { DCC.show_error = function() {}; };
 var DCC = (function() {
   var error_actions = [];
   var error_num = 0;
+  var current_user;
 
-  var clazz = function(user) {
-    var that = this;
+  var clazz = function() {
+  };
 
-    this.current_user = function() { return user; };
+  clazz.init = function(user) {
+    current_user = user;
+    render();
+  };
 
+  clazz.current_user = function() { return current_user; };
 
-    var render_menubar = function() {
-      $("body").append(
-        '<div role="navigation" class="navbar navbar-default navbar-static-top">' +
-          '<div class="container">' +
-            '<div class="navbar-header">' +
-              '<a class="navbar-brand">Infopark DCC</a>' +
-            '</div>' +
-            '<div class="collapse navbar-collapse">' +
-              '<ul class="nav navbar-nav navbar-right">' +
-                '<li class="dropdown" id="user">' +
-                  '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' +
-                    DCC.Localizer.t('user.welcome') + ', ' + that.current_user().first_name() +
-                    ' <b class="caret"></b>' +
-                  '</a>' +
-                  '<ul class="dropdown-menu">' +
-                    '<li>' +
-                      '<a class="btn checkbox unchecked" id="show_all_projects">' +
-                        '<i class="prefix_icon glyphicon glyphicon-check"></i>' +
-                        DCC.Localizer.t('prefs.show_all_projects') +
-                      '</a>' +
-                    '</li>' +
-                    '<li class="divider"></li>' +
-                    '<li><a href="logout">' +
-                      '<i class="prefix_icon glyphicon glyphicon-log-out"></i>' +
-                      DCC.Localizer.t('user.logout') +
-                    '</a></li>' +
-                  '</ul>' +
-                '</li>' +
-              '</ul>' +
-            '</div>' +
-          '</div>' +
-        '</div>'
-      );
-    };
-
-    var render_container = function() {
-      $("body").append(
+  var render_menubar = function() {
+    $("body").append(
+      '<div role="navigation" class="navbar navbar-default navbar-static-top">' +
         '<div class="container">' +
-          '<div id="projects" class="row"></div>' +
-        '</div>'
-      );
+          '<div class="navbar-header">' +
+            '<a class="navbar-brand">Infopark DCC</a>' +
+          '</div>' +
+          '<div class="collapse navbar-collapse">' +
+            '<ul class="nav navbar-nav navbar-right">' +
+              '<li class="dropdown" id="user">' +
+                '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' +
+                  DCC.Localizer.t('user.welcome') + ', ' + current_user.first_name() +
+                  ' <b class="caret"></b>' +
+                '</a>' +
+                '<ul class="dropdown-menu">' +
+                  '<li>' +
+                    '<a id="show_other_projects" class="btn checkbox unchecked">' +
+                      '<i class="prefix_icon glyphicon glyphicon-check"></i>' +
+                      DCC.Localizer.t('prefs.show_other_projects') +
+                    '</a>' +
+                  '</li>' +
+                  '<li>' +
+                    '<a id="show_shared_projects" class="btn checkbox unchecked">' +
+                      '<i class="prefix_icon glyphicon glyphicon-check"></i>' +
+                      DCC.Localizer.t('prefs.show_shared_projects') +
+                    '</a>' +
+                  '</li>' +
+                  '<li class="divider"></li>' +
+                  '<li><a href="logout">' +
+                    '<i class="prefix_icon glyphicon glyphicon-log-out"></i>' +
+                    DCC.Localizer.t('user.logout') +
+                  '</a></li>' +
+                '</ul>' +
+              '</li>' +
+            '</ul>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+
+    var toggle_checkbox = function(checkbox) {
+      if (checkbox.checked) {
+        checkbox.checked = false;
+        $(checkbox).removeClass('checked').addClass('unchecked');
+      } else {
+        checkbox.checked = true;
+        $(checkbox).removeClass('unchecked').addClass('checked');
+      }
     };
 
-    var render_error_overlay = function() {
-      $("body").append(
-        '<div id="error_overlay" class="error_overlay">' +
-          '<h1>' + DCC.Localizer.t('error.occured') + '</h1>' +
-          '<div class="error_overlay_messages_background">' +
-            '<div class="error_overlay_messages_crop">' +
-              '<div id="error_messages" class="error_overlay_messages panel-group">' +
-              '</div>' +
-              '<div id="error_overlay_close" class="error_overlay_close">' +
-              '</div>' +
+    $('#show_other_projects').click(function() {
+      toggle_checkbox(this);
+      DCC.ProjectView.show_other(this.checked);
+    });
+
+    $('#show_shared_projects').click(function() {
+      toggle_checkbox(this);
+      DCC.ProjectView.show_shared(this.checked);
+    });
+
+    if (DCC.ProjectView.show_other()) { $('#show_other_projects').click(); }
+    if (DCC.ProjectView.show_shared()) { $('#show_shared_projects').click(); }
+  };
+
+  var render_container = function() {
+    $("body").append(
+      '<div class="container">' +
+        '<div id="projects" class="row"></div>' +
+      '</div>'
+    );
+  };
+
+  var render_error_overlay = function() {
+    $("body").append(
+      '<div id="error_overlay" class="error_overlay">' +
+        '<h1>' + DCC.Localizer.t('error.occured') + '</h1>' +
+        '<div class="error_overlay_messages_background">' +
+          '<div class="error_overlay_messages_crop">' +
+            '<div id="error_messages" class="error_overlay_messages panel-group">' +
+            '</div>' +
+            '<div id="error_overlay_close" class="error_overlay_close">' +
             '</div>' +
           '</div>' +
-        '</div>'
-      );
-      $("#error_overlay_close").click(function() {
-        $("#error_messages").empty();
-        $("#error_overlay").hide();
-        _.each(error_actions, function(action) { action(); });
-        error_actions = [];
-      });
+        '</div>' +
+      '</div>'
+    );
+    $("#error_overlay_close").click(function() {
+      $("#error_messages").empty();
+      $("#error_overlay").hide();
+      _.each(error_actions, function(action) { action(); });
+      error_actions = [];
+    });
 
+  };
+
+  var refresh_data = function() {
+    var reschedule = function() {
+      setTimeout(function() { refresh_data(); }, 10000);
     };
+    DCC.Project.fetch_all(reschedule, reschedule);
+  };
 
-    var refresh_data = function() {
-      var reschedule = function() {
-        setTimeout(function() { refresh_data(); }, 10000);
-      };
-      DCC.Project.fetch_all(reschedule, reschedule);
-    };
+  var render = function() {
+    render_menubar();
+    render_container();
+    DCC.ProjectView.init($("#projects"));
+    DCC.ProjectView.render_add_project();
+    DCC.HtmlUtils.render_modal("stats_dialog");
+    DCC.ProjectBuildsView.render();
+    render_error_overlay();
 
-    this.render = function() {
-      render_menubar();
-      render_container();
-      DCC.ProjectView.init($("#projects"));
-      DCC.ProjectView.render_add_project();
-      DCC.HtmlUtils.render_modal("stats_dialog");
-      DCC.ProjectBuildsView.render();
-      render_error_overlay();
-
-      refresh_data();
-    };
+    refresh_data();
   };
 
   clazz.show_error = function(headline, message, details, ok_action) {
@@ -573,12 +606,18 @@ DCC.Bucket = (function() {
 
 DCC.ProjectView = (function() {
   var card_css_class = "col-xs-12 col-sm-6 col-md-4 col-lg-4 col-xl-3 col-xxl-2";
+  var project_views = {};
+  var show_shared = true;
+  var show_other = false;
 
   var clazz = function(container, project) {
     var that = this;
     var project_element;
 
-    $(project).on("delete.dcc", function() { project_element.remove(); });
+    $(project).on("delete.dcc", function() {
+      project_element.remove();
+      delete project_views[project.id()];
+    });
 
     $(project).on("update.dcc", function() { that.render(); });
 
@@ -640,6 +679,18 @@ DCC.ProjectView = (function() {
           project.request_build({on_error: function() { build_button.prop("disabled", false); }});
         });
       }
+
+      that.adjust_visibility(0);
+    };
+
+    this.adjust_visibility = function(duration = 150) {
+      var should_be_hidden = (
+        (project.owner() == null && !show_shared) ||
+        (project.owner() != null && project.owner() != DCC.current_user().login() && !show_other)
+      );
+      if (should_be_hidden == $(project_element).is(":visible")) {
+        $(project_element).fadeToggle(duration);
+      }
     };
   };
 
@@ -681,7 +732,7 @@ DCC.ProjectView = (function() {
   clazz.init = function(container) {
     projects_container = container;
     $(DCC.Project).on("add_project.dcc", function(e, project) {
-      new DCC.ProjectView(projects_container, project).render();
+      (project_views[project.id()] = new DCC.ProjectView(projects_container, project)).render();
     });
   };
 
@@ -733,6 +784,26 @@ DCC.ProjectView = (function() {
     );
     init_add_project();
   };
+
+  var adjust_visibility = function() {
+    _.each(project_views, function(view) { view.adjust_visibility(); });
+  };
+
+  clazz.show_other = function(value) {
+    if (value != undefined) {
+      show_other = value;
+      adjust_visibility();
+    }
+    return show_other;
+  }
+
+  clazz.show_shared = function(value) {
+    if (value != undefined) {
+      show_shared = value;
+      adjust_visibility();
+    }
+    return show_shared;
+  }
 
   return clazz;
 })();
