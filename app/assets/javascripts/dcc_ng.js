@@ -78,16 +78,6 @@ var DCC = (function() {
 
     };
 
-    var projects_container = function() { return $("#projects"); };
-
-    var handle_add_project = function(e, project) {
-      new DCC.ProjectView(projects_container(), project).render();
-    };
-
-    var register_event_handlers = function() {
-      projects_container().on("add_project.dcc", handle_add_project);
-    };
-
     var refresh_data = function() {
       var reschedule = function() {
         setTimeout(function() { refresh_data(); }, 10000);
@@ -98,16 +88,11 @@ var DCC = (function() {
     this.render = function() {
       render_menubar();
       render_container();
-      DCC.ProjectView.render_add_project(projects_container());
+      DCC.ProjectView.init($("#projects"));
+      DCC.ProjectView.render_add_project();
       DCC.HtmlUtils.render_modal("stats_dialog");
       DCC.ProjectBuildsView.render();
       render_error_overlay();
-
-      register_event_handlers();
-
-      // TODO stattdessen add-Event auf DCC.Project triggern und ProjectView via init darauf
-      // abonnieren → keine register_event_handlers und keine handle_add_project
-      DCC.Project.init(projects_container());
 
       refresh_data();
     };
@@ -494,15 +479,10 @@ DCC.Project = (function() {
         error_close_action);
   };
 
-  var container;
-  clazz.init = function(projects_container) {
-    container = projects_container;
-  };
-
   var handle_new_project = function(project_data) {
     var project = new DCC.Project(project_data);
     loaded_projects[project_data.id] = project;
-    container.trigger("add_project.dcc", project);
+    $(clazz).trigger("add_project.dcc", project);
   };
 
   var handle_deleted_project = function(id) {
@@ -705,8 +685,16 @@ DCC.ProjectView = (function() {
     });
   };
 
-  clazz.render_add_project = function(container) {
-    $(container).append(
+  var projects_container;
+  clazz.init = function(container) {
+    projects_container = container;
+    $(DCC.Project).on("add_project.dcc", function(e, project) {
+      new DCC.ProjectView(projects_container, project).render();
+    });
+  };
+
+  clazz.render_add_project = function() {
+    $(projects_container).append(
       '<div id="add_project" class="' + card_css_class + '">' +
         '<form accept-charset="UTF-8">' +
           '<div class="panel panel-default add_project">' +
@@ -751,8 +739,7 @@ DCC.ProjectView = (function() {
         '</form>' +
       '</div>'
     );
-
-      init_add_project();
+    init_add_project();
   };
 
   return clazz;
