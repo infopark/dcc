@@ -540,18 +540,26 @@ DCC.Project = (function() {
         var loaded_project = loaded_projects[project_data.id];
         if (!loaded_project) {
           handle_new_project(project_data);
-        } else if (
-          project_data.build_requested != loaded_project.build_requested() ||
-          (
-            project_data.last_build &&
+        } else {
+          var new_last_build = project_data.last_build;
+          var old_last_build = loaded_project.last_build();
+          if (
+            project_data.build_requested != loaded_project.build_requested() ||
             (
-              !loaded_project.last_build() ||
-              loaded_project.last_build().id() != project_data.last_build.id ||
-              loaded_project.last_build().status() != project_data.last_build.status
+              new_last_build &&
+              (
+                !old_last_build ||
+                old_last_build.id() != new_last_build.id ||
+                old_last_build.status() != new_last_build.status ||
+                old_last_build.in_work_buckets().length != new_last_build.in_work_buckets.length ||
+                old_last_build.failed_buckets().length != new_last_build.failed_buckets.length ||
+                old_last_build.pending_buckets().length != new_last_build.pending_buckets.length ||
+                old_last_build.done_buckets().length != new_last_build.done_buckets.length
+              )
             )
-          )
-        ) {
-          loaded_project.update_data(project_data);
+          ) {
+            loaded_project.update_data(project_data);
+          }
         }
       });
       if (success_callback) { success_callback(); }
@@ -586,6 +594,11 @@ DCC.Build = (function() {
       });
     };
 
+    this.in_work_buckets = function() { return build_data.in_work_buckets; };
+    this.failed_buckets = function() { return build_data.failed_buckets; };
+    this.pending_buckets = function() { return build_data.pending_buckets; };
+    this.done_buckets = function() { return build_data.done_buckets; };
+
     var buckets = load_buckets(build_data.in_work_buckets).concat(
         load_buckets(build_data.failed_buckets)).concat(
         load_buckets(build_data.pending_buckets)).concat(
@@ -596,7 +609,7 @@ DCC.Build = (function() {
 
     this.update_data = function(new_build_data) {
       build_data = new_build_data;
-      // FIXME bucket update
+      // FIXME buckets updates
       $(that).trigger('update.dcc');
     };
   };
@@ -828,10 +841,6 @@ DCC.ProjectView = (function() {
 })();
 
 
-// FIXME update für build abonnieren
-// → pagination neu rendern
-// → build_view neu rendern
-    //$(project).on("update.dcc", function() { that.render(); });
 DCC.ProjectBuildsView = (function() {
   var dialog;
   var current_view;
@@ -852,6 +861,10 @@ DCC.ProjectBuildsView = (function() {
       }
       render_pagination();
     });
+
+    // TODO eigentlich ist das hier $(build).on für alle Builds in der Pagination, die weiß ich aber
+    // derzeit nicht. Wäre wohl auch etwas overdosed … project.update tut es aktuell wunderbar.
+    $(project).on("update.dcc", function() { render_pagination(); });
 
     var register_build_click = function(build_entry, build) {
       build_entry.click(function() {
