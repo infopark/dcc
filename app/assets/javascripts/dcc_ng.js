@@ -2,8 +2,6 @@
 // - bei in work-status zusätzlich die anzahl der minions anzeigen
 // - bei builds/buckets irgendwo die laufzeit anzeigen
 //   → ggf. auch bei projekten (last_build)
-// - Pagination-next disablen, wenn load getriggert
-//   → reenablen, on error & on success
 
 window.onbeforeunload = function() { DCC.show_error = function() {}; };
 
@@ -860,6 +858,7 @@ DCC.ProjectBuildsView = (function() {
     var pagination;
     var build_views = {};
     var builds_container;
+    var next_button;
 
     $(project).on("update_builds.dcc", function(e, prepended_count) {
       if (offset > 0) {
@@ -890,7 +889,14 @@ DCC.ProjectBuildsView = (function() {
       });
     };
 
-    var render_pagination = function() {
+    var load_more_builds = function() {
+      next_button.unbind('click');
+      next_button.addClass("disabled");
+      next_button.find("span").addClass("loading");
+      project.load_more_builds();
+    };
+
+    var render_pagination = function(force_next) {
       if (!pagination) { return; }
       pagination.empty();
       var has_scrolling = project.loaded_build_ids().length > 10;
@@ -922,14 +928,14 @@ DCC.ProjectBuildsView = (function() {
         }
       }
 
-      if (has_scrolling) {
-        var next_button = $("<li class='build_next'><span>»</span></li>").appendTo(pagination);
+      if (has_scrolling || force_next) {
+        next_button = $("<li class='build_next'><span>»</span></li>").appendTo(pagination);
         var load_next = count == 10 && !project.all_builds_loaded();
         if (count > 10 || load_next) {
           next_button.click(function() {
             offset += 1;
             if (load_next) {
-              project.load_more_builds();
+              load_more_builds();
             } else {
               render_pagination();
             }
@@ -956,9 +962,11 @@ DCC.ProjectBuildsView = (function() {
         build_views[current] = new DCC.BuildView(builds_container, last_build);
         build_views[current].render();
         build_views[current].show();
-        project.load_more_builds();
+        render_pagination(true);
+        load_more_builds();
+      } else {
+        render_pagination();
       }
-      render_pagination();
       builds_container.show();
     };
 
@@ -994,6 +1002,8 @@ DCC.BuildView = (function() {
 
     var bucket_views = {};
     var buckets_container;
+
+    $(build).on("update.dcc", function() { render_buckets(); });
 
     var render_buckets = function() {
       // FIXME: das ist initial state
