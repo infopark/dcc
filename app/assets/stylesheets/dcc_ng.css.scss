@@ -6,17 +6,6 @@ $state-info-background: #d9edf7 !default;
 $state-danger-text: #b94a48 !default;
 $state-danger-background: #f2dede !default;
 
-@font-face {
-  font-family: "DCC Icons";
-  //src: url("type/filename.eot");
-  src: image-url('github_mark-small.svg') format("svg");
-  src: font-url("types/dcc-icons.eot");
-  src: font-url("types/dcc-icons.eot?#iefix") format("embedded-opentype"),
-       font-url("types/dcc-icons.ttf") format("truetype"),
-       font-url("types/dcc-icons.svg#dcc-icons") format("svg"),
-       font-url("types/dcc-icons.woff") format("woff");
-}
-
 .dropdown-menu .btn {
   text-align: left;
 }
@@ -95,16 +84,6 @@ $state-danger-background: #f2dede !default;
 .modal-form input,
 .modal-form div.make-switch {
   width: 100%;
-}
-
-i.icon {
-  font-family: "DCC Icons";
-  font-weight: normal;
-  font-style: normal;
-}
-
-.icon-github_mark:before {
-  content: 'a';
 }
 
 .checkbox.unchecked i{

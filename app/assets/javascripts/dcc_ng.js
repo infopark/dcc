@@ -1,6 +1,8 @@
 // TODO
 // - bei builds/buckets irgendwo die laufzeit anzeigen
 //   → ggf. auch bei projekten (last_build)
+// - Keine Bucket-Logs laden, wenn Bucket collapsed
+//   → beim Öffnen Laden triggern
 
 window.onbeforeunload = function() { DCC.show_error = function() {}; };
 
@@ -310,6 +312,7 @@ DCC.HtmlUtils = (function() {
           DCC.HtmlUtils.provide_first_element('.indicator', panel.find('.panel-heading'),
           "<h2 class='panel-title pull-right'></h2>");
       panel_status.empty();
+      // FIXME Zeit mit einbauen
       if (thing.bucket_state_counts) {
         var build = thing;
         _.each([40, 35, 30, 20, 10], function(status_code) {
@@ -317,7 +320,12 @@ DCC.HtmlUtils = (function() {
           append_status(panel_status, status_code, value);
         });
       } else {
-        append_status(panel_status, thing.status());
+        var bucket = thing;
+        append_status(panel_status, bucket.status());
+        if (bucket.worker_hostname()) {
+          panel_status.append("<span title='" + bucket.worker_hostname() + "'>" +
+              clazz.icon('screen-1') + "</span>");
+        }
       }
     }
   };
@@ -631,6 +639,7 @@ DCC.Bucket = (function() {
     this.name = function() { return bucket_data.name; };
     this.status = function() { return bucket_data.status; };
     this.build = function() { return build; };
+    this.worker_hostname = function() { return bucket_data.worker_hostname; }
 
     this.update_data = function(new_bucket_data) { bucket_data = new_bucket_data; };
 
@@ -674,7 +683,8 @@ DCC.ProjectView = (function() {
           "<div>" +
             "<a href='" + project.url().replace(/^git@github.com:/, "https://github.com/") +
                 "' class='github_link'>" +
-              DCC.HtmlUtils.icon('github_mark') + project.url().replace(/^git@github.com:/, "") +
+              DCC.HtmlUtils.icon('github-mark-small') +
+              project.url().replace(/^git@github.com:/, "") +
             "</a><br/>" +
             DCC.HtmlUtils.glyphicon('random') + project.branch() + "<br/>" +
             (project.owner() ? (DCC.HtmlUtils.glyphicon('user') + project.owner()) : "") + "<br/>" +
@@ -1068,8 +1078,6 @@ DCC.BucketView = (function() {
     };
 
     this.render = function() {
-      // FIXME (s.u.)
-      // - Zusatzinfo (auf Rechner x) mit schickem Icon (Compi) davor rechts im Header
       var bucket_box = DCC.HtmlUtils.provide_element("#bucket_" + bucket.id(), container,
         '<div class="panel panel-default bucket ' + DCC.HtmlUtils.status_css_class(bucket) +
             '" data-bucket_id="' + bucket.id() + '">' +
@@ -1097,20 +1105,6 @@ DCC.BucketView = (function() {
       // → Das hier sorgt für die richtige Reihenfolge im DOM.
       // Sauberer wäre das natürlich im Build-View…
       container.append(bucket_box)
-      // FIXME
-    //  var bucket_box_id = bucket_html_id(bucket.id);
-    //  var bucket_box = provide_element("#" + bucket_box_id, build_box, "<div class='box'></div>");
-    //
-    //  var log_id = bucket_html_id(bucket.id, 'log');
-    //  var overlay_id = "overlay_" + log_id;
-    //  var log_overlay = provide_element("#" + overlay_id, "body",
-    //      "<div class='overlay'><div class='container'>" +
-    //        "<pre class='log' id='" + log_id + "'></pre>" +
-    //      "</div></div>");
-    //
-    //  render_title(bucket_box, bucket.name, null, "auf " + bucket.worker_hostname, false, bucket,
-    //      function() { update_log(bucket.id); },
-    //      function(title_span) { overlay(title_span, log_overlay); });
     };
   };
 
