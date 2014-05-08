@@ -13,7 +13,6 @@ class Project < ActiveRecord::Base
   has_many :builds, :dependent => :destroy
   has_many :dependencies, :dependent => :destroy
   validate :must_have_name, :must_have_url, :must_have_branch
-  attr_accessible :name, :url, :branch, :owner
 
   attr_writer :before_all_tasks
 

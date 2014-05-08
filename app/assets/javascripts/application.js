@@ -2,10 +2,10 @@
 //= require underscore
 //= require dcc_ng
 //
-//= require twitter/bootstrap/collapse
-//= require twitter/bootstrap/dropdown
-//= require twitter/bootstrap/transition
-//= require twitter/bootstrap/modal
+//= require bootstrap/collapse
+//= require bootstrap/dropdown
+//= require bootstrap/transition
+//= require bootstrap/modal
 //
 //= require bootstrap-switch
 //
