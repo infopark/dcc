@@ -2,10 +2,12 @@
 
 require 'rubygems'
 require 'yaml'
+require 'active_support/core_ext'
 require 'active_record'
 require 'action_mailer'
 require 'fileutils'
 require 'daemon_spawn'
+require 'sys/proctable'
 
 %w(
   ../../lib
@@ -16,9 +18,28 @@ require 'daemon_spawn'
 end
 
 class Dcc < DaemonSpawn::Base
+  def self.find(options)
+    recognized_daemons = super
+    recognized_pids = recognized_daemons.map {|d| d.pid }
+
+    unrecognized_pids = Sys::ProcTable.ps.select do |p|
+      p.comm == 'ruby' && p.ppid == 1 &&
+          p.cmdline =~ /#{File.basename __FILE__} start/ && !recognized_pids.include?(p.pid)
+    end.map {|p| p.pid }
+
+    base_pid_file = new(options).pid_file
+    unrecognized_daemons = unrecognized_pids.map do |pid|
+      pid_file = File.exist?(base_pid_file) ? "#{base_pid_file}.recovered_#{pid}" : base_pid_file
+      File.write(pid_file, pid)
+      new options.merge(pid_file: pid_file)
+    end
+
+    recognized_daemons + unrecognized_daemons
+  end
+
   def start(args)
     File.umask(0022)
-    config = YAML::load(File.read('config/worker.yml')).symbolize_keys
+    config = YAML::load(File.read('config/worker.yml')).with_indifferent_access
     ActiveRecord::Base.establish_connection(
         YAML::load(File.read('config/database.yml'))[config[:environment]])
 
@@ -47,18 +68,12 @@ class Dcc < DaemonSpawn::Base
   end
 end
 
-working_dir = log_dir = pid_file = nil
+working_dir = log_dir = nil
 FileUtils.chdir("#{File.dirname(__FILE__)}/..") do
   working_dir = FileUtils.pwd
   FileUtils.mkdir_p(log_dir = "#{working_dir}/log")
-  FileUtils.mkdir_p(tmp_dir = "#{working_dir}/tmp")
-  pid_file = "#{tmp_dir}/worker.pid"
-  if File.exists?(pid_file) && !system("kill -0 #{File.read pid_file} > /dev/null 2>&1")
-    puts "removing orphaned pid file"
-    FileUtils.rm_f pid_file
-  end
+  FileUtils.mkdir_p("#{working_dir}/tmp/pids")
 end
-Dcc.spawn!(:log_file => "#{log_dir}/worker.log",
-    :pid_file => pid_file,
-    :working_dir => working_dir,
-    :sync_log => true)
+
+Dcc.spawn!(log_file: "#{log_dir}/worker.log",
+    application: 'worker', working_dir: working_dir, sync_log: true, timeout: 10)

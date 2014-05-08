@@ -2,16 +2,7 @@ source 'https://rubygems.org'
 
 gem 'honeybadger'
 
-gem 'daemon-spawn'
-gem 'rails', '~>3.2.16'
-gem 'mysql2'
-gem 'json'
-gem 'jquery-rails'
-gem 'underscore-rails'
-gem 'infopark-politics', '>= 0.5.0'
-gem 'thin'
-gem 'infopark_crm_connector'
-gem 'http_accept_language'
+gem 'aws-sdk'
 # bootstrap from a gem
 gem 'anjlab-bootstrap-rails', '~> 3.0.2.0', :require => 'bootstrap-rails'
 # bootstrap-switch from a gem
@@ -19,6 +10,18 @@ gem 'anjlab-bootstrap-rails', '~> 3.0.2.0', :require => 'bootstrap-rails'
 gem "bootstrap-switch-rails", "1.8.1"
 # bootbox from a gem
 gem 'bootbox-rails', '~> 0.2'
+gem 'daemon-spawn'
+gem 'hipchat'
+gem 'http_accept_language'
+gem 'infopark_crm_connector'
+gem 'infopark-politics', '>= 0.5.2'
+gem 'jquery-rails'
+gem 'json'
+gem 'mysql2', '>= 0.3.14'
+gem 'rails', '~>3.2.16'
+gem 'sys-proctable'
+gem 'thin'
+gem 'underscore-rails'
 
 # Gems used only for assets and not required
 # in production environments by default.
@@ -40,6 +43,4 @@ end
 
 group :test do
   gem 'sqlite3'
-  gem 'cucumber-rails', require: false
-  gem 'database_cleaner'
 end

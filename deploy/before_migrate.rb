@@ -15,20 +15,22 @@ end
 Chef::Log.info('= Building app config')
 
 {
-  'config/initializers/dcc_credentials.rb' => nil,
-  'config/initializers/crm_credentials.rb' => %Q@
+  :dcc_api_key => "Rails.configuration.dcc_api_key = '#{node[:deploy][:dcc][:api_key]}'",
+  :dcc_credentials => nil,
+  :crm_credentials => %Q@
     Infopark::Crm.configure do |config|
       config.url = '#{node[:deploy][:dcc][:webcrm][:url]}'
       config.login = '#{node[:deploy][:dcc][:webcrm][:login]}'
       config.api_key = '#{node[:deploy][:dcc][:webcrm][:api_key]}'
     end
   @,
-  'config/initializers/honeybadger.rb' => %Q@
+  :honeybadger => %Q@
     Honeybadger.configure do |config|
       config.api_key = '#{node[:deploy][:dcc][:honeybadger][:api_key]}'
     end
   @
-}.each do |config_path, config_content|
+}.each do |config_name, config_content|
+  config_path = "config/initializers/#{config_name}.rb"
   shared_config_path = ::File.join(shared_path, config_path)
   released_config_path = ::File.join(release_path, config_path)
 

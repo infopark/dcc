@@ -1,5 +1,7 @@
 # encoding: utf-8
 class ProjectController < ApplicationController
+  prepend_around_filter :with_api_user, only: :show_build, if: -> { session[:user].blank? }
+
   def create
     personal = ActiveRecord::ConnectionAdapters::Column.value_to_boolean(
         params[:project].delete :personal)
@@ -70,7 +72,20 @@ class ProjectController < ApplicationController
   end
 
   def show_bucket
-    @bucket = Bucket.find(params[:id])
+    @bucket = Bucket.select([:log, :error_log]).find(params[:id])
     render :layout => 'classic'
+  end
+
+  private
+
+  def with_api_user
+    session[:user] = DummyUser.new.attributes if api_key_valid?
+    yield
+  ensure
+    session[:user] = nil
+  end
+
+  def api_key_valid?
+    authenticate_with_http_basic { |user| Rails.configuration.dcc_api_key == user }
   end
 end

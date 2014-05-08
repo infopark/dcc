@@ -1,7 +1,9 @@
 <h1>
   Projekt <%= @build.project.name %>,
   Build <%= build_display_identifier(@build) %>
-  <%= if (href = build_gitweb_url(@build)); "(#{link_to "Commit anschauen", href})"; end %>
+  <% if (href = build_gitweb_url(@build)) %>
+    (<%= link_to "Commit anschauen", href %>)
+  <% end %>
 </h1>
 <%= render :partial => "build_status", :locals => {:build => @build} %>
 <% @build.buckets.sort.each do |bucket| -%>

@@ -1,18 +1,21 @@
 # encoding: utf-8
+require 'active_support'
+require 'active_support/core_ext/hash/indifferent_access'
+require 'fileutils'
+require 'hipchat'
+require 'monitor'
 require 'politics'
 require 'politics/static_queue_worker'
-require 'monitor'
 require 'set'
-require 'timeout'
 require 'socket'
-require 'active_support'
-require 'fileutils'
+require 'timeout'
 
 require 'models/project'
 require 'models/build'
 require 'models/bucket'
 require 'models/log'
 
+require_relative 'ec2'
 require_relative 'command_line'
 require_relative 'rake'
 require_relative 'mailer'
@@ -29,11 +32,18 @@ class Worker
 
   def initialize(group_name, memcached_servers, options = {})
     super()
-    options = {:log_level => ::Logger::WARN, :servers => memcached_servers}.merge(options)
+    @hipchat_config = options[:hipchat] || {}
+    @gui_base_url = options[:gui_base_url]
+    options = {
+      log_level: ::Logger::WARN,
+      servers: memcached_servers,
+    }.with_indifferent_access.merge(options)
+    options[:log_level] = eval(options[:log_level]) if String === options[:log_level]
     log.level = options[:log_level]
     log.formatter = ::Logger::Formatter.new()
     Logger.setLog(log)
     register_worker group_name, 0, options
+    EC2.add_tag(uri_tag_name, uri)
     @buckets = BucketStore.new
     @admin_e_mail_address = options[:admin_e_mail_address]
     @succeeded_before_all_tasks = []
@@ -168,13 +178,51 @@ class Worker
     if !succeeded
       bucket.build_error_log
       Mailer.failure_message(bucket).deliver
+      notify_hipchat(bucket, succeeded)
     else
       last_build = project.last_build(:before_build => build)
       if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
             last_bucket.status != 10
         Mailer.fixed_message(bucket).deliver
+        notify_hipchat(bucket, succeeded)
       end
     end
+  end
+
+  def hipchat_room
+    token = @hipchat_config[:token]
+    room_id = @hipchat_config[:room]
+
+    HipChat::Client.new(token, api_version: 'v1')[room_id]
+  end
+
+  def hipchat_user(project)
+    if hipchat_user = (@hipchat_config[:user_mapping] || {})[project.github_user]
+      " /cc @#{hipchat_user}"
+    end
+  end
+
+  def notify_hipchat(bucket, succeeded)
+    user = 'DCC'
+
+    if succeeded
+      color = 'green'
+      event = 'repaired'
+    else
+      color = 'red'
+      event = 'failed'
+    end
+
+    bucket_gui_url = "#{@gui_base_url}/project/show_bucket/#{bucket.id}"
+    project = bucket.build.project
+    message = "[#{project.name}] #{bucket.name} #{event} - " +
+        "#{bucket_gui_url}#{hipchat_user(project)}"
+
+    hipchat_room.send(user, message, {
+      notify: true,
+      message_format: 'text',
+      color: color
+    })
   end
 
   def perform_rake_task(path, task, logs)
@@ -380,7 +428,8 @@ private
     log.debug "leaving protected block (->#{@@pbl -= 1})"
   rescue Exception => e
     log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
-    bucket = options[:bucket]
+    bucket = options[:bucket] &&
+        retry_on_mysql_failure { Bucket.select([:log, :error_log]).find(options[:bucket].id) }
     msg = "uri: #{uri} (#{Socket.gethostname})\n" +
         "leader_uri: #{leader_uri}#{bucket && " (#{bucket.build.leader_hostname})"}\n\n" +
         "#{e.message}\n\n#{e.backtrace.join("\n")}"
@@ -433,7 +482,13 @@ private
   end
 
   def without_bundler(&block)
-    with_environment({"RUBYOPT" => nil, "BUNDLE_GEMFILE" => nil, "BUNDLE_BIN_PATH" => nil}, &block)
+    with_environment({
+      "RUBYOPT" => nil,
+      "RUBYLIB" => nil,
+      "BUNDLE_GEMFILE" => nil,
+      "BUNDLE_BIN_PATH" => nil,
+      "BUNDLE_ORIG_MANPATH" => nil,
+    }, &block)
   end
 
   def with_reset_rails_env(&block)
@@ -463,6 +518,18 @@ private
       end
       pool.disconnect!
     end
+  end
+
+  def uri_tag_name
+    "dcc:#{group_name}:uri"
+  end
+
+  def find_workers
+    EC2.neighbours.map {|i| i.tags[uri_tag_name] }
+  end
+
+  def cleanup
+    EC2.add_tag(uri_tag_name, nil)
   end
 end
 

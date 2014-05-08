@@ -147,7 +147,7 @@ class Project < ActiveRecord::Base
           end
         end
       end
-      receivers = receiver_map[:default] unless receivers
+      receivers = receiver_map[:default] if receivers.blank?
     end
     @e_mail_receivers[bucket_group_name] = receivers ? Array(receivers) : nil
   end

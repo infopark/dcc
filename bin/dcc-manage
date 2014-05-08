@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+
+%w(
+  ../../lib
+  ../../app
+).each do |dir|
+  libdir = File.expand_path(dir, __FILE__)
+  $LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
+end
+
+ACTIONS = %w(get_leader reset_leader restart_workers cleanup_data)
+
+unless ARGV.size == 1 && (ARGV - ACTIONS).empty?
+  puts "Usage:"
+  puts "  #{$0} (#{ACTIONS.join '|'})"
+  exit 1
+end
+
+def config
+  require 'yaml'
+  require 'active_support/core_ext'
+
+  YAML::load(File.read('config/worker.yml')).symbolize_keys
+end
+
+def memcache
+  require 'memcache'
+
+  MemCache.new(config[:memcache_servers])
+end
+
+def get_leader
+  puts memcache.get("#{config[:group_name]}_token")
+end
+
+def reset_leader
+  memcache.delete("#{config[:group_name]}_token")
+end
+
+def restart_workers
+  memcache.add("#{config[:group_name]}_restart", true)
+end
+
+def cleanup_data
+  require 'active_record'
+  require 'rails'
+  require 'models/project'
+
+  ActiveRecord::Base.establish_connection(YAML::load(File.read(
+      File.expand_path('../../config/database.yml', __FILE__)))[config[:environment]])
+  dirs = Dir["#{File.expand_path('../../tmp', __FILE__)}/*"]
+  ids_to_dirs = Hash[dirs.map {|dir| [dir.split('_').last.to_i, dir] }.reject {|id, dir| id == 0 }]
+  ids_to_dirs.each do |id, dir|
+    begin
+      Project.find id
+    rescue ActiveRecord::RecordNotFound
+      puts "deleting #{dir}"
+      FileUtils.rm_rf dir
+    end
+  end
+end
+
+send ARGV.first
+
+exit 0

@@ -36,9 +36,11 @@ private
   def bucket_state_message(bucket, state)
     bucket_message(bucket, bucket.build.project.e_mail_receivers(bucket.name),
         "'#{bucket.name}' #{state} auf #{Socket.gethostname}",
-        "#{
-          "\nFehler:\n\n#{bucket.error_log}\n\n#{'-' * 75}" if bucket.error_log
-        }\nLog:\n\n#{bucket.log}")
+        "")
+        # TODO das ist zuviel für Google-SES (führt zu Broken Pipe)
+        #"#{
+        #  "\nFehler:\n\n#{bucket.error_log}\n\n#{'-' * 75}" if bucket.error_log
+        #}\nLog:\n\n#{bucket.log}")
   end
 end
 

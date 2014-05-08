@@ -98,12 +98,15 @@ context "when showing a build" do
 end
 
 context "when showing a bucket" do
+  let(:log_scope) { Bucket.select([:log, :error_log]) }
   before do
-    Bucket.stub(:find).and_return nil
+    log_scope
+    Bucket.stub(:select).and_return log_scope
+    log_scope.stub(:find).and_return nil
   end
 
   it "should fetch the bucket and assign it for the view" do
-    Bucket.should_receive(:find).with("666").and_return "the bucket"
+    log_scope.should_receive(:find).with("666").and_return "the bucket"
     get 'show_bucket', :id => 666
     assigns[:bucket].should == "the bucket"
   end
@@ -183,6 +186,50 @@ context "when requesting a bucket log" do
     get "log", :id => 666
     response.body.should ==
         '{"log":"the complete log","logs":["some","log","fragments"]}'
+  end
+end
+
+context "when using the API" do
+  before do
+    Rails.application.config.stub need_authorization: true
+    Rails.configuration.dcc_api_key = "GOOD_KEY"
+    Build.stub :find
+  end
+
+  let(:show_build_response) { get "show_build", id: 666 }
+
+  context "w/o credentials" do
+    subject { show_build_response }
+    it { should be_redirect }
+  end
+
+  context "with HTTP auth" do
+    let(:credentials) { ActionController::HttpAuthentication::Basic.encode_credentials user, "x" }
+    before { request.env["HTTP_AUTHORIZATION"] = credentials }
+
+    context "using wrong credentials" do
+      let(:user) { "BAD_KEY" }
+      subject { show_build_response }
+      it { should be_redirect }
+    end
+
+    context "using good credentials" do
+      let(:user) { "GOOD_KEY" }
+
+      subject { show_build_response }
+      it { should be_ok }
+
+      context "non-public action" do
+        subject { get "show_bucket", id: 666 }
+        it { should be_redirect }
+      end
+
+      describe "session" do
+        before { get "show_build", id: 666 }
+        subject { session }
+        its([:user]) { should be_blank }
+      end
+    end
   end
 end
 
