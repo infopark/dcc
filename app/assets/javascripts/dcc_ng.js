@@ -786,8 +786,8 @@ DCC.ProjectView = (function() {
               DCC.HtmlUtils.icon('github-mark-small') +
               project.url().replace(/^git@github.com:/, "") +
             "</a><br/>" +
-            DCC.HtmlUtils.glyphicon('random') + project.branch() + "<br/>" +
-            (project.owner() ? (DCC.HtmlUtils.glyphicon('user') + project.owner()) : "") + "<br/>" +
+            DCC.HtmlUtils.icon('fontawesome-webfont') + project.branch() + "<br/>" +
+            (project.owner() ? (DCC.HtmlUtils.icon('fontawesome-webfont-13') + project.owner()) : "") + "<br/>" +
           "</div>");
       DCC.HtmlUtils.update_panel_status(project_panel, project.last_build());
 
@@ -814,7 +814,7 @@ DCC.ProjectView = (function() {
             "' data-project_id='" + project.id() +
             "' data-project_name='" + DCC.HtmlUtils.escape(project.name()) +
             "' class='btn btn-2 btn-default' data-toggle='modal' data-target='#stats_dialog'>" +
-          "◔" +
+          DCC.HtmlUtils.icon('fontawesome-webfont-16', 'button_icon') +
         "</button>"
       );
 
@@ -901,10 +901,10 @@ DCC.ProjectView = (function() {
                 DCC.HtmlUtils.icon('github-mark-small') +
                 '<input id="project_url" type="text" size="30" placeholder="' +
                     DCC.Localizer.t('project.url') + '" name="project[url]"/><br/>' +
-                DCC.HtmlUtils.glyphicon('random') +
+                DCC.HtmlUtils.icon('fontawesome-webfont') +
                 '<input id="project_branch" type="text" size="30" placeholder="' +
                     DCC.Localizer.t('project.branch') + '" name="project[branch]"/><br/>' +
-                DCC.HtmlUtils.glyphicon('user') +
+                DCC.HtmlUtils.icon('fontawesome-webfont-13') +
                 '<div class="make-switch switch-small" data-on-label="' +
                     DCC.Localizer.t("project.personal") + '" data-off-label="' +
                     DCC.Localizer.t("project.shared") + '">' +

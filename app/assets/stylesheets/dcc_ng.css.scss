@@ -132,6 +132,11 @@ i.status_icon {
   color: $state-info-text;
 }
 
+button.btn.stats {
+  font-size: 20px;
+  line-height: 0;
+}
+
 #stats_dialog .modal-dialog {
   width: 80%;
   height: 100%;
