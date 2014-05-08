@@ -1,5 +1,4 @@
 // TODO
-// - bei in work-status zusätzlich die anzahl der minions anzeigen
 // - bei builds/buckets irgendwo die laufzeit anzeigen
 //   → ggf. auch bei projekten (last_build)
 
@@ -314,7 +313,7 @@ DCC.HtmlUtils = (function() {
       if (thing.bucket_state_counts) {
         var build = thing;
         _.each([40, 35, 30, 20, 10], function(status_code) {
-          var value = build.bucket_state_counts(status_code.toString());
+          var value = build.bucket_state_counts(status_code);
           append_status(panel_status, status_code, value);
         });
       } else {
@@ -591,36 +590,32 @@ DCC.Build = (function() {
     this.id = function() { return build_data.id; };
     this.status = function() { return build_data.status; };
     this.short_identifier = function() { return build_data.short_identifier; };
-
-    var load_buckets = function(bucket_datas) {
-      return _.map(bucket_datas, function(bucket_data) {
-        return new DCC.Bucket(that, bucket_data);
-      });
-    };
-
     this.in_work_buckets = function() { return build_data.in_work_buckets; };
     this.failed_buckets = function() { return build_data.failed_buckets; };
     this.pending_buckets = function() { return build_data.pending_buckets; };
     this.done_buckets = function() { return build_data.done_buckets; };
+    this.bucket_state_counts = function(code) { return build_data.bucket_state_counts[code]; };
 
-    var buckets = load_buckets(build_data.in_work_buckets).concat(
-        load_buckets(build_data.failed_buckets)).concat(
-        load_buckets(build_data.pending_buckets)).concat(
-        load_buckets(build_data.done_buckets));
+    var all_bucket_datas = function(build_data) {
+      return build_data.in_work_buckets.concat(build_data.failed_buckets).concat(
+          build_data.pending_buckets).concat(build_data.done_buckets);
+    };
+
+    var buckets = _.map(all_bucket_datas(build_data), function(bucket_data) {
+      return new DCC.Bucket(that, bucket_data);
+    });
     this.buckets = function() { return buckets; };
 
     loaded_builds[build_data.id] = this;
 
     this.update_data = function(new_build_data) {
       build_data = new_build_data;
-      // FIXME buckets updates
+      _.each(all_bucket_datas(new_build_data), function(bucket_data) {
+        DCC.Bucket.find(bucket_data.id).update_data(bucket_data);
+      });
       $(that).trigger('update.dcc');
     };
   };
-
-  // FIXME Update Builds:
-  // - alle Builds, die noch nicht fertig sind, müssen regelmässig aktualisiert werden
-  // - auch ihre Buckets!
 
   clazz.find = function(id) { return loaded_builds[id]; };
 
@@ -629,12 +624,20 @@ DCC.Build = (function() {
 
 
 DCC.Bucket = (function() {
+  var loaded_buckets = {};
+
   var clazz = function(build, bucket_data) {
     this.id = function() { return bucket_data.id; };
     this.name = function() { return bucket_data.name; };
     this.status = function() { return bucket_data.status; };
     this.build = function() { return build; };
+
+    this.update_data = function(new_bucket_data) { bucket_data = new_bucket_data; };
+
+    loaded_buckets[bucket_data.id] = this;
   };
+
+  clazz.find = function(id) { return loaded_buckets[id]; };
 
   return clazz;
 })();
@@ -1031,7 +1034,6 @@ DCC.BuildView = (function() {
       _.each(build.buckets(), function(bucket) {
         bucket_views[bucket.id()] = new DCC.BucketView(buckets_container, bucket);
       });
-      // TODO Update via event
       render_buckets();
     };
 
@@ -1049,10 +1051,7 @@ DCC.BucketView = (function() {
 
     this.bucket = function() { return bucket; };
 
-    var render_log = function(log)
-    {
-      log_container.append(DCC.HtmlUtils.escape(log));
-    };
+    var render_log = function(log) { log_container.append(DCC.HtmlUtils.escape(log)); };
 
     // TODO daten/view trennen
     // TODO Project-Action
@@ -1066,16 +1065,12 @@ DCC.BucketView = (function() {
             render_log(result.log);
           } else {
             _.each(result.logs, function(log) { render_log(log); });
-            // FIXME nicht einschalten, wenn invisible
-            // FIXME oder gar nicht mit eigener aktualisierung sondern nur, immer wenn render builds
-            // (und visible)
             setTimeout(function() { update_log(); }, 5000);
           }
         },
         error: function(request, message, exception) {
           DCC.show_error(DCC.Localizer.t("error.fetch_log_failed"), request.statusText,
               request.responseText, function() {
-            // FIXME s.o.
             setTimeout(function() { update_log(); }, 5000);
           });
         }
@@ -1083,9 +1078,7 @@ DCC.BucketView = (function() {
     };
 
     this.render = function() {
-      // FIXME log-HTML-ID wofür?
-      var html_id = "bucket_" + bucket.id() + "_log";
-      // FIXME
+      // FIXME (s.u.)
       // - Zusatzinfo (auf Rechner x) mit schickem Icon (Compi) davor rechts im Header
       var bucket_box = DCC.HtmlUtils.provide_element("#bucket_" + bucket.id(), container,
         '<div class="panel panel-default bucket ' + DCC.HtmlUtils.status_css_class(bucket) +
@@ -1109,10 +1102,8 @@ DCC.BucketView = (function() {
       var bucket_body = DCC.HtmlUtils.provide_element(".panel-body", bucket_segment, "<div/>");
       log_container = DCC.HtmlUtils.provide_element("pre", bucket_body,
           '<pre><div class="loading"></div></pre>');
-      // FIXME kein update, wenn nicht pending/in_work
       DCC.HtmlUtils.update_panel_status(bucket_box, bucket);
       // FIXME
-      // FIXME wollen/brauchen wir noch die html_id-Generatoren?
     //  var bucket_box_id = bucket_html_id(bucket.id);
     //  var bucket_box = provide_element("#" + bucket_box_id, build_box, "<div class='box'></div>");
     //
