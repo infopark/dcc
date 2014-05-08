@@ -1,6 +1,4 @@
 // TODO
-// - bei builds/buckets irgendwo die laufzeit anzeigen
-//   → ggf. auch bei projekten (last_build)
 // - Keine Bucket-Logs laden, wenn Bucket collapsed
 //   → beim Öffnen Laden triggern
 
@@ -345,7 +343,7 @@ DCC.HtmlUtils = (function() {
     return s;
   };
 
-
+  // TODO IoC: Kein 'thing' sondern anzuzeigende Daten reinreichen (via Hash).
   clazz.update_panel_status = function(panel, thing) {
     panel.removeClass("panel-danger panel-info panel-success panel-default");
     if (!thing || !thing.status()) {
@@ -362,13 +360,18 @@ DCC.HtmlUtils = (function() {
           DCC.HtmlUtils.provide_first_element('.indicator', panel.find('.panel-heading'),
           "<h2 class='panel-title pull-right'></h2>");
       panel_status.empty();
-      // FIXME Zeit mit einbauen
       if (thing.bucket_state_counts) {
         var build = thing;
         _.each([40, 35, 30, 20, 10], function(status_code) {
           var value = build.bucket_state_counts(status_code);
           append_status(panel_status, status_code, value);
         });
+        var time = duration(build);
+        if (time) {
+          // FIXME anderes Icon als pending
+          panel_status.append("<span title='" + time + "'>" +
+              clazz.glyphicon('time', 'status_icon') + "</span>");
+        }
       } else {
         var bucket = thing;
         append_status(panel_status, bucket.status(), null, duration(bucket));
