@@ -2,12 +2,8 @@
 // - bei in work-status zusätzlich die anzahl der minions anzeigen
 // - bei builds/buckets irgendwo die laufzeit anzeigen
 //   → ggf. auch bei projekten (last_build)
-//
-// FIXME
-// - Buguntersuchung: neuer build verhindert laden des vorigen last_build?
-//   (build, warten bis projet blau, dann builds aufmachen)
-//   Vermutung: last_build ist da (Builds.find) aber nicht im View. Weil er da ist, kommt er nicht
-//   via nachladen in den view.
+// - Pagination-next disablen, wenn load getriggert
+//   → reenablen, on error & on success
 
 window.onbeforeunload = function() { DCC.show_error = function() {}; };
 
@@ -438,9 +434,17 @@ DCC.Project = (function() {
       }
     };
 
+    var _find_first_loaded = function(build_datas) {
+      return _.find(build_datas, function(build_data) { return DCC.Build.find(build_data.id); });
+    };
+
     var handle_loaded_builds = function(build_datas, prepend) {
       var loaded_builds = 0;
-      _.each(prepend ? build_datas.reverse() : build_datas, function(build_data) {
+      if (prepend) {
+        build_datas = build_datas.slice(0,
+            build_datas.indexOf(_find_first_loaded(build_datas))).reverse();
+      }
+      _.each(build_datas, function(build_data) {
         if (!DCC.Build.find(build_data.id)) {
           var build = new DCC.Build(build_data);
           loaded_builds += 1;
@@ -463,7 +467,7 @@ DCC.Project = (function() {
           return handle_loaded_builds(new_build_datas, prepend);
         });
         if (prepend && new_build_datas.length &&
-              !DCC.Build.find(_.last(new_build_datas).id) && result.continuation_handle) {
+              !_find_first_loaded(new_build_datas) && result.continuation_handle) {
             load_builds(result.continuation_handle, true, success_handler, result_handlers);
         } else {
           var loaded_builds = _.reduce(result_handlers, function(x, h) { return x + h(); }, 0)
@@ -565,6 +569,8 @@ DCC.Project = (function() {
       if (success_callback) { success_callback(); }
     }, error_close_action);
   };
+
+  clazz.find = function(id) { return loaded_projects[id]; };
 
   clazz.create = function(valuesToSubmit, success_callback) {
     perform_post(null, 'create', valuesToSubmit, DCC.Localizer.t("error.create_project_failed"),
