@@ -1009,16 +1009,6 @@ DCC.BuildView = (function() {
     $(build).on("update.dcc", function() { render_buckets(); });
 
     var render_buckets = function() {
-      // FIXME: das ist initial state
-      // → update entweder komplett neu rendern, oder dom sortieren
-      // → dom sortieren geht auch ohne jquery extension: views sortieren, und dann
-      //   each.view_element.parentNode.appendChild(view_element)
-      // FIXME Bucket-Updates:
-      // - Umsortierung der Liste
-      // - Aktualisierung des Status
-      // - Log-Update
-      // - kein Log-Update mehr, wenn fertig
-      // - kein Bucket-Update von fertigen Buckets
       var sorted_views = _.sortBy(_.sortBy(bucket_views, function(bucket_view) {
         return bucket_view.bucket().name();
       }), function(bucket_view) {
@@ -1103,6 +1093,10 @@ DCC.BucketView = (function() {
       log_container = DCC.HtmlUtils.provide_element("pre", bucket_body,
           '<pre><div class="loading"></div></pre>');
       DCC.HtmlUtils.update_panel_status(bucket_box, bucket);
+      // Alle Buckets werden immer zusammen gerendert (in der richtigen Reihenfolge).
+      // → Das hier sorgt für die richtige Reihenfolge im DOM.
+      // Sauberer wäre das natürlich im Build-View…
+      container.append(bucket_box)
       // FIXME
     //  var bucket_box_id = bucket_html_id(bucket.id);
     //  var bucket_box = provide_element("#" + bucket_box_id, build_box, "<div class='box'></div>");
