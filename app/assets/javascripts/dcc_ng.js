@@ -38,21 +38,23 @@ var DCC = (function() {
                 '<ul class="dropdown-menu">' +
                   '<li>' +
                     '<a id="show_other_projects" class="btn checkbox unchecked">' +
-                      '<i class="prefix_icon glyphicon glyphicon-check"></i>' +
+                      DCC.HtmlUtils.glyphicon('check') +
                       DCC.Localizer.t('prefs.show_other_projects') +
                     '</a>' +
                   '</li>' +
                   '<li>' +
                     '<a id="show_shared_projects" class="btn checkbox unchecked">' +
-                      '<i class="prefix_icon glyphicon glyphicon-check"></i>' +
+                      DCC.HtmlUtils.glyphicon('check') +
                       DCC.Localizer.t('prefs.show_shared_projects') +
                     '</a>' +
                   '</li>' +
                   '<li class="divider"></li>' +
-                  '<li><a href="logout">' +
-                    '<i class="prefix_icon glyphicon glyphicon-log-out"></i>' +
-                    DCC.Localizer.t('user.logout') +
-                  '</a></li>' +
+                  '<li>' +
+                    '<a href="logout">' +
+                      DCC.HtmlUtils.glyphicon('log-out') +
+                      DCC.Localizer.t('user.logout') +
+                    '</a>' +
+                  '</li>' +
                 '</ul>' +
               '</li>' +
             '</ul>' +
@@ -233,12 +235,11 @@ DCC.HtmlUtils = (function() {
     return str;
   };
 
-  clazz.icon = function(name) {
-    return "<i class='prefix_icon icon icon-" + name + "'></i>";
+  clazz.icon = function(name, additional_class = "prefix_icon") {
+    return "<i class='" + additional_class + " icon icon-" + name + "'></i>";
   }
 
-  clazz.glyphicon = function(name, additional_class) {
-    additional_class = additional_class || "prefix_icon"
+  clazz.glyphicon = function(name, additional_class = "prefix_icon") {
     return "<i class='glyphicon glyphicon-" + name + " " + additional_class + "'></i>";
   };
 
@@ -286,15 +287,64 @@ DCC.HtmlUtils = (function() {
     }
   };
 
-  var append_status = function(element, status_code, value) {
+  var append_status = function(element, status_code, value, additional_title) {
     if (value != 0) {
       $("<span title='" + status_message(status_code) +
+          (additional_title ? (" " + additional_title) : "") +
           "' class='" + clazz.status_css_class(status_code) + "'>" +
         clazz.glyphicon(status_icon(status_code), 'status_icon') +
         (value > 0 ? value : "") +
       "</span>").appendTo(element);
     }
   }
+
+  var format_duration = function(interval) {
+    interval /= 1000;
+    var seconds = interval % 60;
+    interval -= seconds;
+    var minutes = interval / 60 % 60;
+    interval -= minutes * 60;
+    var hours = interval / 3600;
+    var parts = [];
+    if (hours > 0) {
+      parts.push("" + hours + " " +
+          DCC.Localizer.t("status.duration.hour" + (hours > 1 ? "s" : "")));
+    }
+    if (minutes > 0) {
+      parts.push("" + minutes + " " +
+          DCC.Localizer.t("status.duration.minute" + (minutes > 1 ? "s" : "")));
+    }
+    if (seconds > 0) {
+      parts.push("" + seconds + " " +
+          DCC.Localizer.t("status.duration.second" + (seconds > 1 ? "s" : "")));
+    }
+    return parts.join(" ");
+  };
+
+
+  fd = function(num)
+  {
+    return (num < 10 ? "0" : "") + num;
+  };
+
+
+  duration = function(thing)
+  {
+    s = ""
+    if (thing.started_at()) {
+      if (thing.finished_at()) {
+        s = " " + DCC.Localizer.t("status.duration.in") + " " +
+            format_duration(Date.parse(thing.finished_at()) - Date.parse(thing.started_at()));
+      } else {
+        var d = new Date(Date.parse(thing.started_at()));
+        s = " " + DCC.Localizer.t("status.duration.since") + " " +
+            d.getFullYear() + "-" + fd(d.getMonth() + 1) + "-" + fd(d.getDate()) + " " +
+            fd(d.getHours()) + ":" + fd(d.getMinutes()) + ":" + fd(d.getSeconds());
+      }
+    }
+    return s;
+  };
+
 
   clazz.update_panel_status = function(panel, thing) {
     panel.removeClass("panel-danger panel-info panel-success panel-default");
@@ -321,10 +371,10 @@ DCC.HtmlUtils = (function() {
         });
       } else {
         var bucket = thing;
-        append_status(panel_status, bucket.status());
+        append_status(panel_status, bucket.status(), null, duration(bucket));
         if (bucket.worker_hostname()) {
           panel_status.append("<span title='" + bucket.worker_hostname() + "'>" +
-              clazz.icon('screen-1') + "</span>");
+              clazz.icon('screen-1', 'status_icon') + "</span>");
         }
       }
     }
@@ -603,6 +653,8 @@ DCC.Build = (function() {
     this.pending_buckets = function() { return build_data.pending_buckets; };
     this.done_buckets = function() { return build_data.done_buckets; };
     this.bucket_state_counts = function(code) { return build_data.bucket_state_counts[code]; };
+    this.started_at = function(code) { return build_data.started_at; };
+    this.finished_at = function(code) { return build_data.finished_at; };
 
     var all_bucket_datas = function(build_data) {
       return build_data.in_work_buckets.concat(build_data.failed_buckets).concat(
@@ -640,6 +692,8 @@ DCC.Bucket = (function() {
     this.status = function() { return bucket_data.status; };
     this.build = function() { return build; };
     this.worker_hostname = function() { return bucket_data.worker_hostname; }
+    this.started_at = function(code) { return bucket_data.started_at; };
+    this.finished_at = function(code) { return bucket_data.finished_at; };
 
     this.update_data = function(new_bucket_data) { bucket_data = new_bucket_data; };
 
@@ -798,13 +852,13 @@ DCC.ProjectView = (function() {
             '</div>' +
             '<div class="panel-body unobtrusive">' +
               '<span class="form">' +
-                '<i class="prefix_icon icon icon-github_mark"></i>' +
+                DCC.HtmlUtils.icon('github-mark-small') +
                 '<input id="project_url" type="text" size="30" placeholder="' +
                     DCC.Localizer.t('project.url') + '" name="project[url]"/><br/>' +
-                '<i class="prefix_icon glyphicon glyphicon-random"></i>' +
+                DCC.HtmlUtils.glyphicon('random') +
                 '<input id="project_branch" type="text" size="30" placeholder="' +
                     DCC.Localizer.t('project.branch') + '" name="project[branch]"/><br/>' +
-                '<i class="prefix_icon glyphicon glyphicon-user"></i>' +
+                DCC.HtmlUtils.glyphicon('user') +
                 '<div class="make-switch switch-small" data-on-label="' +
                     DCC.Localizer.t("project.personal") + '" data-off-label="' +
                     DCC.Localizer.t("project.shared") + '">' +
@@ -814,7 +868,7 @@ DCC.ProjectView = (function() {
               '</span>' +
               '<div class="show_form_button">' +
                 '<a class="btn">' +
-                  '<i class="glyphicon glyphicon-plus"></i><br/>' +
+                  DCC.HtmlUtils.glyphicon('plus') + '<br/>' +
                   DCC.Localizer.t("project.new") +
                 '</a>' +
               '</div>' +

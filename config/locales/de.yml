@@ -43,6 +43,15 @@ de:
     in_work: in Arbeit
     processing_failed: Fehler bei der Bearbeitung
     failed: fehlgeschlagen
+    duration:
+      in: in
+      since: seit
+      hour: Stunde
+      hours: Stunden
+      minute: Minute
+      minutes: Minuten
+      second: Sekunde
+      seconds: Sekunden
   error:
     unknown_status: unbekannter Status
     occured: Es sind Fehler aufgetreten

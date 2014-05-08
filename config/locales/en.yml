@@ -43,6 +43,15 @@ en:
     in_work: in work
     processing_failed: processing failed
     failed: failed
+    duration:
+      in: in
+      since: since
+      hour: hour
+      hours: hours
+      minute: minute
+      minutes: minutes
+      second: second
+      seconds: seconds
   error:
     unknown_status: unknown state
     occured: following errors occured
