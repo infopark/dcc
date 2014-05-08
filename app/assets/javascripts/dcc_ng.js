@@ -871,7 +871,7 @@ DCC.ProjectView = (function() {
               '</span>' +
               '<div class="show_form_button">' +
                 '<a class="btn">' +
-                  DCC.HtmlUtils.glyphicon('plus') + '<br/>' +
+                  DCC.HtmlUtils.glyphicon('plus', 'large_icon') + '<br/>' +
                   DCC.Localizer.t("project.new") +
                 '</a>' +
               '</div>' +
