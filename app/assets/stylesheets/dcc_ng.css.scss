@@ -10,6 +10,10 @@ $state-danger-background: #f2dede !default;
   text-align: left;
 }
 
+.panel-heading a {
+  text-decoration: none;
+}
+
 .add_project .panel-body.unobtrusive {
   opacity: 0.3;
   transition: opacity 0.4s ease-in 0s;
