@@ -1,5 +1,5 @@
 @import "bootstrap";
-/*
+
 // _variables
 
 $container-extra-large-desktop:  ((1500px + $grid-gutter-width)) !default;
@@ -148,11 +148,7 @@ $screen-xl-max:              ($screen-xxl-min - 1) !default;
     width: $container-xl;
   }
 
-  @include make-grid-columns-float(xl);
-  @include make-grid($grid-columns, xl, width);
-  @include make-grid($grid-columns, xl, pull);
-  @include make-grid($grid-columns, xl, push);
-  @include make-grid($grid-columns, xl, offset);
+  @include make-grid(xl);
 }
 
 
@@ -161,11 +157,5 @@ $screen-xl-max:              ($screen-xxl-min - 1) !default;
     width: $container-xxl;
   }
 
-  @include make-grid-columns-float(xxl);
-  @include make-grid($grid-columns, xxl, width);
-  @include make-grid($grid-columns, xxl, pull);
-  @include make-grid($grid-columns, xxl, push);
-  @include make-grid($grid-columns, xxl, offset);
+  @include make-grid(xxl);
 }
-
-*/
