@@ -423,6 +423,8 @@ DCC.HtmlUtils = (function() {
               clazz.icon('screen-1', 'status_icon') + "</span>");
         }
       }
+      panel_status.append("<a href='" + thing.static_url() + "'>" +
+          clazz.icon('fontawesome-webfont-14', 'status_icon') + "</a>");
     }
   };
 
@@ -702,6 +704,8 @@ DCC.Build = (function() {
     this.started_at = function(code) { return build_data.started_at; };
     this.finished_at = function(code) { return build_data.finished_at; };
 
+    this.static_url = function() { return "/project/show_build/" + that.id(); };
+
     var all_bucket_datas = function(build_data) {
       return build_data.in_work_buckets.concat(build_data.failed_buckets).concat(
           build_data.pending_buckets).concat(build_data.done_buckets);
@@ -733,6 +737,8 @@ DCC.Bucket = (function() {
   var loaded_buckets = {};
 
   var clazz = function(build, bucket_data) {
+    var that = this;
+
     this.id = function() { return bucket_data.id; };
     this.name = function() { return bucket_data.name; };
     this.status = function() { return bucket_data.status; };
@@ -740,6 +746,8 @@ DCC.Bucket = (function() {
     this.worker_hostname = function() { return bucket_data.worker_hostname; }
     this.started_at = function(code) { return bucket_data.started_at; };
     this.finished_at = function(code) { return bucket_data.finished_at; };
+
+    this.static_url = function() { return "/project/show_bucket/" + that.id(); };
 
     this.update_data = function(new_bucket_data) { bucket_data = new_bucket_data; };
 
@@ -773,7 +781,7 @@ DCC.ProjectView = (function() {
       project_element = DCC.HtmlUtils.provide_first_element("#project_" + project.id(),
           container, "<div class='" + card_css_class + "'/>");
       var project_panel = DCC.HtmlUtils.provide_element(".panel", project_element,
-          "<div class='panel-default'/>");
+          "<div class='project panel-default'/>");
       var project_heading = DCC.HtmlUtils.provide_element(".panel-heading", project_panel, "<div " +
           "data-toggle='modal' data-target='#build_dialog'/>").prop('project', project);
       var project_title = DCC.HtmlUtils.provide_element(".panel-title", project_heading,
