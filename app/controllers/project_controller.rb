@@ -58,7 +58,12 @@ class ProjectController < ApplicationController
     }
   end
 
-  # alt für statische Links (z.B. für Pull-Requests)
+  # altes GUI
+  def index
+    render :layout => 'classic'
+  end
+
+  # altes GUI für statische Links (z.B. für Pull-Requests)
   def show_build
     @build = Build.find(params[:id])
     render :layout => 'classic'

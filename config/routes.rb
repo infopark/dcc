@@ -1,19 +1,27 @@
 Dcc::Application.routes.draw do
-  match '/' => 'project#index'
-  match '/beta' => 'application#index'
+  # gui
+  match '/' => 'application#index'
+
+  # for gui
   match 'project/create' => 'project#create', :via => :post
   match 'project/delete/:id' => 'project#delete', :via => :post
   match 'project/build/:id' => 'project#build', :via => :post
   match 'project/list' => 'project#list'
   match 'project/log/:id' => 'project#log'
   match 'project/previous_builds/:id' => 'project#previous_builds'
+  match 'stats/project/:id' => 'stats#show'
+
+  # classic gui
+  match 'classic' => 'project#index'
   match 'project/old_build/:id' => 'project#old_build'
   match 'project/show_build/:id' => 'project#show_build'
   match 'project/show_bucket/:id' => 'project#show_bucket'
-  match 'project/index/:id' => 'project#index'
+
+  # TODO: noch benötigt? DCC benutzt es nicht. Public-API?
   match 'project/:id' => 'project#show'
-  match 'stats/project/:id' => 'stats#show'
+
   match 'login' => 'user#login', :as => :login
   match 'logout' => 'user#logout', :as => :logout
-  root :to => 'project#index'
+
+  root :to => 'application#index'
 end
