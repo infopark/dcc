@@ -93,6 +93,49 @@ var DCC = (function() {
     );
   };
 
+  var show_stats = function(project_id, container) {
+    $.getJSON("/stats/project/" + project_id, function(json) {
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', DCC.Localizer.t("project.stats.chart.date"));
+      data.addColumn('number', DCC.Localizer.t("project.stats.chart.slowest"));
+      data.addColumn('number', DCC.Localizer.t("project.stats.chart.fastest"));
+      data.addRows(json.rows);
+      var vAxis = {
+        format: '# min',
+        gridlines: { color: '#dfdaad', count: json.max / 5 },
+        minorGridlines: { count: 5 },
+        viewWindow: { max: json.max / 5 * 5, min: 0 }
+      };
+      new google.visualization.ColumnChart(container.get(0)).draw(data, {
+        backgroundColor: '#fffacd',
+        bar: { groupWidth: '70%' },
+        colors: ['#77c76f', '#27771f'],
+        focusTarget: 'category',
+        height: '100%',
+        isStacked: true,
+        legend: { position: 'bottom' },
+        series: [ { targetAxisIndex: 0 }, { targetAxisIndex: 1 } ],
+        title: json.name + " - " + DCC.Localizer.t("project.stats.chart.name_prefix"),
+        vAxes: [vAxis, vAxis],
+        width: '100%'
+      });
+    });
+  };
+
+  var render_stats_overlay = function() {
+    DCC.HtmlUtils.render_modal("stats_dialog");
+    $('#stats_dialog').on('show.bs.modal', function (evt) {
+      $(evt.target).find('.modal-title').append(
+          DCC.Localizer.t("project.stats.title").replace('%{name}',
+          $(evt.relatedTarget).data('project_name')));
+      show_stats($(evt.relatedTarget).data('project_id'), $(evt.target).find('.modal-body'));
+    });
+    $('#stats_dialog').on('hidden.bs.modal', function (evt) {
+      $(evt.target).find('.modal-body').empty();
+      $(evt.target).find('.modal-title').empty();
+    });
+  };
+
   var render_error_overlay = function() {
     $("body").append(
       '<div id="error_overlay" class="error_overlay">' +
@@ -128,8 +171,8 @@ var DCC = (function() {
     render_container();
     DCC.ProjectView.init($("#projects"));
     DCC.ProjectView.render_add_project();
-    DCC.HtmlUtils.render_modal("stats_dialog");
     DCC.ProjectBuildsView.render();
+    render_stats_overlay();
     render_error_overlay();
 
     refresh_data();

@@ -1,18 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Distributed Cruise Control - BETA</title>
+  <title>Distributed Cruise Control</title>
   <%= stylesheet_link_tag    "application", :media => "all" %>
   <%= javascript_include_tag "application" %>
   <%= csrf_meta_tags %>
   <link rel="shortcut icon" href="<%= asset_path 'diccr-favicon-medium.ico' %>" type="image/x-icon">
   <link rel="icon" href="<%= asset_path 'diccr-favicon-medium.ico' %>" type="image/x-icon">
-  <!-- FIXME Stats → in Javascript-Zeux verschieben?
   <script type="text/javascript" src="//www.google.com/jsapi"></script>
   <script type="text/javascript">
     google.load('visualization', '1', {packages: ['corechart']});
   </script>
-  -->
 </head>
 <body>
   <%= yield %>
