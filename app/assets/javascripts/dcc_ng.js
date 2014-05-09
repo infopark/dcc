@@ -100,11 +100,12 @@ var DCC = (function() {
       data.addColumn('number', DCC.Localizer.t("project.stats.chart.slowest"));
       data.addColumn('number', DCC.Localizer.t("project.stats.chart.fastest"));
       data.addRows(json.rows);
+      var value_segments = Math.ceil(json.max / 5);
       var vAxis = {
         format: '# min',
-        gridlines: { color: '#dfdaad', count: json.max / 5 },
+        gridlines: { color: '#dfdaad', count: value_segments },
         minorGridlines: { count: 5 },
-        viewWindow: { max: json.max / 5 * 5, min: 0 }
+        viewWindow: { max: value_segments * 5, min: 0 }
       };
       new google.visualization.ColumnChart(container.get(0)).draw(data, {
         backgroundColor: '#fffacd',
