@@ -10,8 +10,8 @@ end
 describe TestAuthenticationController do
   before do
     Rails.application.routes.draw do
-      match 'test_authentication/any_target' => "test_authentication#any_target"
-      match 'login' => 'user#login'
+      get 'test_authentication/any_target' => "test_authentication#any_target"
+      get 'login' => 'user#login'
     end
   end
 
