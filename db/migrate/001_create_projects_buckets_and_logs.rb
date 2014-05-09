@@ -14,7 +14,8 @@ class CreateProjectsBucketsAndLogs < ActiveRecord::Migration
       t.belongs_to :project
     end
     add_index :buckets, [:project_id, :commit]
-    add_index :buckets, [:name, :project_id, :commit, :build_number], :unique => true
+    add_index :buckets, [:name, :project_id, :commit, :build_number], unique: true,
+        name: "index_buckets_n_pi_c_bn"
     add_index :buckets, :build_number
     add_index :buckets, :project_id
 
