@@ -180,7 +180,7 @@ class Worker
       Mailer.failure_message(bucket).deliver
       notify_hipchat(bucket, succeeded)
     else
-      last_build = project.last_build(:before_build => build)
+      last_build = project.build_before(build)
       if last_build && (last_bucket = last_build.buckets.find_by_name(bucket.name)) &&
             last_bucket.status != 10
         Mailer.fixed_message(bucket).deliver

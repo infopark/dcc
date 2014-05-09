@@ -135,7 +135,7 @@ module DCC
 
     context 'when build succeeded again' do
       before do
-        bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
+        bucket.build.project.should_receive(:build_before).with(bucket.build).
             and_return Build.find(330)
       end
 
@@ -153,7 +153,7 @@ module DCC
 
     context 'when first build ever succeeded' do
       before do
-        bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
+        bucket.build.project.should_receive(:build_before).with(bucket.build).
             and_return nil
       end
 
@@ -175,7 +175,7 @@ module DCC
         buckets.should_receive(:find_by_name).with('my_bucket').and_return(double(status: 40))
         last_build = double(buckets: buckets)
 
-        bucket.build.project.should_receive(:last_build).with(:before_build => bucket.build).
+        bucket.build.project.should_receive(:build_before).with(bucket.build).
             and_return last_build
 
         Mailer.stub(:fixed_message).and_return double(deliver: nil)

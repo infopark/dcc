@@ -53,7 +53,7 @@ class ProjectController < ApplicationController
   # FIXME delete
   def old_build
     b = Build.find(params[:id])
-    pb = b.project.last_build(:before_build => b)
+    pb = b.project.build_before(b)
     render :json => {
       :build => b,
       :previous_build_id => pb ? pb.id : nil
