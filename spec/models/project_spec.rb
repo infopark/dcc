@@ -98,9 +98,8 @@ describe Project do
         branch: "project branch",
         build_requested: nil,
         last_build: nil,
-        previous_build_ids: [],
         last_system_error: nil,
-        owner: nil
+        owner: nil,
       }.with_indifferent_access
     end
   end
