@@ -2,11 +2,11 @@
 
 @font-face {
   font-family: "dcc-icons";
-  src:url("fonts/dcc-icons.eot");
-  src:url("fonts/dcc-icons.eot?#iefix") format("embedded-opentype"),
-    url("fonts/dcc-icons.woff") format("woff"),
-    url("fonts/dcc-icons.ttf") format("truetype"),
-    url("fonts/dcc-icons.svg#dcc-icons") format("svg");
+  src:asset-url("fonts/dcc-icons.eot");
+  src:asset-url("fonts/dcc-icons.eot?#iefix") format("embedded-opentype"),
+    asset-url("fonts/dcc-icons.woff") format("woff"),
+    asset-url("fonts/dcc-icons.ttf") format("truetype"),
+    asset-url("fonts/dcc-icons.svg#dcc-icons") format("svg");
   font-weight: normal;
   font-style: normal;
 
