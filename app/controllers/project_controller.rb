@@ -6,7 +6,7 @@ class ProjectController < ApplicationController
     personal = ActiveRecord::ConnectionAdapters::Column.value_to_boolean(
         params[:project].delete :personal)
     params[:project][:owner] = @current_user.login if personal
-    p = Project.new(params[:project])
+    p = Project.new(params.require(:project).permit(:name, :url, :branch, :owner))
     p.save
     render :json => p
   end
