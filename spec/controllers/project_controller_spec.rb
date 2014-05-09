@@ -20,9 +20,19 @@ context "when creating a project" do
     post 'create', {:project => {:name => 'the name', :url => 'the url', :branch => 'the branch'}}
   end
 
-  it "should redirect to index" do
+  it "renders the created project as json" do
     post 'create', {:project => {:name => 'the name', :url => 'the url', :branch => 'the branch'}}
-    response.should redirect_to(:action => :index)
+
+    JSON.parse(response.body).should == {
+      "name" => "the name",
+      "url" => "the url",
+      "branch" => "the branch",
+      "build_requested" => nil,
+      "last_build" => nil,
+      "last_system_error" => nil,
+      "owner" => nil,
+      "id" => anything(),
+    }
   end
 
   shared_examples_for "creating a personal project" do
