@@ -277,11 +277,13 @@ DCC.HtmlUtils = (function() {
     return str;
   };
 
-  clazz.icon = function(name, additional_class = "prefix_icon") {
+  clazz.icon = function(name, additional_class) {
+    additional_class = additional_class || "prefix_icon";
     return "<i class='" + additional_class + " icon icon-" + name + "'></i>";
-  }
+  };
 
-  clazz.glyphicon = function(name, additional_class = "prefix_icon") {
+  clazz.glyphicon = function(name, additional_class) {
+    additional_class = additional_class || "prefix_icon";
     return "<i class='glyphicon glyphicon-" + name + " " + additional_class + "'></i>";
   };
 
@@ -518,9 +520,9 @@ DCC.Project = (function() {
       });
     };
 
-    this.request_build = function(options = {}) {
+    this.request_build = function(options) {
       perform_post(that.id(), 'build', {}, DCC.Localizer.t("error.trigger_build_failed"),
-          options.on_success, options.on_error);
+          options.on_success, options ? options.on_error : {});
     };
 
     var _finalize_update = function() {
@@ -562,8 +564,8 @@ DCC.Project = (function() {
       return loaded_builds;
     };
 
-    var load_builds = function(last_build_id, prepend, success_handler = null,
-        result_handlers = []) {
+    var load_builds = function(last_build_id, prepend, success_handler, result_handlers) {
+      result_handlers = result_handlers || [];
       perform_get(last_build_id, "previous_builds", {},
           DCC.Localizer.t("error.fetch_builds_failed"), function(result) {
         var new_build_datas = result.previous_builds;
@@ -841,13 +843,13 @@ DCC.ProjectView = (function() {
       that.adjust_visibility(0);
     };
 
-    this.adjust_visibility = function(duration = 150) {
+    this.adjust_visibility = function(duration) {
       var should_be_hidden = (
         (project.owner() == null && !show_shared) ||
         (project.owner() != null && project.owner() != DCC.current_user().login() && !show_other)
       );
       if (should_be_hidden == $(project_element).is(":visible")) {
-        $(project_element).fadeToggle(duration);
+        $(project_element).fadeToggle(duration || 150);
       }
     };
   };
