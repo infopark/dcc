@@ -510,14 +510,7 @@ private
   end
 
   def close_db_connections
-    ActiveRecord::Base.connection_pool.tap do |pool|
-      pool.connections.each do |connection|
-        while connection.open_transactions > 0
-          connection.decrement_open_transactions
-        end
-      end
-      pool.disconnect!
-    end
+    ActiveRecord::Base.connection_pool.tap {|pool| pool.disconnect! }
   end
 
   def uri_tag_name
