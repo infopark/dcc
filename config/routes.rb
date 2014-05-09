@@ -3,9 +3,9 @@ Dcc::Application.routes.draw do
   get '/' => 'application#index'
 
   # for gui
-  match 'project/create' => 'project#create', :via => :post
-  match 'project/delete/:id' => 'project#delete', :via => :post
-  match 'project/build/:id' => 'project#build', :via => :post
+  post 'project/create' => 'project#create'
+  post 'project/delete/:id' => 'project#delete'
+  post 'project/build/:id' => 'project#build'
   get 'project/list' => 'project#list'
   get 'project/log/:id' => 'project#log'
   get 'project/previous_builds/:id' => 'project#previous_builds'
@@ -20,8 +20,8 @@ Dcc::Application.routes.draw do
   # TODO: noch benötigt? DCC benutzt es nicht. Public-API?
   get 'project/:id' => 'project#show'
 
-  get 'login' => 'user#login', :as => :login
-  get 'logout' => 'user#logout', :as => :logout
+  match 'login' => 'user#login', :as => :login, :via => [:post, :get]
+  post 'logout' => 'user#logout', :as => :logout
 
   root :to => 'application#index'
 end
