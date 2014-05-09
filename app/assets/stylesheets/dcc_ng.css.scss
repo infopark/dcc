@@ -6,6 +6,28 @@ $state-info-background: #d9edf7 !default;
 $state-danger-text: #b94a48 !default;
 $state-danger-background: #f2dede !default;
 
+
+.login {
+  padding-top: 65px;
+}
+
+.login .center {
+  float: none;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.login input {
+  width: 100%;
+  display: block;
+  margin-bottom: 1em;
+}
+
+.login button {
+  margin-top: 2em;
+}
+
+
 .dropdown-menu .btn {
   text-align: left;
 }

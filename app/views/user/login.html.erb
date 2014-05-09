@@ -1,10 +1,22 @@
-<%= form_for :user, :url => login_url do |f| -%>
-  <%= hidden_field_tag :return_to, params[:return_to] %>
-  <%= f.label :login, t('user.login') %>
-  <%= f.text_field :login %>
-  <%= f.label :password, t('user.password') %>
-  <%= f.password_field :password %>
-  <br />
-  <%= button_tag(t('user.login_submit'),
-                  :name => :login, :class => 'btn btn-primary') %>
-<% end -%>
+<div class="navbar navbar-default navbar-static-top">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand">Infopark DCC</a>
+    </div>
+  </div>
+</div>
+
+<div class="container login">
+  <div class="row ">
+    <div class="center col-xs-10 col-sm-8 col-md-6 col-lg-5 col-xl-4 col-xxl-3 well">
+      <legend><%= t('user.please_log_in') %></legend>
+      <%= form_for :user, :url => login_url do |f| -%>
+        <%= hidden_field_tag :return_to, params[:return_to] %>
+        <%= f.text_field :login, placeholder: t('user.login') %>
+        <%= f.password_field :password, placeholder: t('user.password') %>
+        <%= button_tag(t('user.login_submit'),
+            :name => :login, :class => 'btn btn-primary btn-block') %>
+      <% end -%>
+    </div>
+  </div>
+</div>

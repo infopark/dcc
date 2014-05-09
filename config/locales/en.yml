@@ -10,6 +10,7 @@ en:
     logout: Logout
     login_submit: Log me in
     welcome: Welcome
+    please_log_in: Please Log In
   project:
     name: Name
     url: Repository URL

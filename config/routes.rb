@@ -21,7 +21,7 @@ Dcc::Application.routes.draw do
   get 'project/:id' => 'project#show'
 
   match 'login' => 'user#login', :as => :login, :via => [:post, :get]
-  post 'logout' => 'user#logout', :as => :logout
+  get 'logout' => 'user#logout', :as => :logout
 
   root :to => 'application#index'
 end

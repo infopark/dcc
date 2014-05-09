@@ -10,6 +10,7 @@ de:
     logout: Abmelden
     login_submit: Anmelden
     welcome: Willkommen
+    please_log_in: Bitte melden Sie sich an
   project:
     name: Name
     url: Repository-URL
