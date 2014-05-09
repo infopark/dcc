@@ -83,7 +83,7 @@ class Project < ActiveRecord::Base
   end
 
   def last_build
-    Build.where(project_id: id).last
+    builds.last
   end
 
   def build_before(build)
@@ -91,8 +91,7 @@ class Project < ActiveRecord::Base
   end
 
   def builds_before(build, count)
-    build ?
-        Build.where("project_id = ? AND id < ?", id, build.id).order("id DESC").first(count) : []
+    build ? builds.where("id < ?", build.id).order("id DESC").first(count) : []
   end
 
   def next_build_number

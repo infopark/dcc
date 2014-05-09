@@ -165,16 +165,18 @@ describe Project do
       end
 
       it "should return the last build of the available builds" do
-        Build.stub(:where).with(project_id: 'p_id').
-            and_return ['predator', 'terminator', 'last action hero']
+        @project.stub(:builds).and_return ['predator', 'terminator', 'last action hero']
         @project.last_build.should == 'last action hero'
       end
     end
 
     describe "the build before another build" do
       it "returns the build before the specified build" do
-        Build.stub(:where).with("project_id = ? AND id < ?", 'p_id', 12345).
-            and_return ['first in a row', 'somewhere in the middle', 'last man standing']
+        @project.stub(:builds).and_return(builds = double('builds'))
+        builds.stub(:where).with("id < ?", 12345).and_return(double.tap do |result|
+          result.stub(:order).with("id DESC").and_return(
+              ['last man standing', 'somewhere in the middle', 'first in a row'])
+        end)
         @project.build_before(double(:id => 12345)).should == 'last man standing'
       end
     end
