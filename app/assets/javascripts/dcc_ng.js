@@ -489,6 +489,10 @@ DCC.Project = (function() {
 
     var last_build;
     this.last_build = function() { return last_build; };
+    this.belongs_to_current_user = function() {
+      return that.owner() == DCC.current_user().login();
+    };
+    this.is_shared = function() { return that.owner() == null; };
 
     // TODO Build-Model → Beim Projekt-Laden direkt ein Build-Model erzeugen → multi-model-response?
     // → dann hat das project lediglich last_build_id und last_build() macht find auf Build
@@ -845,8 +849,8 @@ DCC.ProjectView = (function() {
 
     this.adjust_visibility = function(duration) {
       var should_be_hidden = (
-        (project.owner() == null && !show_shared) ||
-        (project.owner() != null && project.owner() != DCC.current_user().login() && !show_other)
+        (project.is_shared() && !show_shared) ||
+        (!project.belongs_to_current_user() && !show_other)
       );
       if (should_be_hidden == $(project_element).is(":visible")) {
         $(project_element).fadeToggle(duration || 150);
