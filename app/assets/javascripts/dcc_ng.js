@@ -88,7 +88,9 @@ var DCC = (function() {
   var render_container = function() {
     $("body").append(
       '<div class="container">' +
-        '<div id="projects" class="row"></div>' +
+        '<div id="container" class="row">' +
+          '<span id="projects"></span>' +
+        '</div>' +
       '</div>'
     );
   };
@@ -171,7 +173,7 @@ var DCC = (function() {
     render_menubar();
     render_container();
     DCC.ProjectView.init($("#projects"));
-    DCC.ProjectView.render_add_project();
+    DCC.ProjectView.render_add_project($("#container"));
     DCC.ProjectBuildsView.render();
     render_stats_overlay();
     render_error_overlay();
@@ -900,8 +902,8 @@ DCC.ProjectView = (function() {
     });
   };
 
-  clazz.render_add_project = function() {
-    $(projects_container).append(
+  clazz.render_add_project = function(container) {
+    $(container).append(
       '<div id="add_project" class="' + card_css_class + '">' +
         '<form accept-charset="UTF-8">' +
           '<div class="panel panel-default add_project">' +
