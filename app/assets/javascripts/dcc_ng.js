@@ -779,6 +779,9 @@ DCC.ProjectView = (function() {
     var that = this;
     var project_element;
 
+    this.project = function() { return project; };
+    this.project_element = function() { return project_element; };
+
     $(project).on("delete.dcc", function() {
       project_element.remove();
       delete project_views[project.id()];
@@ -899,6 +902,20 @@ DCC.ProjectView = (function() {
     projects_container = container;
     $(DCC.Project).on("add_project.dcc", function(e, project) {
       (project_views[project.id()] = new DCC.ProjectView(projects_container, project)).render();
+
+      var sorted_views = _.sortBy(_.sortBy(project_views, function(view) {
+        return view.project().name();
+      }), function(view) {
+        var project = view.project();
+        if (project.belongs_to_other_user()) {
+          return 2;
+        } else if (project.is_shared()) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
+      _.each(sorted_views, function(view) { container.append(view.project_element()); });
     });
   };
 
