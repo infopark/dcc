@@ -789,9 +789,19 @@ DCC.ProjectView = (function() {
 
     $(project).on("update.dcc", function() { that.render(); });
 
+    var owner_class = function() {
+      if (project.belongs_to_other_user()) {
+        return "owner-other";
+      } else if (project.is_shared()) {
+        return "owner-shared";
+      } else {
+        return "owner-self";
+      }
+    };
+
     this.render = function() {
       project_element = DCC.HtmlUtils.provide_first_element("#project_" + project.id(),
-          container, "<div class='" + card_css_class + "'/>");
+          container, "<div class='" + card_css_class + " " + owner_class() + "'/>");
       var project_panel = DCC.HtmlUtils.provide_element(".panel", project_element,
           "<div class='project panel-default'/>");
       var project_heading = DCC.HtmlUtils.provide_element(".panel-heading", project_panel, "<div " +

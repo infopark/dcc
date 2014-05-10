@@ -142,6 +142,18 @@ i.status_icon {
 .project .panel-title .success,
 .project .panel-title .in_progress { font-size: 80%; }
 
+.owner-shared .panel-body,
+.owner-shared .panel-body a {
+  background-color: #ffffe0;
+  color: #888;
+}
+
+.owner-other .panel-body,
+.owner-other .panel-body a {
+  background-color: #f0f0f0;
+  color: #aaa;
+}
+
 #build_dialog .modal-dialog { width: 80%; }
 
 #build_dialog .pagination li:not(.disabled):not(.active) span { cursor: pointer; }
