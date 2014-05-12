@@ -2,7 +2,6 @@
 /config/database.yml
 /config/worker.yml
 /db/*.*
-/Gemfile.lock
 /log/*
 /public/assets
 /rerun.txt
