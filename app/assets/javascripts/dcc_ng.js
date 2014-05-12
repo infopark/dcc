@@ -428,8 +428,9 @@ DCC.HtmlUtils = (function() {
               clazz.icon('screen-1', 'status_icon') + "</span>");
         }
       }
-      panel_status.append("<a href='" + thing.static_url() + "'>" +
-          clazz.icon('fontawesome-webfont-14', 'status_icon') + "</a>");
+      $("<a href='" + thing.static_url() + "'>" +
+          clazz.icon('fontawesome-webfont-14', 'status_icon') + "</a>").appendTo(panel_status).
+          click(function(e) { e.stopPropagation(); });
     }
   };
 
