@@ -56,6 +56,7 @@ var DCC = (function() {
                 '</ul>' +
               '</li>' +
             '</ul>' +
+            '<p class="navbar-text navbar-center" id="global_state"></p>' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -175,6 +176,7 @@ var DCC = (function() {
     DCC.ProjectView.init($("#projects"));
     DCC.ProjectView.render_add_project($("#container"));
     DCC.ProjectBuildsView.render();
+    DCC.TaskStatusView.render($("#global_state"));
     render_stats_overlay();
     render_error_overlay();
 
@@ -333,14 +335,18 @@ DCC.HtmlUtils = (function() {
     }
   };
 
+  clazz.render_status = function(container, status_code, value, additional_title) {
+    return $("<span title='" + status_message(status_code) +
+        (additional_title ? (" " + additional_title) : "") +
+        "' class='" + clazz.status_css_class(status_code) + "'>" +
+      clazz.glyphicon(status_icon(status_code), 'status_icon') +
+      (value || "") +
+    "</span>").appendTo(container);
+  };
+
   var append_status = function(element, status_code, value, additional_title) {
     if (value != 0) {
-      $("<span title='" + status_message(status_code) +
-          (additional_title ? (" " + additional_title) : "") +
-          "' class='" + clazz.status_css_class(status_code) + "'>" +
-        clazz.glyphicon(status_icon(status_code), 'status_icon') +
-        (value > 0 ? value : "") +
-      "</span>").appendTo(element);
+      clazz.render_status(element, status_code, value, additional_title);
     }
   }
 
@@ -679,11 +685,14 @@ DCC.Project = (function() {
           }
         }
       });
+      $(clazz).trigger("update.dcc");
       if (success_callback) { success_callback(); }
     }, error_close_action);
   };
 
   clazz.find = function(id) { return loaded_projects[id]; };
+
+  clazz.find_all = function(id) { return _.values(loaded_projects); };
 
   clazz.create = function(valuesToSubmit, success_callback) {
     perform_post(null, 'create', valuesToSubmit, DCC.Localizer.t("error.create_project_failed"),
@@ -713,6 +722,9 @@ DCC.Build = (function() {
     this.bucket_state_counts = function(code) { return build_data.bucket_state_counts[code]; };
     this.started_at = function(code) { return build_data.started_at; };
     this.finished_at = function(code) { return build_data.finished_at; };
+
+    this.pending_buckets_count = function() { return _.size(that.pending_buckets()); };
+    this.in_work_buckets_count = function() { return _.size(that.in_work_buckets()); };
 
     this.static_url = function() { return "/project/show_build/" + that.id(); };
 
@@ -1251,6 +1263,36 @@ DCC.BucketView = (function() {
       // Sauberer wäre das natürlich im Build-View…
       container.append(bucket_box)
     };
+  };
+
+  return clazz;
+})();
+
+
+DCC.TaskStatusView = (function() {
+  var clazz = function() {
+  };
+
+  var render_task_status = function(container, status_code) {
+    return $("<span>0</span>").appendTo(DCC.HtmlUtils.render_status(container, status_code));
+  };
+
+  clazz.render = function(container) {
+    var tasks_in_work = render_task_status(container, 30);
+    var tasks_pending = render_task_status(container, 20);
+
+    $(DCC.Project).on("update.dcc", function(e) {
+      var in_work_count = 0;
+      var pending_count = 0;
+      _.each(DCC.Project.find_all(), function(project) {
+        in_work_count = in_work_count + project.last_build().in_work_buckets_count();
+        pending_count = pending_count + project.last_build().pending_buckets_count();
+      });
+      tasks_in_work.empty();
+      tasks_in_work.append(in_work_count);
+      tasks_pending.empty();
+      tasks_pending.append(pending_count);
+    });
   };
 
   return clazz;
