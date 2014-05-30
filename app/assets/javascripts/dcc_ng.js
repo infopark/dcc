@@ -226,7 +226,12 @@ DCC.Localizer = (function() {
 
   clazz.t = function(key) {
     var message = messages[locale];
-    _.each(key.split("."), function(k) { message = message[k]; });
+    _.each(key.split("."), function(k) {
+      message = message[k];
+      if (!message) {
+        message = "undefined localizer key:" + key;
+      }
+    });
     return message;
   };
 
