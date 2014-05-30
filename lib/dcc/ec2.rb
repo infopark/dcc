@@ -4,31 +4,41 @@ require 'net/http'
 
 module DCC
 
-module EC2
-  class << self
-    def add_tag(name, value)
-      instance.add_tag(name, value: value)
-    end
+class EC2
+  def initialize(runs_on_ec2)
+    @runs_on_ec2 = runs_on_ec2
+  end
 
-    def neighbours
+  def add_tag(name, value)
+    instance.add_tag(name, value: value) if runs_on_ec2?
+  end
+
+  def neighbours
+    if runs_on_ec2?
       ec2.instances.tagged('opsworks:stack').tagged_values(instance.tags["opsworks:stack"]).
           reject {|i| i.id == instance.id }
+    else
+      []
     end
+  end
 
-    private
+  private
 
-    def meta_data
-      @meta_data ||= JSON.parse(Net::HTTP.new('169.254.169.254').
-          get("/latest/dynamic/instance-identity/document").body)
-    end
+  def runs_on_ec2?
+    @runs_on_ec2
+  end
 
-    def ec2
-      @ec2 ||= AWS::EC2.new(region: meta_data['region'])
-    end
+  def meta_data
+    @meta_data ||= JSON.parse(Net::HTTP.new('169.254.169.254').
+        get("/latest/dynamic/instance-identity/document").body)
+  end
 
-    def instance
-      @instance ||= ec2.instances[meta_data['instanceId']]
-    end
+  def ec2
+    @ec2 ||= AWS::EC2.new(region: meta_data['region'])
+  end
+
+  def instance
+    @instance ||= ec2.instances[meta_data['instanceId']]
   end
 end
 

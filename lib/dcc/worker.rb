@@ -43,7 +43,8 @@ class Worker
     log.formatter = ::Logger::Formatter.new()
     Logger.setLog(log)
     register_worker group_name, 0, options
-    EC2.add_tag(uri_tag_name, uri)
+    @ec2 = EC2.new(options[:runs_on_ec2])
+    ec2.add_tag(uri_tag_name, uri)
     @buckets = BucketStore.new
     @admin_e_mail_address = options[:admin_e_mail_address]
     @succeeded_before_all_tasks = []
@@ -393,7 +394,9 @@ class Worker
     log_error_on_failure(subject, :email_address => admin_e_mail_address, &block)
   end
 
-private
+  private
+
+  attr_reader :ec2
 
   def retry_on_mysql_failure
     yield
@@ -525,11 +528,11 @@ private
   end
 
   def find_workers
-    EC2.neighbours.map {|i| i.tags[uri_tag_name] }
+    ec2.neighbours.map {|i| i.tags[uri_tag_name] }
   end
 
   def cleanup
-    EC2.add_tag(uri_tag_name, nil)
+    ec2.add_tag(uri_tag_name, nil)
   end
 end
 
