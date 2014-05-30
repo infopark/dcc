@@ -1290,8 +1290,11 @@ DCC.TaskStatusView = (function() {
       var in_work_count = 0;
       var pending_count = 0;
       _.each(DCC.Project.find_all(), function(project) {
-        in_work_count = in_work_count + project.last_build().in_work_buckets_count();
-        pending_count = pending_count + project.last_build().pending_buckets_count();
+        var last_build = project.last_build();
+        if (last_build) {
+          in_work_count = in_work_count + last_build.in_work_buckets_count();
+          pending_count = pending_count + last_build.pending_buckets_count();
+        }
       });
       tasks_in_work.empty();
       tasks_in_work.append(in_work_count);
