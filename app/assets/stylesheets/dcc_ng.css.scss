@@ -214,6 +214,8 @@ i.status_icon {
   color: #aaa;
 }
 
+#syserror_dialog .modal-dialog { width: 90%; }
+
 #build_dialog .modal-dialog { width: 80%; }
 
 #build_dialog .pagination li:not(.disabled):not(.active) span { cursor: pointer; }

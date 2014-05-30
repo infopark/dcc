@@ -402,18 +402,24 @@ DCC.HtmlUtils = (function() {
     return s;
   };
 
+  clazz.change_panel_status_class = function(panel, new_class) {
+    panel.removeClass("panel-danger panel-info panel-success panel-default");
+    panel.addClass(new_class);
+  };
+
   // TODO IoC: Kein 'thing' sondern anzuzeigende Daten reinreichen (via Hash).
   clazz.update_panel_status = function(panel, thing) {
-    panel.removeClass("panel-danger panel-info panel-success panel-default");
+    var new_status_class;
     if (!thing || !thing.status()) {
-      panel.addClass("panel-default");
+      new_status_class = "panel-default";
     } else if (thing.status() <= 10) {
-      panel.addClass("panel-success");
+      new_status_class = "panel-success";
     } else if (thing.status() <= 30) {
-      panel.addClass("panel-info");
+      new_status_class = "panel-info";
     } else {
-      panel.addClass("panel-danger");
+      new_status_class = "panel-danger";
     }
+    clazz.change_panel_status_class(panel, new_status_class);
     if (thing) {
       var panel_status =
           DCC.HtmlUtils.provide_first_element('.indicator', panel.find('.panel-heading'),
@@ -499,7 +505,8 @@ DCC.Project = (function() {
     this.name = function() { return project_data.name; };
     this.id = function() { return project_data.id; };
     this.build_requested = function() { return project_data.build_requested; };
-    this.loaded_build_ids = function() { return loaded_build_ids; }
+    this.loaded_build_ids = function() { return loaded_build_ids; };
+    this.last_system_error = function() { return project_data.last_system_error; };
 
     var last_build;
     this.last_build = function() { return last_build; };
@@ -822,10 +829,24 @@ DCC.ProjectView = (function() {
           container, "<div class='" + card_css_class + " " + owner_class() + "'/>");
       var project_panel = DCC.HtmlUtils.provide_element(".panel", project_element,
           "<div class='project panel-default'/>");
-      var project_heading = DCC.HtmlUtils.provide_element(".panel-heading", project_panel, "<div " +
-          "data-toggle='modal' data-target='#build_dialog'/>").prop('project', project);
-      var project_title = DCC.HtmlUtils.provide_element(".panel-title", project_heading,
-          "<h1>" + DCC.HtmlUtils.escape(project.name()) + "</h1>");
+
+      if (project.last_system_error()) {
+        DCC.HtmlUtils.change_panel_status_class(project_panel, "panel-danger");
+        project_panel.find(".panel-heading").remove();
+        var project_heading = DCC.HtmlUtils.provide_element(".panel-heading", project_panel,
+            "<div data-toggle='modal' data-target='#syserror_dialog' class='syserror'/>");
+        project_heading.prop('project', project);
+        var project_title = DCC.HtmlUtils.provide_element(".panel-title", project_heading,
+            "<h1>" + DCC.HtmlUtils.glyphicon("warning-sign") +
+            DCC.HtmlUtils.escape(project.name()) + "</h1>");
+      } else {
+        project_panel.find(".syserror").remove();
+        var project_heading = DCC.HtmlUtils.provide_first_element(".panel-heading", project_panel,
+            "<div data-toggle='modal' data-target='#build_dialog'/>").prop('project', project);
+        var project_title = DCC.HtmlUtils.provide_element(".panel-title", project_heading,
+            "<h1>" + DCC.HtmlUtils.escape(project.name()) + "</h1>");
+        DCC.HtmlUtils.update_panel_status(project_panel, project.last_build());
+      }
 
       var project_body = DCC.HtmlUtils.provide_element(".panel-body", project_panel,
           "<div>" +
@@ -837,7 +858,6 @@ DCC.ProjectView = (function() {
             DCC.HtmlUtils.icon('fontawesome-webfont') + project.branch() + "<br/>" +
             (project.owner() ? (DCC.HtmlUtils.icon('fontawesome-webfont-13') + project.owner()) : "") + "<br/>" +
           "</div>");
-      DCC.HtmlUtils.update_panel_status(project_panel, project.last_build());
 
       var buttons = DCC.HtmlUtils.provide_element(".panel-footer", project_panel,
           "<div class='btn-group'/>", function(element) {
@@ -925,6 +945,22 @@ DCC.ProjectView = (function() {
     });
   };
 
+  var render_syserror_overlay = function() {
+    dialog = DCC.HtmlUtils.render_modal("syserror_dialog");
+    dialog.on('show.bs.modal', function (evt) {
+      project = evt.relatedTarget.project;
+      $(evt.target).find('.modal-title').append(
+          DCC.Localizer.t("project.syserror.title").replace('%{name}', project.name()));
+      $("<pre></pre>").appendTo($(evt.target).find('.modal-body')).
+          append(project.last_system_error());
+    });
+
+    dialog.on('hidden.bs.modal', function (evt) {
+      $(evt.target).find('.modal-body').empty();
+      $(evt.target).find('.modal-title').empty();
+    });
+  };
+
   var projects_container;
   clazz.init = function(container) {
     projects_container = container;
@@ -945,6 +981,8 @@ DCC.ProjectView = (function() {
       });
       _.each(sorted_views, function(view) { container.append(view.project_element()); });
     });
+
+    render_syserror_overlay();
   };
 
   clazz.render_add_project = function(container) {

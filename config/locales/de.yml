@@ -29,6 +29,8 @@ de:
         name_prefix: Bearbeitungsdauer grüner Cruises
     builds:
       title: Builds für %{name}
+    syserror:
+      title: "%{name} konnte nicht bearbeitet werden"
   dialog:
     yes: Ja
     no: Nein

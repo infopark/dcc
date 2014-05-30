@@ -29,6 +29,8 @@ en:
         name_prefix: Cruise Duration by Green Commit
     builds:
       title: Builds for %{name}
+    syserror:
+      title: "%{name} could not being processed"
   dialog:
     yes: Yes
     no: No
