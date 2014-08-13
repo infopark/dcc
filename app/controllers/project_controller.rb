@@ -28,7 +28,7 @@ class ProjectController < ApplicationController
   end
 
   def list
-    render :json => {:projects => Project.all}
+    render json: {projects: Project.all, cluster_state: ClusterState.instance}
   end
 
   def log

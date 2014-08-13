@@ -55,6 +55,9 @@ de:
       minutes: Minuten
       second: Sekunde
       seconds: Sekunden
+  cluster:
+    status:
+      minion_count: Arbeiter insgesamt
   error:
     unknown_status: unbekannter Status
     occured: Es sind Fehler aufgetreten

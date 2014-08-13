@@ -55,6 +55,9 @@ en:
       minutes: minutes
       second: second
       seconds: seconds
+  cluster:
+    status:
+      minion_count: overall workers
   error:
     unknown_status: unknown state
     occured: following errors occured

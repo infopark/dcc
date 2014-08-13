@@ -697,6 +697,7 @@ DCC.Project = (function() {
           }
         }
       });
+      clazz.minion_count = result.cluster_state.minion_count;
       $(clazz).trigger("update.dcc");
       if (success_callback) { success_callback(); }
     }, error_close_action);
@@ -1323,10 +1324,18 @@ DCC.TaskStatusView = (function() {
   clazz.render = function(container) {
     var tasks_in_work = render_task_status(container, 30);
     var tasks_pending = render_task_status(container, 20);
+    var overall_minions = $("<span>0</span>").appendTo(
+      $(
+        "<span title='" + DCC.Localizer.t("cluster.status.minion_count") + "'>" +
+          DCC.HtmlUtils.icon('screen-1', 'status_icon') +
+        "</span>"
+      ).appendTo(container)
+    );
 
     $(DCC.Project).on("update.dcc", function(e) {
       var in_work_count = 0;
       var pending_count = 0;
+      var minion_count = DCC.Project.minion_count;
       _.each(DCC.Project.find_all(), function(project) {
         var last_build = project.last_build();
         if (last_build) {
@@ -1338,6 +1347,8 @@ DCC.TaskStatusView = (function() {
       tasks_in_work.append(in_work_count);
       tasks_pending.empty();
       tasks_pending.append(pending_count);
+      overall_minions.empty();
+      overall_minions.append(minion_count);
     });
   };
 
