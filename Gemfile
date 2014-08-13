@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'honeybadger'
 
+gem 'acts_as_singleton'
 gem 'aws-sdk'
 gem 'bootstrap-sass', '~> 3.1.1'
 # bootstrap-switch from a gem
@@ -14,7 +15,7 @@ gem 'daemon-spawn'
 gem 'hipchat'
 gem 'http_accept_language'
 gem 'infopark_crm_connector'
-gem 'infopark-politics', '>= 0.5.2'
+gem 'infopark-politics', '>= 0.7.0'
 gem 'jquery-rails'
 gem 'json'
 gem 'mysql2', '>= 0.3.14'

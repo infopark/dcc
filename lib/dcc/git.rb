@@ -28,7 +28,7 @@ module DCC
         hash, head = line.split
         revs[head.gsub(%r|refs/heads/|, "origin/")] = hash
       end
-      revs[remote_branch] != current_commit
+      revs[remote_branch(true)] != current_commit
     end
 
     def dependency?
@@ -79,14 +79,20 @@ module DCC
       git("log", '--pretty=format:%H', '-n', '1')[0]
     end
 
-    def remote_branch
+    private
+
+    def remote_branch(retry_once_after_update = false)
       rb = nil
       return rb if branch_exists?(rb = "origin/#{branch}")
       return rb if branch_exists?(rb = "origin/#{fallback_branch}")
-      raise "neither branch '#{branch}' nor fallback branch '#{fallback_branch}' exist at #{url}"
-    end
 
-    private
+      unless retry_once_after_update
+        raise "neither branch '#{branch}' nor fallback branch '#{fallback_branch}' exist at #{url}"
+      end
+
+      update
+      remote_branch
+    end
 
     def cleanup(options = {})
       log.debug("→ cleanup")
