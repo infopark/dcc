@@ -1,6 +1,7 @@
 # encoding: utf-8
 require 'active_support'
 require 'active_support/core_ext/hash/indifferent_access'
+require 'acts_as_singleton'
 require 'fileutils'
 require 'hipchat'
 require 'monitor'
@@ -10,6 +11,7 @@ require 'set'
 require 'socket'
 require 'timeout'
 
+require 'models/cluster_state'
 require 'models/project'
 require 'models/build'
 require 'models/bucket'
