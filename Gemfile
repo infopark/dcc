@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'honeybadger'
 
+gem 'acts_as_singleton'
 gem 'aws-sdk'
 gem 'daemon-spawn'
 gem 'hipchat'
