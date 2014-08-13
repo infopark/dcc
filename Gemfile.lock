@@ -59,7 +59,7 @@ GEM
       json (~> 1.8)
       multi_xml (>= 0.5.2)
     i18n (0.6.9)
-    infopark-politics (0.6.0)
+    infopark-politics (0.7.0)
       memcache-client (>= 1.5.0)
       starling (>= 0.9.8)
     infopark_crm_connector (1.2.0)
@@ -170,7 +170,7 @@ DEPENDENCIES
   hipchat
   honeybadger
   http_accept_language
-  infopark-politics (>= 0.6.0)
+  infopark-politics (>= 0.7.0)
   infopark_crm_connector
   jquery-rails
   json

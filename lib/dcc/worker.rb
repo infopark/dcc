@@ -394,6 +394,15 @@ class Worker
     log_error_on_failure(subject, :email_address => admin_e_mail_address, &block)
   end
 
+  def before_perform_leader_duties
+    state = ClusterState.instance
+    minion_count = ec2.neighbours.count
+    if state.minion_count != minion_count
+      state.minion_count = minion_count
+      state.save
+    end
+  end
+
   private
 
   attr_reader :ec2

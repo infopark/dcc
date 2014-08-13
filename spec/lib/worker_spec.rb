@@ -626,6 +626,8 @@ describe Worker, "when running as leader" do
     @leader = Worker.new('dcc_test', nil, :log_level => ::Logger::FATAL)
   end
 
+  let(:leader) { @leader }
+
   shared_examples_for "finishing build" do
     describe "when finishing the last build" do
       before do
@@ -982,6 +984,32 @@ describe Worker, "when running as leader" do
 
       it "should deliver the nil bucket" do
         @leader.next_bucket("requestor", {}).should == [nil, 0]
+      end
+    end
+  end
+
+  context "before performing the leader duties" do
+    let(:state) { ClusterState.instance.tap {|i| ClusterState.stub(:instance).and_return i } }
+
+    before do
+      EC2.any_instance.stub(:neighbours).and_return %w(1 2 3 4 5)
+    end
+
+    it "updates the cluster state's minion count" do
+      state.should_receive(:minion_count=).with(5).ordered
+      state.should_receive(:save).ordered
+      leader.before_perform_leader_duties
+    end
+
+    context "when minion count has not changed" do
+      before do
+        state.stub(:minion_count).and_return 5
+      end
+
+      it "does not update the cluster state" do
+        expect(state).to_not receive :minion_count=
+        expect(state).to_not receive :save
+        leader.before_perform_leader_duties
       end
     end
   end
