@@ -398,7 +398,7 @@ class Worker
 
   def before_perform_leader_duties
     state = ClusterState.instance
-    minion_count = ec2.neighbours.count
+    minion_count = find_workers.count
     if state.minion_count != minion_count
       state.minion_count = minion_count
       state.save

@@ -992,7 +992,8 @@ describe Worker, "when running as leader" do
     let(:state) { ClusterState.instance.tap {|i| ClusterState.stub(:instance).and_return i } }
 
     before do
-      EC2.any_instance.stub(:neighbours).and_return %w(1 2 3 4 5)
+      EC2.any_instance.stub(:neighbours).
+          and_return([double('instance', tags: {'dcc:dcc_test:uri' => 'the_uri'})] * 5)
     end
 
     it "updates the cluster state's minion count" do
