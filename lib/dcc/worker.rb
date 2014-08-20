@@ -543,7 +543,7 @@ class Worker
   end
 
   def cleanup
-    ec2.add_tag(uri_tag_name, nil)
+    ec2.remove_tag(uri_tag_name)
   end
 end
 
