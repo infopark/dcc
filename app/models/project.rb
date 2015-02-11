@@ -119,6 +119,11 @@ class Project < ActiveRecord::Base
     @after_bucket_tasks[bucket_group(bucket_identifier)] || []
   end
 
+  def bucket_group_environment(bucket_identifier)
+    read_config
+    @bucket_group_environments[bucket_group(bucket_identifier)] || {}
+  end
+
   def github_user
     (m = %r#(git@github\.com:|https?://github\.com/)([^/]*)/.*#.match(url)) && m[2]
   end
@@ -164,6 +169,11 @@ class Project < ActiveRecord::Base
 
   def set_after_each_rake_tasks(bucket_group_name, rake_tasks)
     @after_bucket_tasks[bucket_group_name] = rake_tasks
+  end
+
+  def set_environment(bucket_group_name, environment)
+    raise "invalid environment spec" unless Hash === environment
+    @bucket_group_environments[bucket_group_name] = environment
   end
 
   def log_dependency(url, branch, fallback_branch)
@@ -330,6 +340,10 @@ private
         end.new(@project, @name)
       end
 
+      def environment(environment)
+        @project.set_environment(@name, environment)
+      end
+
       def for_error_log(&block)
         @project.set_for_error_log_code(@name, block)
       end
@@ -367,6 +381,7 @@ private
       @before_bucket_tasks = {}
       @after_bucket_tasks = {}
       @for_error_log_code = {}
+      @bucket_group_environments = {}
       raise "missing config in '#{config_file}'" unless @config = File.read(config_file)
       log.debug "config read: #{@config}"
       self.instance_eval(@config, config_file)
