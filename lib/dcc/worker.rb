@@ -103,7 +103,10 @@ class Worker
               bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
               log_bucket_error_on_failure(bucket, "processing bucket failed") do
                 Timeout::timeout(7200) do
-                  with_environment(RBENV_VERSION: bucket.build.project.ruby_version(bucket.name)) do
+                  project = bucket.build.project
+                  with_environment({
+                    RBENV_VERSION: project.ruby_version(bucket.name)
+                  }.merge(project.bucket_group_environment(bucket.name))) do
                     perform_task bucket
                   end
                 end

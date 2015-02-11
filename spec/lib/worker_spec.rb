@@ -94,7 +94,7 @@ describe Worker, "when running as follower" do
       Bucket.stub(:find).with("b_id#{i}").and_return(@buckets[i] = mock_model(Bucket,
         name: "bucket #{i}",
         build: mock_model(Build,
-          project: mock_model(Project, ruby_version: nil)
+          project: mock_model(Project, ruby_version: nil, bucket_group_environment: {})
         )
       ))
     end
@@ -105,39 +105,6 @@ describe Worker, "when running as follower" do
     @worker.should_receive(:perform_task).with(@buckets[2])
     @worker.should_receive(:perform_task).with(@buckets[3])
     @worker.run
-  end
-
-  it "should perform the tasks without bundler, rbenv or rails environment" do
-    old_path = ENV['PATH']
-    begin
-      ENV['RBENV_DIR'] = 'hau mich weg'
-      ENV['RBENV_VERSION'] = 'mich auch'
-      ENV['RBENV_ROOT'] = '/hier/liegt/rbenv'
-      ENV['GEM_PATH'] = "woll'n wa nich"
-      ENV['GEM_HOME'] = "dito"
-      ENV['RUBYOPT'] = "bittenich"
-      ENV['BUNDLE_GEMFILE'] = "unerwünscht"
-      ENV['BUNDLE_BIN_PATH'] = "persona non grata"
-      ENV['RAILS_ENV'] = "please do not disturb"
-      ENV['PATH'] = '/hier/liegt/rbenv/versions/oder/darunter:/ein/pfad/woanders:/hier/liegt/rbenv/versions/oder/so:/keinpfadin/rbenv/versions/sondernwasanderes'
-
-      @worker.stub(:perform_task) { @perform_task_env = ENV.to_hash }
-      @worker.run
-      %w(
-        RBENV_VERSION
-        RBENV_DIR
-        GEM_PATH
-        GEM_HOME
-        RUBYOPT
-        BUNDLE_GEMFILE
-        BUNDLE_BIN_PATH
-        RAILS_ENV
-      ).each {|key| @perform_task_env.keys.should_not include(key) }
-      @perform_task_env['PATH'].should ==
-          '/ein/pfad/woanders:/keinpfadin/rbenv/versions/sondernwasanderes'
-    ensure
-      ENV['PATH'] = old_path
-    end
   end
 
   describe 'when determining if it is processing a specific bucket' do
@@ -191,7 +158,7 @@ describe Worker, "when running as follower" do
       :log => 'old_log',
       :build => double('build',
         :leader_hostname => nil,
-        :project => double('project', ruby_version: nil)
+        :project => double('project', ruby_version: nil, bucket_group_environment: {})
       )
     ) }
 
@@ -226,9 +193,9 @@ describe Worker, "when running as follower" do
   describe '' do
     before do
       @git = double('git', :path => 'git path', :update => nil, :current_commit => nil)
-      @project = double('project', :name => "project's name", :before_all_tasks => [], :git => @git,
-          :e_mail_receivers => [], :before_bucket_tasks => [], :after_bucket_tasks => [], :id => 1,
-          :last_build => nil, :ruby_version => nil, :github_user => 'foobar')
+      @project = double('project', name: "project's name", before_all_tasks: [], git: @git,
+          e_mail_receivers: [], before_bucket_tasks: [], after_bucket_tasks: [], id: 1,
+          last_build: nil, ruby_version: nil, github_user: 'foobar', bucket_group_environment: {})
       @project.stub(:bucket_tasks).with('t1').and_return(['rt1'])
       @project.stub(:bucket_tasks).with('t2').and_return(['rt21', 'rt22'])
       @logs = [double('l1', :log => 'log1'), double('l2', :log => 'log2')]
@@ -255,12 +222,58 @@ describe Worker, "when running as follower" do
       )
     end
 
-    it "should perform the task with the configured ruby version if any" do
-      Bucket.stub(:find).and_return @bucket
-      @project.stub(:ruby_version).with("t2").and_return "1.2.3-p4"
-      @worker.stub(:perform_task) { @perform_task_env = ENV.to_hash }
-      @worker.run
-      @perform_task_env['RBENV_VERSION'].should == '1.2.3-p4'
+    describe "the environment of the task execution" do
+      before do
+        allow(@worker).to receive(:perform_task) { @perform_task_env = ENV.to_hash }
+        allow(Bucket).to receive(:find).and_return @bucket
+      end
+
+      it "does not contain bundler, rbenv or rails environment" do
+        old_path = ENV['PATH']
+        begin
+          ENV['RBENV_DIR'] = 'hau mich weg'
+          ENV['RBENV_VERSION'] = 'mich auch'
+          ENV['RBENV_ROOT'] = '/hier/liegt/rbenv'
+          ENV['GEM_PATH'] = "woll'n wa nich"
+          ENV['GEM_HOME'] = "dito"
+          ENV['RUBYOPT'] = "bittenich"
+          ENV['BUNDLE_GEMFILE'] = "unerwünscht"
+          ENV['BUNDLE_BIN_PATH'] = "persona non grata"
+          ENV['RAILS_ENV'] = "please do not disturb"
+          ENV['PATH'] = '/hier/liegt/rbenv/versions/oder/darunter:/ein/pfad/woanders:/hier/liegt/rbenv/versions/oder/so:/keinpfadin/rbenv/versions/sondernwasanderes'
+
+          @worker.run
+          %w(
+            RBENV_VERSION
+            RBENV_DIR
+            GEM_PATH
+            GEM_HOME
+            RUBYOPT
+            BUNDLE_GEMFILE
+            BUNDLE_BIN_PATH
+            RAILS_ENV
+          ).each {|key| expect(@perform_task_env.keys).to_not include(key) }
+          expect(@perform_task_env['PATH']).
+              to eq('/ein/pfad/woanders:/keinpfadin/rbenv/versions/sondernwasanderes')
+        ensure
+          ENV['PATH'] = old_path
+        end
+      end
+
+      it "performs the task with the configured ruby version if any" do
+        allow(@project).to receive(:ruby_version).with("t2").and_return "1.2.3-p4"
+        @worker.run
+        expect(@perform_task_env['RBENV_VERSION']).to eq('1.2.3-p4')
+      end
+
+      it "performs the task with the configured environment if any" do
+        allow(@project).to receive(:bucket_group_environment).with("t2").and_return({
+          SOME: "env"
+        })
+        @worker.run
+        expect(@perform_task_env['SOME']).to eq('env')
+        expect(@perform_task_env.reject {|k, v| k == 'SOME' }).to_not be_empty
+      end
     end
 
     describe "when performing task" do
