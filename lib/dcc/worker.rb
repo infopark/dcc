@@ -59,8 +59,6 @@ class Worker
         alias :original_seize_leadership :seize_leadership
         def seize_leadership(ignore = nil)
           original_seize_leadership(1000000)
-          @leader_uri = nil
-          @nominated_at = Time.now
         end
 
         alias :original_nominate :nominate
