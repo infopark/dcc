@@ -1,6 +1,7 @@
 # encoding: utf-8
 require 'active_support'
 require 'active_support/core_ext/hash/indifferent_access'
+require 'acts_as_singleton'
 require 'fileutils'
 require 'hipchat'
 require 'monitor'
@@ -10,6 +11,7 @@ require 'set'
 require 'socket'
 require 'timeout'
 
+require 'models/cluster_state'
 require 'models/project'
 require 'models/build'
 require 'models/bucket'
@@ -57,8 +59,6 @@ class Worker
         alias :original_seize_leadership :seize_leadership
         def seize_leadership(ignore = nil)
           original_seize_leadership(1000000)
-          @leader_uri = nil
-          @nominated_at = Time.now
         end
 
         alias :original_nominate :nominate
@@ -101,7 +101,10 @@ class Worker
               bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
               log_bucket_error_on_failure(bucket, "processing bucket failed") do
                 Timeout::timeout(7200) do
-                  with_environment(RBENV_VERSION: bucket.build.project.ruby_version(bucket.name)) do
+                  project = bucket.build.project
+                  with_environment({
+                    RBENV_VERSION: project.ruby_version(bucket.name)
+                  }.merge(project.bucket_group_environment(bucket.name))) do
                     perform_task bucket
                   end
                 end
@@ -396,7 +399,7 @@ class Worker
 
   def before_perform_leader_duties
     state = ClusterState.instance
-    minion_count = ec2.neighbours.count
+    minion_count = find_workers.count
     if state.minion_count != minion_count
       state.minion_count = minion_count
       state.save
@@ -534,7 +537,7 @@ class Worker
   end
 
   def cleanup
-    ec2.add_tag(uri_tag_name, nil)
+    ec2.remove_tag(uri_tag_name)
   end
 end
 

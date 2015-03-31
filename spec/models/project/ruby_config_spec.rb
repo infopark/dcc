@@ -2,19 +2,7 @@
 require 'spec_helper'
 
 describe Project, "when providing ruby version" do
-  let(:git) do
-    double("git",
-      :current_commit => "current commit",
-      :path => 'git_path',
-      :remote_changed? => false
-    )
-  end
-
-  let(:project) do
-    Project.new(:name => "name", :url => "url", :branch => "branch").tap do |p|
-      p.stub(:git).and_return git
-    end
-  end
+  let(:project) { provide_project }
 
   context "when not configured" do
     before do

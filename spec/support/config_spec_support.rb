@@ -16,3 +16,13 @@ def provide_bucket_group_config(default, extra = nil)
   EOD
 end
 
+def provide_project
+  git = double("git",
+    :current_commit => "current commit",
+    :path => 'git_path',
+    :remote_changed? => false
+  )
+  Project.new(:name => "name", :url => "url", :branch => "branch").tap do |p|
+    allow(p).to receive(:git).and_return git
+  end
+end

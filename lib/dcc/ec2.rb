@@ -13,6 +13,10 @@ class EC2
     instance.add_tag(name, value: value) if runs_on_ec2?
   end
 
+  def remove_tag(name)
+    instance.tag(name).delete if runs_on_ec2?
+  end
+
   def neighbours
     if runs_on_ec2?
       ec2.instances.tagged('opsworks:stack').tagged_values(instance.tags["opsworks:stack"]).
