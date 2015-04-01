@@ -48,6 +48,7 @@ en:
     failed: failed
     duration:
       in: in
+      at: at
       since: since
       hour: hour
       hours: hours

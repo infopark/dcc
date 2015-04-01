@@ -385,21 +385,30 @@ DCC.HtmlUtils = (function() {
   };
 
 
+  format_timestamp = function(timestamp)
+  {
+    var date = new Date(Date.parse(timestamp));
+    return date.getFullYear() + "-" + fd(date.getMonth() + 1) + "-" + fd(date.getDate()) + " " +
+        fd(date.getHours()) + ":" + fd(date.getMinutes()) + ":" + fd(date.getSeconds());
+  };
+
+
   duration = function(thing)
   {
-    s = ""
+    var msg = [""];
     if (thing.started_at()) {
       if (thing.finished_at()) {
-        s = " " + DCC.Localizer.t("status.duration.in") + " " +
-            format_duration(Date.parse(thing.finished_at()) - Date.parse(thing.started_at()));
+        msg.push(DCC.Localizer.t("status.duration.in"));
+        msg.push(
+            format_duration(Date.parse(thing.finished_at()) - Date.parse(thing.started_at())));
+        msg.push(DCC.Localizer.t("status.duration.at"));
+        msg.push(format_timestamp(thing.finished_at()));
       } else {
-        var d = new Date(Date.parse(thing.started_at()));
-        s = " " + DCC.Localizer.t("status.duration.since") + " " +
-            d.getFullYear() + "-" + fd(d.getMonth() + 1) + "-" + fd(d.getDate()) + " " +
-            fd(d.getHours()) + ":" + fd(d.getMinutes()) + ":" + fd(d.getSeconds());
+        msg.push(DCC.Localizer.t("status.duration.since"));
+        msg.push(format_timestamp(thing.started_at()));
       }
     }
-    return s;
+    return msg.join(" ");
   };
 
   clazz.change_panel_status_class = function(panel, new_class) {

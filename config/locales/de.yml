@@ -48,6 +48,7 @@ de:
     failed: fehlgeschlagen
     duration:
       in: in
+      at: am
       since: seit
       hour: Stunde
       hours: Stunden
