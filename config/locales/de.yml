@@ -56,6 +56,8 @@ de:
       minutes: Minuten
       second: Sekunde
       seconds: Sekunden
+    leader: Leader
+    worker: Worker
   cluster:
     status:
       minion_count: Arbeiter insgesamt

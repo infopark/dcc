@@ -449,10 +449,10 @@ DCC.HtmlUtils = (function() {
       } else {
         var bucket = thing;
         append_status(panel_status, bucket.status(), null, duration(bucket));
-        if (bucket.worker_hostname()) {
-          panel_status.append("<span title='" + bucket.worker_hostname() + "'>" +
-              clazz.icon('screen-1', 'status_icon') + "</span>");
-        }
+        var span_title = DCC.Localizer.t("status.leader") + ": " + bucket.leader_hostname() + "; " +
+            DCC.Localizer.t("status.worker") + ": " + (bucket.worker_hostname() || "-");
+        panel_status.append("<span title='" + span_title + "'>" +
+            clazz.icon('screen-1', 'status_icon') + "</span>");
       }
       $("<a href='" + thing.static_url() + "'>" +
           clazz.icon('fontawesome-webfont-14', 'status_icon') + "</a>").appendTo(panel_status).
@@ -742,8 +742,8 @@ DCC.Build = (function() {
     this.pending_buckets = function() { return build_data.pending_buckets; };
     this.done_buckets = function() { return build_data.done_buckets; };
     this.bucket_state_counts = function(code) { return build_data.bucket_state_counts[code]; };
-    this.started_at = function(code) { return build_data.started_at; };
-    this.finished_at = function(code) { return build_data.finished_at; };
+    this.started_at = function() { return build_data.started_at; };
+    this.finished_at = function() { return build_data.finished_at; };
 
     this.pending_buckets_count = function() { return _.size(that.pending_buckets()); };
     this.in_work_buckets_count = function() { return _.size(that.in_work_buckets()); };
@@ -756,7 +756,7 @@ DCC.Build = (function() {
     };
 
     var buckets = _.map(all_bucket_datas(build_data), function(bucket_data) {
-      return new DCC.Bucket(that, bucket_data);
+      return new DCC.Bucket(that, bucket_data, build_data.leader_hostname);
     });
     this.buckets = function() { return buckets; };
 
@@ -780,7 +780,7 @@ DCC.Build = (function() {
 DCC.Bucket = (function() {
   var loaded_buckets = {};
 
-  var clazz = function(build, bucket_data) {
+  var clazz = function(build, bucket_data, leader_hostname) {
     var that = this;
 
     this.id = function() { return bucket_data.id; };
@@ -788,8 +788,10 @@ DCC.Bucket = (function() {
     this.status = function() { return bucket_data.status; };
     this.build = function() { return build; };
     this.worker_hostname = function() { return bucket_data.worker_hostname; }
-    this.started_at = function(code) { return bucket_data.started_at; };
-    this.finished_at = function(code) { return bucket_data.finished_at; };
+    this.started_at = function() { return bucket_data.started_at; };
+    this.finished_at = function() { return bucket_data.finished_at; };
+
+    this.leader_hostname = function() { return leader_hostname; };
 
     this.static_url = function() { return "/project/show_bucket/" + that.id(); };
 
