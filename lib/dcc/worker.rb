@@ -322,6 +322,17 @@ class Worker
         rescue Exception => e
           log.debug "setting bucket #{b} to “processing failed”: status = #{b.status}, " +
               "reason: #{e.message}\n\n#{e.backtrace.join("\n")}"
+          b.log = <<EOD
+#{b.log}
+
+------ Processing failed ------
+
+Failed to analyze bucket state (#{b.status}):
+
+#{e.message}
+
+#{e.backtrace.join("\n")}
+EOD
           b.status = 35
           b.save
           false
