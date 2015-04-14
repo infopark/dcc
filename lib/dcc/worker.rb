@@ -335,6 +335,7 @@ Failed to analyze bucket state (#{b.status}):
 EOD
           b.status = 35
           b.save
+          log.debug "returning false for bucket with erroneous state"
           false
         end
       end.empty?
