@@ -475,7 +475,7 @@ EOD
   end
 
   def load_bucket_with_logs(id)
-    retry_on_mysql_failure { Bucket.select([:log, :error_log]).find(options[:bucket].id) }
+    retry_on_mysql_failure { Bucket.select([:log, :error_log]).find(id) }
   end
 
   def perform_rake_tasks(path, tasks, logs)
