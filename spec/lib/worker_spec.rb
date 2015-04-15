@@ -779,6 +779,10 @@ describe Worker, "when running as leader" do
           @bucket.stub(:status=)
           @bucket.stub(:save)
           @bucket.stub(:worker_uri).and_return "worker's uri"
+          @bucket.stub(:id).and_return 'bucket_id'
+          @bucket.stub(:log)
+          @bucket.stub(:log=)
+          @leader.stub(:load_bucket_with_logs).with('bucket_id').and_return(@bucket)
         end
 
         it "should say no" do
@@ -787,6 +791,14 @@ describe Worker, "when running as leader" do
 
         it "should set the bucket's status to 'processing_failed'" do
           @bucket.should_receive(:status=).with(35).ordered
+          @bucket.should_receive(:save).ordered
+          @leader.project_in_build?(@project)
+        end
+
+        it "fills the bucket's log with error info" do
+          expect(@bucket).to receive(:log=).ordered do |msg|
+            expect(msg).to match('Processing failed')
+          end
           @bucket.should_receive(:save).ordered
           @leader.project_in_build?(@project)
         end

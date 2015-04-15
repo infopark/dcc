@@ -320,6 +320,7 @@ class Worker
             false
           end
         rescue Exception => e
+          b = load_bucket_with_logs(b.id)
           log.debug "setting bucket #{b} to “processing failed”: status = #{b.status}, " +
               "reason: #{e.message}\n\n#{e.backtrace.join("\n")}"
           b.log = <<EOD
@@ -455,8 +456,7 @@ EOD
     log.debug "leaving protected block (->#{@@pbl -= 1})"
   rescue Exception => e
     log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
-    bucket = options[:bucket] &&
-        retry_on_mysql_failure { Bucket.select([:log, :error_log]).find(options[:bucket].id) }
+    bucket = options[:bucket] && load_bucket_with_logs(options[:bucket].id)
     msg = "uri: #{uri} (#{Socket.gethostname})\n" +
         "leader_uri: #{leader_uri}#{bucket && " (#{bucket.build.leader_hostname})"}\n\n" +
         "#{e.message}\n\n#{e.backtrace.join("\n")}"
@@ -472,6 +472,10 @@ EOD
     if options[:email_address]
       Mailer.dcc_message(options[:email_address], subject, msg).deliver
     end
+  end
+
+  def load_bucket_with_logs(id)
+    retry_on_mysql_failure { Bucket.select([:log, :error_log]).find(options[:bucket].id) }
   end
 
   def perform_rake_tasks(path, tasks, logs)
