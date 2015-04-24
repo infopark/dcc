@@ -57,23 +57,23 @@ class Worker
       log.debug { "become tyrant" }
       instance_eval do
         alias :original_seize_leadership :seize_leadership
-        def seize_leadership(ignore = nil)
-          original_seize_leadership(1000000)
+        def seize_leadership(memcache_client, ignore = nil)
+          original_seize_leadership(memcache_client, 1000000)
         end
 
         alias :original_nominate :nominate
-        def nominate
-          seize_leadership
+        def nominate(memcache_client)
+          seize_leadership(memcache_client)
         end
 
-        def leader?
-          uri == leader_uri
+        def leader?(memcache_client)
+          uri == leader_uri(memcache_client)
         end
       end
-      seize_leadership
+      seize_leadership(client_for(memcache_config))
       fork do
         while true
-          seize_leadership
+          seize_leadership(client_for(memcache_config))
           sleep 60
         end
       end
@@ -92,14 +92,15 @@ class Worker
 
   def run
     log.debug "running"
-    log_general_error_on_failure("running worker failed") do
+    memcache_client = client_for(memcache_config)
+    log_general_error_on_failure(memcache_client, "running worker failed") do
       with_reset_rbenv do
         with_reset_rails_env do
           without_bundler do
             process_bucket do |bucket_id|
               @currently_processed_bucket_id = bucket_id
               bucket = retry_on_mysql_failure {Bucket.find(bucket_id)}
-              log_bucket_error_on_failure(bucket, "processing bucket failed") do
+              log_bucket_error_on_failure(memcache_client, bucket, "processing bucket failed") do
                 Timeout::timeout(7200) do
                   project = bucket.build.project
                   with_environment({
@@ -288,16 +289,16 @@ class Worker
     return 10
   end
 
-  def initialize_buckets
+  def initialize_buckets(memcache_client)
     log.debug "initializing buckets"
-    update_buckets
+    update_buckets(memcache_client)
   end
 
-  def update_buckets
+  def update_buckets(memcache_client)
     log.debug "updating buckets"
     Project.find(:all).each do |project|
       if !project_in_build?(project)
-        compute_buckets_and_finish_last_build_if_necessary(project)
+        compute_buckets_and_finish_last_build_if_necessary(memcache_client, project)
       end
     end
   end
@@ -349,11 +350,11 @@ EOD
     @currently_processed_bucket_id == bucket_id
   end
 
-  def read_buckets(project)
+  def read_buckets(memcache_client, project)
     buckets = []
-    as_dictator do
+    as_dictator(memcache_client) do
       log.info "reading buckets for project #{project}"
-      log_project_error_on_failure(project, "reading buckets failed") do
+      log_project_error_on_failure(memcache_client, project, "reading buckets failed") do
         if project.wants_build?
           build_number = project.next_build_number
           build = project.builds.create(
@@ -398,16 +399,16 @@ EOD
     bucket_spec
   end
 
-  def log_bucket_error_on_failure(bucket, subject, &block)
-    log_error_on_failure(subject, :bucket => bucket, &block)
+  def log_bucket_error_on_failure(memcache_client, bucket, subject, &block)
+    log_error_on_failure(memcache_client, subject, :bucket => bucket, &block)
   end
 
-  def log_project_error_on_failure(project, subject, &block)
-    log_error_on_failure(subject, :project => project, &block)
+  def log_project_error_on_failure(memcache_client, project, subject, &block)
+    log_error_on_failure(memcache_client, subject, :project => project, &block)
   end
 
-  def log_general_error_on_failure(subject, &block)
-    log_error_on_failure(subject, :email_address => admin_e_mail_address, &block)
+  def log_general_error_on_failure(memcache_client, subject, &block)
+    log_error_on_failure(memcache_client, subject, :email_address => admin_e_mail_address, &block)
   end
 
   def before_perform_leader_duties
@@ -441,7 +442,7 @@ EOD
   end
 
   @@pbl = 0
-  def log_error_on_failure(subject, options = {})
+  def log_error_on_failure(memcache_client, subject, options = {})
     log.debug "entering protected block (->#{@@pbl += 1})"
     begin
       retry_on_mysql_failure do
@@ -458,7 +459,7 @@ EOD
     log.debug "error #{e.class} occurred in protected block (->#{@@pbl -= 1})"
     bucket = options[:bucket] && load_bucket_with_logs(options[:bucket].id)
     msg = "uri: #{uri} (#{Socket.gethostname})\n" +
-        "leader_uri: #{leader_uri}#{bucket && " (#{bucket.build.leader_hostname})"}\n\n" +
+        "leader_uri: #{leader_uri(memcache_client)}#{bucket && " (#{bucket.build.leader_hostname})"}\n\n" +
         "#{e.message}\n\n#{e.backtrace.join("\n")}"
     log.error "#{subject}\n#{msg}"
     if bucket
@@ -485,7 +486,7 @@ EOD
     succeeded
   end
 
-  def compute_buckets_and_finish_last_build_if_necessary(project)
+  def compute_buckets_and_finish_last_build_if_necessary(memcache_client, project)
     build = project.last_build
     log.info "finished?: checking build #{build || '<nil>'} (#{
         build && build.finished_at || '<nil>'})"
@@ -494,7 +495,7 @@ EOD
       build.finished_at = Time.now
       build.save
     end
-    buckets = read_buckets(project)
+    buckets = read_buckets(memcache_client, project)
     synchronize do
       @buckets.set_buckets project.name, buckets
     end

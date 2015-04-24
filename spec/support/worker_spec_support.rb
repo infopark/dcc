@@ -6,7 +6,6 @@ module DCC
 
   class Worker
     attr_accessor :buckets
-    attr_reader :memcache_client
 
     def cleanup
     end
@@ -15,7 +14,7 @@ module DCC
       return 0.1
     end
 
-    def as_dictator
+    def as_dictator(memcache_client)
       yield
     end
   end

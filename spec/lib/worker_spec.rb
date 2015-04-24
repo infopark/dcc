@@ -84,8 +84,8 @@ describe Worker, "when running as follower" do
     leader = Worker.new('dcc_test', nil, :log_level => ::Logger::ERROR)
     @worker.stub(:leader).and_return leader
     leader.stub(:bucket_request).and_return ["b_id1", 10], ["b_id2", 10], ["b_id3", 10], [nil, 10]
-    @worker.memcache_client.stub(:add)
-    @worker.memcache_client.stub(:get).and_return(leader.uri)
+    allow(@worker).to receive(:client_for).
+        and_return(double(Dalli::Client, add: nil, get: leader.uri))
     @worker.stub(:loop?).and_return true, true, false
     @worker.send(:log).level = ::Logger::FATAL
     Bucket.stub(:find)
@@ -640,6 +640,7 @@ describe Worker, "when running as leader" do
   end
 
   let(:leader) { @leader }
+  let(:memcache_client) { double(Dalli::Client, add: nil, get: nil) }
 
   shared_examples_for "finishing build" do
     describe "when finishing the last build" do
@@ -650,7 +651,7 @@ describe Worker, "when running as leader" do
 
       it "should clean up dead buckets by calling 'project_in_build?'" do
         @leader.should_receive(:project_in_build?).with(@project1)
-        @leader.send(@method_under_test)
+        @leader.send(@method_under_test, memcache_client)
       end
 
       describe "when a project is not in build" do
@@ -665,19 +666,19 @@ describe Worker, "when running as leader" do
           Time.stub(:now).and_return now
           @last_build.should_receive(:finished_at=).with(now).ordered
           @last_build.should_receive(:save).ordered
-          @leader.send(@method_under_test)
+          @leader.send(@method_under_test, memcache_client)
         end
 
         it "should not change the last build's finished_at when it's already set" do
           @last_build.stub(:finished_at).and_return Time.now
           @last_build.should_not_receive(:finished_at=)
           @last_build.should_not_receive(:save)
-          @leader.send(@method_under_test)
+          @leader.send(@method_under_test, memcache_client)
         end
 
         it "should not fail if project was never built" do
           @project1.stub(:last_build).and_return nil
-          @leader.send(@method_under_test)
+          @leader.send(@method_under_test, memcache_client)
         end
       end
 
@@ -689,7 +690,7 @@ describe Worker, "when running as leader" do
         it "should not change the last build's finished_at regardless of it's state" do
           @last_build.should_not_receive(:finished_at=)
           @last_build.should_not_receive(:save)
-          @leader.update_buckets
+          @leader.update_buckets(memcache_client)
         end
       end
     end
@@ -703,14 +704,14 @@ describe Worker, "when running as leader" do
     it_should_behave_like "finishing build"
 
     it "should read and set the buckets for every project" do
-      @leader.should_receive(:read_buckets).exactly(4).times.and_return do |p|
+      @leader.should_receive(:read_buckets).exactly(4).times.and_return do |memcache_client, p|
         "#{p.name}_buckets"
       end
       @leader.buckets.should_receive(:set_buckets).with('p1', 'p1_buckets')
       @leader.buckets.should_receive(:set_buckets).with('p2', 'p2_buckets')
       @leader.buckets.should_receive(:set_buckets).with('p3', 'p3_buckets')
       @leader.buckets.should_receive(:set_buckets).with('p4', 'p4_buckets')
-      @leader.initialize_buckets
+      @leader.initialize_buckets(memcache_client)
     end
   end
 
@@ -724,14 +725,14 @@ describe Worker, "when running as leader" do
     it "should read and set for every project which is not actually build" do
       @leader.stub(:project_in_build?).and_return {|p| p.name =~ /p[13]/}
 
-      @leader.should_receive(:read_buckets).exactly(2).times.and_return do |p|
+      @leader.should_receive(:read_buckets).exactly(2).times.and_return do |memcache_client, p|
         "new_#{p.name}_buckets"
       end
 
       @leader.buckets.should_receive(:set_buckets).with('p2', 'new_p2_buckets')
       @leader.buckets.should_receive(:set_buckets).with('p4', 'new_p4_buckets')
 
-      @leader.update_buckets
+      @leader.update_buckets(memcache_client)
     end
   end
 
@@ -869,7 +870,7 @@ describe Worker, "when running as leader" do
     end
 
     it "should return changed buckets" do
-      buckets = @leader.read_buckets(@project1)
+      buckets = @leader.read_buckets(memcache_client, @project1)
       buckets.size.should == 3
       buckets.should be_include('p11_id')
       buckets.should be_include('p12_id')
@@ -877,17 +878,17 @@ describe Worker, "when running as leader" do
     end
 
     it "should not return unchanched buckets" do
-      @leader.read_buckets(@project2).should be_empty
+      @leader.read_buckets(memcache_client, @project2).should be_empty
     end
 
     it "should update the projects state if buckets were read" do
       @project1.should_receive(:update_state)
-      @leader.read_buckets(@project1)
+      @leader.read_buckets(memcache_client, @project1)
     end
 
     it "should not update the projects state if buckets were not read" do
       @project2.should_not_receive(:update_state)
-      @leader.read_buckets(@project2)
+      @leader.read_buckets(memcache_client, @project2)
     end
 
     it "creates the build and the buckets in the db" do
@@ -898,7 +899,7 @@ describe Worker, "when running as leader" do
         build.buckets.should_receive(:create).with(:name => "p1#{task}", :status => 20).
             and_return(double('', :id => 1))
       end
-      @leader.read_buckets(@project1)
+      @leader.read_buckets(memcache_client, @project1)
     end
 
     it "should set the error into the database if an error occurs" do
@@ -909,7 +910,7 @@ describe Worker, "when running as leader" do
           ordered
       @project1.should_receive(:save).ordered
 
-      @leader.read_buckets(@project1)
+      @leader.read_buckets(memcache_client, @project1)
     end
 
     it "should set the error into the database even if a LoadError error occurs" do
@@ -919,7 +920,7 @@ describe Worker, "when running as leader" do
       @project1.should_receive(:last_system_error=).with(/reading buckets failed.*nix da/m).ordered
       @project1.should_receive(:save).ordered
 
-      @leader.read_buckets(@project1)
+      @leader.read_buckets(memcache_client, @project1)
     end
 
     it "should unset the error in the database if no error occurs" do
@@ -929,7 +930,7 @@ describe Worker, "when running as leader" do
       @project1.should_receive(:last_system_error=).with(nil).ordered
       @project1.should_receive(:save).ordered
 
-      @leader.read_buckets(@project1)
+      @leader.read_buckets(memcache_client, @project1)
     end
 
     it "should not unset the error in the database if an error occurs" do
@@ -938,7 +939,7 @@ describe Worker, "when running as leader" do
 
       @project1.should_not_receive(:last_system_error=).with(nil)
 
-      @leader.read_buckets(@project1)
+      @leader.read_buckets(memcache_client, @project1)
     end
   end
 
