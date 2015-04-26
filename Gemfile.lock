@@ -60,8 +60,6 @@ GEM
       json (~> 1.8)
       multi_xml (>= 0.5.2)
     i18n (0.6.9)
-    infopark-politics (0.9.1)
-      dalli
     infopark_crm_connector (1.2.0)
       activeresource (>= 3.1)
     journey (1.0.4)
@@ -163,10 +161,10 @@ DEPENDENCIES
   aws-sdk
   coffee-rails (~> 3.2.1)
   daemon-spawn
+  dalli
   hipchat
   honeybadger
   http_accept_language
-  infopark-politics (~> 0.9.1)
   infopark_crm_connector
   jquery-rails
   json

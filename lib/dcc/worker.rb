@@ -5,8 +5,6 @@ require 'acts_as_singleton'
 require 'fileutils'
 require 'hipchat'
 require 'monitor'
-require 'politics'
-require 'politics/static_queue_worker'
 require 'set'
 require 'socket'
 require 'timeout'
@@ -22,6 +20,7 @@ require_relative 'command_line'
 require_relative 'rake'
 require_relative 'mailer'
 require_relative 'bucket_store'
+require_relative 'static_queue_worker'
 
 module DCC
 
