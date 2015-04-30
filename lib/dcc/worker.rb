@@ -251,9 +251,9 @@ class Worker
       begin
         rake.rake(task)
       rescue
-        exit 1
+        exit! 1
       end
-      exit 0
+      exit! 0
     end
     ActiveRecord::Base.establish_connection(old_connection_pool.spec.config)
     log_length = 0
