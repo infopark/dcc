@@ -207,6 +207,8 @@ class Worker
   end
 
   def notify_hipchat(bucket, succeeded)
+    return unless @hipchat_config[:token]
+
     user = 'DCC'
 
     if succeeded
