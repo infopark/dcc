@@ -166,7 +166,7 @@ context "when requesting all projects" do
   end
 
   it "renders the projects as json" do
-    expect(response.body).to eq('{"projects":[{"p":1},{"p":2},{"p":3},{"p":4}]}')
+    expect(response.body).to eq('{"projects":[{"p":1},{"p":2},{"p":3},{"p":4}],"cluster_state":{"id":1,"minion_count":0}}')
   end
 end
 
@@ -195,7 +195,7 @@ context "when requesting a bucket log" do
   it "renders the log data as json" do
     get "log", :id => 666
     expect(response.body).to eq(
-        '{"log":"the complete log","logs":["some","log","fragments"]}'
+        '{"log":"the complete log","logs":"somelogfragments"}'
     )
   end
 end

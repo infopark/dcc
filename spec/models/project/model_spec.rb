@@ -793,7 +793,7 @@ describe Project do
       allow(builds).to receive(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
           :order => "build_number DESC").and_return(instance_double(Build, 'build_number' => 5))
       allow(builds).to receive(:where).with(commit_hash: 'the current commit').and_return(double.tap do |result|
-        allow(result).to receive(:order).with("build_number").and_return ["foo", "bar", double(build_number: 5)]
+        allow(result).to receive(:order).with(:build_number).and_return ["foo", "bar", double(build_number: 5)]
       end)
 
       expect(@project.next_build_number).to eq(6)
