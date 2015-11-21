@@ -7,3 +7,4 @@
 /rerun.txt
 /tmp
 /vendor/bundle
+/spec/examples.state

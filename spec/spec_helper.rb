@@ -53,4 +53,6 @@ RSpec.configure do |config|
   #       # Equivalent to being in spec/controllers
   #     end
   config.infer_spec_type_from_file_location!
+
+  config.example_status_persistence_file_path = File.expand_path("../examples.state", __FILE__)
 end

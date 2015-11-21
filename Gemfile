@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 gem 'honeybadger'
 
 gem 'acts_as_singleton'
-gem 'aws-sdk'
+gem 'aws-sdk-v1'
 gem 'daemon-spawn'
 gem 'dalli'
 gem 'hipchat'
