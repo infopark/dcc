@@ -10,29 +10,29 @@ describe Rake do
 
   describe "when performing rake" do
     before do
-      FileUtils.stub(:rm_f)
-      FileUtils.stub(:mkdir_p)
-      FileUtils.stub(:touch)
+      allow(FileUtils).to receive(:rm_f)
+      allow(FileUtils).to receive(:mkdir_p)
+      allow(FileUtils).to receive(:touch)
     end
 
     describe "when project is bundled" do
       before do
-        File.stub(:exists?).with("project path/Gemfile").and_return true
+        allow(File).to receive(:exists?).with("project path/Gemfile").and_return true
       end
 
       it "should execute „bundle exec rake …“" do
-        rake.should_receive(:execute).with(['bundle', 'exec', 'rake', 'der task'], anything())
+        expect(rake).to receive(:execute).with(['bundle', 'exec', 'rake', 'der task'], anything())
         rake.rake("der task")
       end
     end
 
     describe "when project is not bundled" do
       before do
-        File.stub(:exists?).with("project path/Gemfile").and_return false
+        allow(File).to receive(:exists?).with("project path/Gemfile").and_return false
       end
 
       it "should execute „rake …“" do
-        rake.should_receive(:execute).with(['rake', 'der task'], anything())
+        expect(rake).to receive(:execute).with(['rake', 'der task'], anything())
         rake.rake("der task")
       end
     end

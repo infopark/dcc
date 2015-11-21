@@ -8,150 +8,151 @@ describe ApplicationHelper do
     end
 
     it "should return 'pending' if bucket is pending" do
-      @bucket.stub(:status).and_return 20
-      helper.bucket_display_status(@bucket).should == 'pending'
+      allow(@bucket).to receive(:status).and_return 20
+      expect(helper.bucket_display_status(@bucket)).to eq('pending')
     end
 
     it "should return 'in work' if bucket is in work" do
-      @bucket.stub(:status).and_return 30
-      helper.bucket_display_status(@bucket).should == 'in work'
+      allow(@bucket).to receive(:status).and_return 30
+      expect(helper.bucket_display_status(@bucket)).to eq('in work')
     end
 
     it "should return 'done' if bucket was successfully done" do
-      @bucket.stub(:status).and_return 10
-      helper.bucket_display_status(@bucket).should == 'done'
+      allow(@bucket).to receive(:status).and_return 10
+      expect(helper.bucket_display_status(@bucket)).to eq('done')
     end
 
     it "should return 'processing failed' if bucket processing has failed" do
-      @bucket.stub(:status).and_return 35
-      helper.bucket_display_status(@bucket).should == 'processing failed'
+      allow(@bucket).to receive(:status).and_return 35
+      expect(helper.bucket_display_status(@bucket)).to eq('processing failed')
     end
 
     it "should return 'failed' if bucket has failed" do
-      @bucket.stub(:status).and_return 40
-      helper.bucket_display_status(@bucket).should == 'failed'
+      allow(@bucket).to receive(:status).and_return 40
+      expect(helper.bucket_display_status(@bucket)).to eq('failed')
     end
 
     it "should contain 'since …' if the bucket is in progress" do
       now = Time.now
-      @bucket.stub(:started_at).and_return now
-      helper.bucket_display_status(@bucket).should =~ /since #{now.to_formatted_s(:db)}/
+      allow(@bucket).to receive(:started_at).and_return now
+      expect(helper.bucket_display_status(@bucket)).to match(/since #{now.to_formatted_s(:db)}/)
     end
 
     it "should contain 'in …' if the bucket is finished" do
       start = Time.now
       finish = start + 6666
-      @bucket.stub(:started_at).and_return start
-      @bucket.stub(:finished_at).and_return finish
-      helper.bucket_display_status(@bucket).should =~ /in 1 hour 51 minutes 6 seconds/
+      allow(@bucket).to receive(:started_at).and_return start
+      allow(@bucket).to receive(:finished_at).and_return finish
+      expect(helper.bucket_display_status(@bucket)).to match(/in 1 hour 51 minutes 6 seconds/)
 
       finish = start + 36061
-      @bucket.stub(:finished_at).and_return finish
-      helper.bucket_display_status(@bucket).should =~ /in 10 hours 1 minute 1 second/
+      allow(@bucket).to receive(:finished_at).and_return finish
+      expect(helper.bucket_display_status(@bucket)).to match(/in 10 hours 1 minute 1 second/)
 
       finish = start + 3600
-      @bucket.stub(:finished_at).and_return finish
-      helper.bucket_display_status(@bucket).should =~ /in 1 hour/
+      allow(@bucket).to receive(:finished_at).and_return finish
+      expect(helper.bucket_display_status(@bucket)).to match(/in 1 hour/)
 
       finish = start + 3606
-      @bucket.stub(:finished_at).and_return finish
-      helper.bucket_display_status(@bucket).should =~ /in 1 hour 6 seconds/
+      allow(@bucket).to receive(:finished_at).and_return finish
+      expect(helper.bucket_display_status(@bucket)).to match(/in 1 hour 6 seconds/)
 
       finish = start + 120
-      @bucket.stub(:finished_at).and_return finish
-      helper.bucket_display_status(@bucket).should =~ /in 2 minutes/
+      allow(@bucket).to receive(:finished_at).and_return finish
+      expect(helper.bucket_display_status(@bucket)).to match(/in 2 minutes/)
 
       finish = start + 12
-      @bucket.stub(:finished_at).and_return finish
-      helper.bucket_display_status(@bucket).should =~ /in 12 seconds/
+      allow(@bucket).to receive(:finished_at).and_return finish
+      expect(helper.bucket_display_status(@bucket)).to match(/in 12 seconds/)
     end
   end
 
   describe 'build_display_status' do
     before do
       @build = Build.new
-      helper.stub(:build_status).with(@build).and_return 10
-      helper.stub(:detailed_build_status).with(@build).and_return({})
+      allow(helper).to receive(:build_status).with(@build).and_return 10
+      allow(helper).to receive(:detailed_build_status).with(@build).and_return({})
     end
 
     it "should return 'pending' if build is pending" do
-      helper.stub(:build_status).with(@build).and_return 20
-      helper.build_display_status(@build).should =~ /^pending/
+      allow(helper).to receive(:build_status).with(@build).and_return 20
+      expect(helper.build_display_status(@build)).to match(/^pending/)
     end
 
     it "should return 'in work' if build is in work" do
-      helper.stub(:build_status).with(@build).and_return 30
-      helper.build_display_status(@build).should =~ /^in work/
+      allow(helper).to receive(:build_status).with(@build).and_return 30
+      expect(helper.build_display_status(@build)).to match(/^in work/)
     end
 
     it "should return 'done' if build was successfully done" do
-      helper.stub(:build_status).with(@build).and_return 10
-      helper.build_display_status(@build).should =~ /^done/
+      allow(helper).to receive(:build_status).with(@build).and_return 10
+      expect(helper.build_display_status(@build)).to match(/^done/)
     end
 
     it "should return 'processing failed' if build processing has failed" do
-      helper.stub(:build_status).with(@build).and_return 35
-      helper.build_display_status(@build).should =~ /^processing failed/
+      allow(helper).to receive(:build_status).with(@build).and_return 35
+      expect(helper.build_display_status(@build)).to match(/^processing failed/)
     end
 
     it "should return 'failed' if build has failed" do
-      helper.stub(:build_status).with(@build).and_return 40
-      helper.build_display_status(@build).should =~ /^failed/
+      allow(helper).to receive(:build_status).with(@build).and_return 40
+      expect(helper.build_display_status(@build)).to match(/^failed/)
     end
 
     it "should contain summary information on bucket states" do
-      helper.stub(:detailed_build_status).with(@build).and_return({
+      allow(helper).to receive(:detailed_build_status).with(@build).and_return({
         10 => 3,
         20 => 5,
         30 => 2,
         35 => 7,
         40 => 1
       })
-      helper.build_display_status(@build).should =~
+      expect(helper.build_display_status(@build)).to match(
           /\(3 done, 5 pending, 2 in work, 7 processing failed, 1 failed\)/
+      )
     end
 
     it "should contain no summary information on states where no bucket is in" do
-      helper.stub(:detailed_build_status).with(@build).and_return({
+      allow(helper).to receive(:detailed_build_status).with(@build).and_return({
         10 => 0,
         20 => 5,
         35 => 7
       })
-      helper.build_display_status(@build).should =~ /\(5 pending, 7 processing failed\)/
+      expect(helper.build_display_status(@build)).to match(/\(5 pending, 7 processing failed\)/)
     end
 
     it "should contain 'since …' if the build is in progress" do
       now = Time.now
-      @build.stub(:started_at).and_return now
-      helper.build_display_status(@build).should =~ /since #{now.to_formatted_s(:db)}/
+      allow(@build).to receive(:started_at).and_return now
+      expect(helper.build_display_status(@build)).to match(/since #{now.to_formatted_s(:db)}/)
     end
 
     it "should contain 'in …' if the build is finished" do
       start = Time.now
       finish = start + 6666
-      @build.stub(:started_at).and_return start
-      @build.stub(:finished_at).and_return finish
-      helper.build_display_status(@build).should =~ /in 1 hour 51 minutes 6 seconds/
+      allow(@build).to receive(:started_at).and_return start
+      allow(@build).to receive(:finished_at).and_return finish
+      expect(helper.build_display_status(@build)).to match(/in 1 hour 51 minutes 6 seconds/)
 
       finish = start + 36061
-      @build.stub(:finished_at).and_return finish
-      helper.build_display_status(@build).should =~ /in 10 hours 1 minute 1 second/
+      allow(@build).to receive(:finished_at).and_return finish
+      expect(helper.build_display_status(@build)).to match(/in 10 hours 1 minute 1 second/)
 
       finish = start + 3600
-      @build.stub(:finished_at).and_return finish
-      helper.build_display_status(@build).should =~ /in 1 hour/
+      allow(@build).to receive(:finished_at).and_return finish
+      expect(helper.build_display_status(@build)).to match(/in 1 hour/)
 
       finish = start + 3606
-      @build.stub(:finished_at).and_return finish
-      helper.build_display_status(@build).should =~ /in 1 hour 6 seconds/
+      allow(@build).to receive(:finished_at).and_return finish
+      expect(helper.build_display_status(@build)).to match(/in 1 hour 6 seconds/)
 
       finish = start + 120
-      @build.stub(:finished_at).and_return finish
-      helper.build_display_status(@build).should =~ /in 2 minutes/
+      allow(@build).to receive(:finished_at).and_return finish
+      expect(helper.build_display_status(@build)).to match(/in 2 minutes/)
 
       finish = start + 12
-      @build.stub(:finished_at).and_return finish
-      helper.build_display_status(@build).should =~ /in 12 seconds/
+      allow(@build).to receive(:finished_at).and_return finish
+      expect(helper.build_display_status(@build)).to match(/in 12 seconds/)
     end
   end
 
@@ -166,31 +167,31 @@ describe ApplicationHelper do
     end
 
     it "should return pending if no bucket failed or is in work and at least one is pending" do
-      @build.stub(:buckets => [@succeeded_bucket, @pending_bucket, @succeeded_bucket])
-      helper.build_status(@build).should == 20
+      allow(@build).to receive_messages(:buckets => [@succeeded_bucket, @pending_bucket, @succeeded_bucket])
+      expect(helper.build_status(@build)).to eq(20)
     end
 
     it "should return in work if no bucket failed and at least one is in work" do
-      @build.stub(:buckets =>
+      allow(@build).to receive_messages(:buckets =>
           [@succeeded_bucket, @pending_bucket, @inwork_bucket, @succeeded_bucket])
-      helper.build_status(@build).should == 30
+      expect(helper.build_status(@build)).to eq(30)
     end
 
     it "should return processing failed if no bucket failed and at least one's processing failed" do
-      @build.stub(:buckets => [@succeeded_bucket, @pending_bucket, @inwork_bucket,
+      allow(@build).to receive_messages(:buckets => [@succeeded_bucket, @pending_bucket, @inwork_bucket,
           @processing_failed_bucket, @succeeded_bucket])
-      helper.build_status(@build).should == 35
+      expect(helper.build_status(@build)).to eq(35)
     end
 
     it "should return done iff all buckets are done" do
-      @build.stub(:buckets => [@succeeded_bucket, @succeeded_bucket])
-      helper.build_status(@build).should == 10
+      allow(@build).to receive_messages(:buckets => [@succeeded_bucket, @succeeded_bucket])
+      expect(helper.build_status(@build)).to eq(10)
     end
 
     it "should return failed if at least one bucket failed" do
-      @build.stub(:buckets => [@succeeded_bucket, @failed_bucket, @pending_bucket, @inwork_bucket,
+      allow(@build).to receive_messages(:buckets => [@succeeded_bucket, @failed_bucket, @pending_bucket, @inwork_bucket,
           @processing_failed_bucket])
-      helper.build_status(@build).should == 40
+      expect(helper.build_status(@build)).to eq(40)
     end
   end
 
@@ -205,12 +206,12 @@ describe ApplicationHelper do
     end
 
     it "should return summary information on bucket states" do
-      @build.stub(:buckets =>
+      allow(@build).to receive_messages(:buckets =>
           [@succeeded_bucket, @pending_bucket, @succeeded_bucket, @pending_bucket])
-      helper.detailed_build_status(@build).should == {10 => 2, 20 => 2}
-      @build.stub(:buckets => [@succeeded_bucket, @pending_bucket, @inwork_bucket,
+      expect(helper.detailed_build_status(@build)).to eq({10 => 2, 20 => 2})
+      allow(@build).to receive_messages(:buckets => [@succeeded_bucket, @pending_bucket, @inwork_bucket,
           @processing_failed_bucket, @failed_bucket])
-      helper.detailed_build_status(@build).should == {10 => 1, 20 => 1, 30 => 1, 35 => 1, 40 => 1}
+      expect(helper.detailed_build_status(@build)).to eq({10 => 1, 20 => 1, 30 => 1, 35 => 1, 40 => 1})
     end
   end
 
@@ -219,7 +220,7 @@ describe ApplicationHelper do
       @project = double('project', :url => '')
       @build = double('build', identifier: 'build_identifier', leader_uri: 'leader_uri',
           leader_hostname: 'leader_hostname', project: @project, commit: 'commit_hash')
-      YAML.stub(:load_file).with("#{Rails.root}/config/gitweb_url_map.yml").and_return({
+      allow(YAML).to receive(:load_file).with("#{Rails.root}/config/gitweb_url_map.yml").and_return({
             '^git@machine:(.*?)(\.git)?$' => 'gitweb_url1 #{$1} #{commit}',
             '^git+ssh://machine/(.*?)(\.git)?$' => 'gitweb_url2 #{$1} #{commit}',
             '^git://github.com/(.*?)(\.git)?$' => 'gitweb_url3 #{$1} #{commit}'
@@ -227,22 +228,22 @@ describe ApplicationHelper do
     end
 
     it "should return the gitweb url for the project" do
-      @project.stub(:url).and_return "git@machine:the_project.git"
-      helper.build_gitweb_url(@build).should == 'gitweb_url1 the_project commit_hash'
+      allow(@project).to receive(:url).and_return "git@machine:the_project.git"
+      expect(helper.build_gitweb_url(@build)).to eq('gitweb_url1 the_project commit_hash')
 
-      @project.stub(:url).and_return "git@machine:the_project"
-      helper.build_gitweb_url(@build).should == 'gitweb_url1 the_project commit_hash'
+      allow(@project).to receive(:url).and_return "git@machine:the_project"
+      expect(helper.build_gitweb_url(@build)).to eq('gitweb_url1 the_project commit_hash')
 
-      @project.stub(:url).and_return "git://github.com/my/project.git"
-      helper.build_gitweb_url(@build).should == 'gitweb_url3 my/project commit_hash'
+      allow(@project).to receive(:url).and_return "git://github.com/my/project.git"
+      expect(helper.build_gitweb_url(@build)).to eq('gitweb_url3 my/project commit_hash')
 
-      @project.stub(:url).and_return "git://github.com/my/project"
-      helper.build_gitweb_url(@build).should == 'gitweb_url3 my/project commit_hash'
+      allow(@project).to receive(:url).and_return "git://github.com/my/project"
+      expect(helper.build_gitweb_url(@build)).to eq('gitweb_url3 my/project commit_hash')
     end
 
     it "should return nil if no gitweb url is configured" do
-      @project.stub(:url).and_return "nix configured"
-      helper.build_gitweb_url(@build).should be_nil
+      allow(@project).to receive(:url).and_return "nix configured"
+      expect(helper.build_gitweb_url(@build)).to be_nil
     end
   end
 
@@ -252,16 +253,16 @@ describe ApplicationHelper do
     end
 
     it "should return a short version of the build identifier" do
-      @build.stub(:identifier).and_return("ziemlich lang datt ding")
-      helper.build_display_identifier(@build).should == "ziemlich"
+      allow(@build).to receive(:identifier).and_return("ziemlich lang datt ding")
+      expect(helper.build_display_identifier(@build)).to eq("ziemlich")
 
-      @build.stub(:identifier).and_return("kurz!")
-      helper.build_display_identifier(@build).should == "kurz!"
+      allow(@build).to receive(:identifier).and_return("kurz!")
+      expect(helper.build_display_identifier(@build)).to eq("kurz!")
     end
 
     it "should preserve the build number in the identifier" do
-      @build.stub(:identifier).and_return("ziemlich lang datt ding.build number")
-      helper.build_display_identifier(@build).should == "ziemlich.build number"
+      allow(@build).to receive(:identifier).and_return("ziemlich lang datt ding.build number")
+      expect(helper.build_display_identifier(@build)).to eq("ziemlich.build number")
     end
   end
 
@@ -272,8 +273,8 @@ describe ApplicationHelper do
     end
 
     it "should return info containing the full identifier and the leader hostname" do
-      helper.build_display_details(@build).should =~ /ziemlich lang das ding/
-      helper.build_display_details(@build).should =~ /leader's hostname/
+      expect(helper.build_display_details(@build)).to match(/ziemlich lang das ding/)
+      expect(helper.build_display_details(@build)).to match(/leader's hostname/)
     end
   end
 
@@ -284,23 +285,23 @@ describe ApplicationHelper do
     end
 
     it "should return info containing the worker hostname" do
-      helper.bucket_display_details(@bucket).should =~ /worker_hostname/
+      expect(helper.bucket_display_details(@bucket)).to match(/worker_hostname/)
     end
   end
 
   describe 'status_css_class' do
     it "should return 'success' if the status is done" do
-      helper.status_css_class(10).should == "success"
+      expect(helper.status_css_class(10)).to eq("success")
     end
 
     it "should return 'failure' if the status is failed or processing failed" do
-      helper.status_css_class(35).should == "failure"
-      helper.status_css_class(40).should == "failure"
+      expect(helper.status_css_class(35)).to eq("failure")
+      expect(helper.status_css_class(40)).to eq("failure")
     end
 
     it "should return 'in_progress' if the status is pending or in work" do
-      helper.status_css_class(20).should == "in_progress"
-      helper.status_css_class(30).should == "in_progress"
+      expect(helper.status_css_class(20)).to eq("in_progress")
+      expect(helper.status_css_class(30)).to eq("in_progress")
     end
   end
 
@@ -310,19 +311,19 @@ describe ApplicationHelper do
     end
 
     it "should return 'true' if the bucket or the processing for it failed" do
-      @bucket.stub(:status).and_return(35)
-      helper.bucket_failed?(@bucket).should be_true
-      @bucket.stub(:status).and_return(40)
-      helper.bucket_failed?(@bucket).should be_true
+      allow(@bucket).to receive(:status).and_return(35)
+      expect(helper.bucket_failed?(@bucket)).to be_truthy
+      allow(@bucket).to receive(:status).and_return(40)
+      expect(helper.bucket_failed?(@bucket)).to be_truthy
     end
 
     it "should return 'false' otherwise" do
-      @bucket.stub(:status).and_return(10)
-      helper.bucket_failed?(@bucket).should be_false
-      @bucket.stub(:status).and_return(20)
-      helper.bucket_failed?(@bucket).should be_false
-      @bucket.stub(:status).and_return(30)
-      helper.bucket_failed?(@bucket).should be_false
+      allow(@bucket).to receive(:status).and_return(10)
+      expect(helper.bucket_failed?(@bucket)).to be_falsey
+      allow(@bucket).to receive(:status).and_return(20)
+      expect(helper.bucket_failed?(@bucket)).to be_falsey
+      allow(@bucket).to receive(:status).and_return(30)
+      expect(helper.bucket_failed?(@bucket)).to be_falsey
     end
   end
 end

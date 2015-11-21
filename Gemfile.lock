@@ -111,6 +111,10 @@ GEM
     rdoc (3.12.2)
       json (~> 1.4)
     ref (1.0.5)
+    rspec-activemodel-mocks (1.0.2)
+      activemodel (>= 3.0)
+      activesupport (>= 3.0)
+      rspec-mocks (>= 2.99, < 4.0)
     rspec-core (3.0.3)
       rspec-support (~> 3.0.0)
     rspec-expectations (3.0.3)
@@ -181,6 +185,7 @@ DEPENDENCIES
   pry
   rails (~> 3.2.18)
   rake
+  rspec-activemodel-mocks
   rspec-its
   rspec-rails
   sass-rails (~> 3.2.3)

@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 def provide_bucket_group_config(default, extra = nil)
-  File.stub(:read).with("git_path/dcc_config.rb").and_return <<-EOD
+  allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return <<-EOD
     #{default}
 
     buckets "default" do

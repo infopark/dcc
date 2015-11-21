@@ -9,45 +9,45 @@ describe Bucket do
   end
 
   it "should have a build" do
-    @bucket.build.should_not be_nil
+    expect(@bucket.build).not_to be_nil
   end
 
   it "should have a name" do
-    @bucket.name.should == "one"
+    expect(@bucket.name).to eq("one")
   end
 
   it "should have a status" do
-    @bucket.status.should == 10
+    expect(@bucket.status).to eq(10)
   end
 
   it "may have a log text" do
-    Bucket.select(:log).find(1).log.should be_nil
-    Bucket.select(:log).find(2).log.should == "bucket's log"
+    expect(Bucket.select(:log).find(1).log).to be_nil
+    expect(Bucket.select(:log).find(2).log).to eq("bucket's log")
   end
 
   it "may have a worker uri" do
-    @bucket.worker_uri.should be_nil
-    Bucket.find(2).worker_uri.should == "worker's uri"
+    expect(@bucket.worker_uri).to be_nil
+    expect(Bucket.find(2).worker_uri).to eq("worker's uri")
   end
 
   it "may have logs" do
-    @bucket.logs.should be_empty
-    Bucket.find(2).logs.should_not be_empty
+    expect(@bucket.logs).to be_empty
+    expect(Bucket.find(2).logs).not_to be_empty
   end
 
   it "may have a start time" do
-    @bucket.started_at.should be_nil
-    Bucket.find(2).started_at.should be_a(Time)
+    expect(@bucket.started_at).to be_nil
+    expect(Bucket.find(2).started_at).to be_a(Time)
   end
 
   it "may have an end time" do
-    @bucket.finished_at.should be_nil
-    Bucket.find(2).finished_at.should be_a(Time)
+    expect(@bucket.finished_at).to be_nil
+    expect(Bucket.find(2).finished_at).to be_a(Time)
   end
 
   it "may have an error log" do
-    Bucket.select(:error_log).find(1).error_log.should be_nil
-    Bucket.select(:error_log).find(2).error_log.should == "bucket's error log"
+    expect(Bucket.select(:error_log).find(1).error_log).to be_nil
+    expect(Bucket.select(:error_log).find(2).error_log).to eq("bucket's error log")
   end
 
   describe "when being sorted" do
@@ -62,46 +62,46 @@ describe Bucket do
     end
 
     it "should be sorted by the name" do
-      @unsorted_buckets.sort.should == @sorted_buckets
+      expect(@unsorted_buckets.sort).to eq(@sorted_buckets)
     end
 
     it "should return nil when compared with non bucket" do
-      @bucket.<=>("nix bucket").should be_nil
+      expect(@bucket.<=>("nix bucket")).to be_nil
     end
   end
 
   describe "when building error log" do
     before do
-      @bucket.build.stub(:project).and_return(@project = double('project', :name => 'p'))
-      @bucket.stub(:finished_at).and_return Time.now
-      @project.stub(:for_error_log).and_return(double('code', :call => 'nix da'))
-      @bucket.stub(:log).and_return('the log')
+      allow(@bucket.build).to receive(:project).and_return(@project = double('project', :name => 'p'))
+      allow(@bucket).to receive(:finished_at).and_return Time.now
+      allow(@project).to receive(:for_error_log).and_return(double('code', :call => 'nix da'))
+      allow(@bucket).to receive(:log).and_return('the log')
     end
 
     it "should not do anything when project has no “for_error_log” code" do
-      @project.stub(:for_error_log).and_return nil
-      @bucket.should_not_receive(:error_log=)
-      @bucket.should_not_receive(:save)
+      allow(@project).to receive(:for_error_log).and_return nil
+      expect(@bucket).not_to receive(:error_log=)
+      expect(@bucket).not_to receive(:save)
       @bucket.build_error_log
     end
 
     it "should raise an error if it has not finished yet" do
-      @bucket.stub(:finished_at).and_return nil
-      lambda {@bucket.build_error_log}.should raise_error(NotFinishedYet)
+      allow(@bucket).to receive(:finished_at).and_return nil
+      expect {@bucket.build_error_log}.to raise_error(NotFinishedYet)
     end
 
     it "should store the outcome of the “for_error_log” code for the log into the database" do
-      @project.should_receive(:for_error_log).with('one').and_return(code = double('error_log_code'))
-      code.should_receive(:call).with('the log').and_return('the errors')
-      @bucket.should_receive(:error_log=).with("the errors").ordered
-      @bucket.should_receive(:save).ordered
+      expect(@project).to receive(:for_error_log).with('one').and_return(code = double('error_log_code'))
+      expect(code).to receive(:call).with('the log').and_return('the errors')
+      expect(@bucket).to receive(:error_log=).with("the errors").ordered
+      expect(@bucket).to receive(:save).ordered
       @bucket.build_error_log
     end
   end
 
   describe "#as_json" do
     it "returns the bucket as json serializable structure" do
-      @bucket.as_json.with_indifferent_access.should == {
+      expect(@bucket.as_json.with_indifferent_access).to eq({
         id: 1,
         name: "one",
         status: 10,
@@ -109,7 +109,7 @@ describe Bucket do
         finished_at: nil,
         worker_uri: nil,
         worker_hostname: nil,
-      }.with_indifferent_access
+      }.with_indifferent_access)
     end
   end
 end
