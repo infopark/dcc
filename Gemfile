@@ -14,6 +14,7 @@ gem 'json'
 gem 'mysql2', '>= 0.3.14'
 gem 'rails', '~>3.2.18'
 gem 'sys-proctable'
+gem 'terminal'
 gem 'thin'
 gem 'underscore-rails'
 
