@@ -1276,7 +1276,7 @@ DCC.BucketView = (function() {
           if (result.log) {
             render_log(result.log);
           } else {
-            _.each(result.logs, function(log) { render_log(log); });
+            render_log(result.logs);
             setTimeout(function() { update_log(); }, 5000);
           }
         },
