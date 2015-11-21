@@ -65,8 +65,6 @@ GEM
       json (~> 1.8)
       multi_xml (>= 0.5.2)
     i18n (0.7.0)
-    infopark-politics (0.8.0)
-      dalli
     infopark_crm_connector (1.2.0)
       activeresource (>= 3.1)
     jquery-rails (3.1.2)

@@ -1263,7 +1263,7 @@ DCC.BucketView = (function() {
 
     this.bucket = function() { return bucket; };
 
-    var render_log = function(log) { log_container.append(DCC.HtmlUtils.escape(log)); };
+    var render_log = function(log) { log_container.append(log); }; //DCC.HtmlUtils.escape(log)); };
 
     // TODO daten/view trennen
     // TODO Project-Action

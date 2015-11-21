@@ -33,9 +33,9 @@ class ProjectController < ApplicationController
 
   def log
     bucket = Bucket.select(:log).find(params[:id])
-    render :json => {
-      :log => bucket.log,
-      :logs => bucket.logs.map {|l| l.log}
+    render json: {
+      log: process_log(bucket.log),
+      logs: process_log(bucket.logs.map {|l| l.log}.join),
     }
   end
 
@@ -87,5 +87,9 @@ class ProjectController < ApplicationController
 
   def api_key_valid?
     authenticate_with_http_basic { |user| Rails.configuration.dcc_api_key == user }
+  end
+
+  def process_log(log)
+    Terminal::Renderer.new(log).render
   end
 end

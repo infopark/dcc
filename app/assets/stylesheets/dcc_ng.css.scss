@@ -147,6 +147,21 @@ i.status_icon {
 .project .panel-heading,
 .bucket .panel-heading { cursor: pointer; }
 
+.bucket .panel-body pre
+{
+  white-space: pre-line;
+  word-break: keep-all;
+}
+
+.term-fg30 { color: darkgrey; }
+.term-fg31 { color: red; font-weight: bold;}
+.term-fg32 { color: green; }
+.term-fg33 { color: darkkhaki; font-weight: bold; }
+.term-fg34 { color: darkblue; }
+.term-fg35 { color: purple; }
+.term-fg36 { color: darkcyan; }
+.term-fg37 { color: black; }
+
 .project h2.panel-title { font-size: 12px; }
 .project h2.panel-title .failure { font-size: 16px; }
 
