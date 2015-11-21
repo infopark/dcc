@@ -2,7 +2,6 @@
 ENV["RAILS_ENV"] ||= 'test'
 require File.expand_path("../../config/environment", __FILE__)
 require 'rspec/rails'
-require 'rspec/autorun'
 
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
@@ -39,8 +38,21 @@ RSpec.configure do |config|
   config.before(:each) do
     room = double(HipChat::Room, send: nil)
     client = double(HipChat::Client, :[] => room)
-    HipChat::Client.stub(:new).and_return(client)
-    DCC::EC2.stub(:neighbours)
-    DCC::EC2.stub(:add_tag)
+    allow(HipChat::Client).to receive(:new).and_return(client)
+    allow(DCC::EC2).to receive(:neighbours)
+    allow(DCC::EC2).to receive(:add_tag)
   end
+
+  # rspec-rails 3 will no longer automatically infer an example group's spec type
+  # from the file location. You can explicitly opt-in to the feature using this
+  # config option.
+  # To explicitly tag specs without using automatic inference, set the `:type`
+  # metadata manually:
+  #
+  #     describe ThingsController, :type => :controller do
+  #       # Equivalent to being in spec/controllers
+  #     end
+  config.infer_spec_type_from_file_location!
+
+  config.example_status_persistence_file_path = File.expand_path("../examples.state", __FILE__)
 end

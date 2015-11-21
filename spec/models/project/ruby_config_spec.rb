@@ -10,9 +10,9 @@ describe Project, "when providing ruby version" do
     end
 
     it "has no ruby version for the bucket groups" do
-      project.ruby_version('default:one').should be_nil
-      project.ruby_version('default:two').should be_nil
-      project.ruby_version('extra:three').should be_nil
+      expect(project.ruby_version('default:one')).to be_nil
+      expect(project.ruby_version('default:two')).to be_nil
+      expect(project.ruby_version('extra:three')).to be_nil
     end
   end
 
@@ -22,9 +22,9 @@ describe Project, "when providing ruby version" do
     end
 
     it "returns the configured version for all buckets" do
-      project.ruby_version('default:one').should == '1.2.3-p4'
-      project.ruby_version('default:two').should == '1.2.3-p4'
-      project.ruby_version('extra:three').should == '1.2.3-p4'
+      expect(project.ruby_version('default:one')).to eq('1.2.3-p4')
+      expect(project.ruby_version('default:two')).to eq('1.2.3-p4')
+      expect(project.ruby_version('extra:three')).to eq('1.2.3-p4')
     end
   end
 
@@ -34,9 +34,9 @@ describe Project, "when providing ruby version" do
     end
 
     it "returns the configured version for the bucket group where it is configured" do
-      project.ruby_version('default:one').should be_nil
-      project.ruby_version('default:two').should be_nil
-      project.ruby_version('extra:three').should == '1.2.3-p4'
+      expect(project.ruby_version('default:one')).to be_nil
+      expect(project.ruby_version('default:two')).to be_nil
+      expect(project.ruby_version('extra:three')).to eq('1.2.3-p4')
     end
   end
 
@@ -46,12 +46,12 @@ describe Project, "when providing ruby version" do
     end
 
     it "returns the local version for the bucket group where it is configured" do
-      project.ruby_version('extra:three').should == '5.6'
+      expect(project.ruby_version('extra:three')).to eq('5.6')
     end
 
     it "returns the global version for bucket groups without locally configured version" do
-      project.ruby_version('default:one').should == '1.2.3-p4'
-      project.ruby_version('default:two').should == '1.2.3-p4'
+      expect(project.ruby_version('default:one')).to eq('1.2.3-p4')
+      expect(project.ruby_version('default:two')).to eq('1.2.3-p4')
     end
   end
 end

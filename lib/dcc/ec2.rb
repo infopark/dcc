@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-v1'
 require 'json'
 require 'net/http'
 
@@ -19,8 +19,7 @@ class EC2
 
   def neighbours
     if runs_on_ec2?
-      ec2.instances.tagged('opsworks:stack').tagged_values(instance.tags["opsworks:stack"]).
-          reject {|i| i.id == instance.id }
+      ec2.instances.tagged('opsworks:stack').tagged_values(instance.tags["opsworks:stack"])
     else
       []
     end

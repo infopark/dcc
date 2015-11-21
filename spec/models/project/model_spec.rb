@@ -9,80 +9,80 @@ describe Project do
   end
 
   it "should have an id" do
-    @project.id.should == 1
+    expect(@project.id).to eq(1)
   end
 
   it "should have a name" do
-    @project.name.should == "project name"
+    expect(@project.name).to eq("project name")
   end
 
   it "should have an url" do
-    @project.url.should == "project url"
+    expect(@project.url).to eq("project url")
   end
 
   it "should have a branch" do
-    @project.branch.should == "project branch"
+    expect(@project.branch).to eq("project branch")
   end
 
   it "may have an owner" do
-    @project.owner.should be_nil
-    Project.find(2).owner.should == "project owner"
+    expect(@project.owner).to be_nil
+    expect(Project.find(2).owner).to eq("project owner")
   end
 
   it "may have a last_commit" do
-    @project.last_commit.should be_nil
-    Project.find(2).last_commit.should == "project's last commit"
+    expect(@project.last_commit).to be_nil
+    expect(Project.find(2).last_commit).to eq("project's last commit")
   end
 
   it "may have the build_requested flag set" do
-    @project.build_requested.should be_nil
-    Project.find(2).build_requested.should be_true
-    Project.find(3).build_requested.should be_false
+    expect(@project.build_requested).to be_nil
+    expect(Project.find(2).build_requested).to be_truthy
+    expect(Project.find(3).build_requested).to be_falsey
   end
 
   it "may have builds" do
-    @project.builds.should be_empty
-    Project.find(3).builds.should_not be_empty
+    expect(@project.builds).to be_empty
+    expect(Project.find(3).builds).not_to be_empty
   end
 
   it "may have dependencies" do
-    @project.dependencies.should be_empty
-    Project.find(3).dependencies.should_not be_empty
+    expect(@project.dependencies).to be_empty
+    expect(Project.find(3).dependencies).not_to be_empty
   end
 
   it "may have a last_system_error" do
-    @project.last_system_error.should be_nil
-    Project.find(3).last_system_error.should == "project's last system error"
+    expect(@project.last_system_error).to be_nil
+    expect(Project.find(3).last_system_error).to eq("project's last system error")
   end
 
   context "when deleting" do
     it "deletes itself and all it's builds, buckets and logs" do
       Project.destroy(3)
-      lambda {
+      expect {
         Project.find(3)
-      }.should raise_error ActiveRecord::RecordNotFound
+      }.to raise_error ActiveRecord::RecordNotFound
       [1, 3].each do |id|
-        lambda {
+        expect {
           Build.find(id)
-        }.should raise_error ActiveRecord::RecordNotFound
+        }.to raise_error ActiveRecord::RecordNotFound
       end
       [1, 2].each do |id|
-        lambda {
+        expect {
           Bucket.find(id)
-        }.should raise_error ActiveRecord::RecordNotFound
+        }.to raise_error ActiveRecord::RecordNotFound
       end
       [1, 2].each do |id|
-        lambda {
+        expect {
           Log.find(id)
-        }.should raise_error ActiveRecord::RecordNotFound
+        }.to raise_error ActiveRecord::RecordNotFound
       end
     end
 
     it "does not delete builds, buckets or logs of other projects" do
       Project.destroy(1)
-      lambda {
+      expect {
         Project.find(1)
-      }.should raise_error ActiveRecord::RecordNotFound
+      }.to raise_error ActiveRecord::RecordNotFound
       [1, 3].each {|id| Build.find(id) }
       [1, 2].each {|id| Bucket.find(id) }
       [1, 2].each {|id| Log.find(id) }
@@ -91,7 +91,7 @@ describe Project do
 
   describe "#as_json" do
     it "returns the project as json serializable structure" do
-      @project.as_json.with_indifferent_access.should == {
+      expect(@project.as_json.with_indifferent_access).to eq({
         name: "project name",
         id: 1,
         url: "project url",
@@ -100,7 +100,7 @@ describe Project do
         last_build: nil,
         last_system_error: nil,
         owner: nil,
-      }.with_indifferent_access
+      }.with_indifferent_access)
     end
   end
 end
@@ -117,35 +117,35 @@ describe Project, "when creating a new one" do
     #    raise_error(ActiveRecord::StatementInvalid)
 
     Project.new(name: 'name', url: 'url', branch: 'branch', owner: 'owner').save
-    lambda {Project.new(name: 'name', url: 'a url', branch: 'branch', owner: 'owner').save}.should\
+    expect {Project.new(name: 'name', url: 'a url', branch: 'branch', owner: 'owner').save}.to\
         raise_error(ActiveRecord::StatementInvalid)
   end
 
   it "should raise an error when the name was missing" do
-    lambda {Project.new(:url => 'url', :branch => 'branch').save}.should raise_error(/blank/)
+    expect {Project.new(:url => 'url', :branch => 'branch').save}.to raise_error(/blank/)
   end
 
   it "should raise an error when the name left empty" do
-    lambda {Project.new(:name => '', :url => 'url', :branch => 'branch').save}.
-        should raise_error(/blank/)
+    expect {Project.new(:name => '', :url => 'url', :branch => 'branch').save}.
+        to raise_error(/blank/)
   end
 
   it "should raise an error when the url was missing" do
-    lambda {Project.new(:name => 'name', :branch => 'branch').save}.should raise_error(/blank/)
+    expect {Project.new(:name => 'name', :branch => 'branch').save}.to raise_error(/blank/)
   end
 
   it "should raise an error when the url left empty" do
-    lambda {Project.new(:url => '', :name => 'name', :branch => 'branch').save}.
-        should raise_error(/blank/)
+    expect {Project.new(:url => '', :name => 'name', :branch => 'branch').save}.
+        to raise_error(/blank/)
   end
 
   it "should raise an error when the branch was missing" do
-    lambda {Project.new(:url => 'url', :name => 'name').save}.should raise_error(/blank/)
+    expect {Project.new(:url => 'url', :name => 'name').save}.to raise_error(/blank/)
   end
 
   it "should raise an error when the branch left empty" do
-    lambda {Project.new(:branch => '', :url => 'url', :name => 'name').save}.
-        should raise_error(/blank/)
+    expect {Project.new(:branch => '', :url => 'url', :name => 'name').save}.
+        to raise_error(/blank/)
   end
 end
 
@@ -156,47 +156,48 @@ describe Project do
 
   describe "when determining" do
     before do
-      @project.stub(:id).and_return 'p_id'
+      allow(@project).to receive(:id).and_return 'p_id'
     end
 
     describe "the last build" do
       it "should return nil if it has no builds" do
-        @project.last_build.should be_nil
+        expect(@project.last_build).to be_nil
       end
 
       it "should return the last build of the available builds" do
-        @project.stub(:builds).and_return ['predator', 'terminator', 'last action hero']
-        @project.last_build.should == 'last action hero'
+        allow(@project).to receive(:builds).
+            and_return ['predator', 'terminator', 'last action hero']
+        expect(@project.last_build).to eq('last action hero')
       end
     end
 
     describe "the build before another build" do
       it "returns the build before the specified build" do
-        @project.stub(:builds).and_return(builds = double('builds'))
-        builds.stub(:where).with("id < ?", 12345).and_return(double.tap do |result|
-          result.stub(:order).with("id DESC").and_return(
+        allow(@project).to receive(:builds).and_return(builds = double('builds'))
+        allow(builds).to receive(:where).with("id < ?", 12345).and_return(double.tap do |result|
+          allow(result).to receive(:order).with("id DESC").and_return(
               ['last man standing', 'somewhere in the middle', 'first in a row'])
         end)
-        @project.build_before(double(:id => 12345)).should == 'last man standing'
+        expect(@project.build_before(double(:id => 12345))).to eq('last man standing')
       end
     end
   end
 
   describe "when providing git" do
     before do
-      @project.stub(:id).and_return 123
+      allow(@project).to receive(:id).and_return 123
     end
 
     it "should create a new git using name, url and branch" do
-      DCC::Git.should_receive(:new).with("name", 123, "url", "branch").and_return "the git"
-      @project.git.should == "the git"
+      expect(DCC::Git).to receive(:new).with("name", 123, "url", "branch").and_return "the git"
+      expect(@project.git).to eq("the git")
     end
 
     it "should reuse an already created git" do
-      DCC::Git.should_receive(:new).once.and_return "the git"
-      @project.git.should == "the git"
-      @project.git.should == "the git"
-      @project.git.should == "the git"
+      expect(DCC::Git).to receive(:new).once.and_return "the git"
+      expect(@project.git).to eq("the git")
+      expect(@project.git).to eq("the git")
+      expect(@project.git).to eq("the git")
     end
   end
 
@@ -204,92 +205,92 @@ describe Project do
     before do
       @git = double("git", :current_commit => "the current commit", :path => 'git_path',
           :remote_changed? => false)
-      @project.stub(:git).and_return @git
+      allow(@project).to receive(:git).and_return @git
     end
 
     describe "when providing current commit" do
       it "should get and return the current commit" do
-        @project.current_commit.should == "the current commit"
+        expect(@project.current_commit).to eq("the current commit")
       end
     end
 
     describe "when reading the config" do
       it "should read the config only once" do
-        File.should_receive(:read).with("git_path/dcc_config.rb").once.and_return ""
+        expect(File).to receive(:read).with("git_path/dcc_config.rb").once.and_return ""
         @project.send(:read_config)
         @project.send(:read_config)
       end
 
       it "should reread the config if git commit changed" do
-        @git.stub(:current_commit).and_return('old one')
-        File.should_receive(:read).with("git_path/dcc_config.rb").twice.and_return ""
+        allow(@git).to receive(:current_commit).and_return('old one')
+        expect(File).to receive(:read).with("git_path/dcc_config.rb").twice.and_return ""
         @project.send(:read_config)
-        @git.stub(:current_commit).and_return('new one')
+        allow(@git).to receive(:current_commit).and_return('new one')
         @project.send(:read_config)
       end
     end
 
     describe "when being asked if wants_build?" do
       before do
-        @project.stub(:build_requested?).and_return false
-        @project.stub(:last_commit).and_return 'the current commit'
-        @project.stub(:dependencies).and_return [
+        allow(@project).to receive(:build_requested?).and_return false
+        allow(@project).to receive(:last_commit).and_return 'the current commit'
+        allow(@project).to receive(:dependencies).and_return [
               @dep1 = double('', :has_changed? => false),
               @dep2 = double('', :has_changed? => false)
             ]
-        @project.stub(:update_dependencies)
-        @git.stub(:update)
-        File.stub(:read).with("git_path/dcc_config.rb").and_return "rebuild_if {false}"
+        allow(@project).to receive(:update_dependencies)
+        allow(@git).to receive(:update)
+        allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return "rebuild_if {false}"
       end
 
       it "should say 'true' if the current commit is not the same as remote" do
-        @git.stub(:remote_changed?).and_return true
-        @project.stub(:current_commit).and_return 'new'
-        @project.wants_build?.should be_true
+        allow(@git).to receive(:remote_changed?).and_return true
+        allow(@project).to receive(:current_commit).and_return 'new'
+        expect(@project.wants_build?).to be_truthy
       end
 
       it "should say 'true' if the 'build_requested' flag is set" do
-        @project.stub(:build_requested?).and_return true
-        @project.wants_build?.should be_true
+        allow(@project).to receive(:build_requested?).and_return true
+        expect(@project.wants_build?).to be_truthy
       end
 
       it "should say 'true' if a dependency has changed" do
-        @dep2.stub(:has_changed?).and_return true
-        @project.wants_build?.should be_true
+        allow(@dep2).to receive(:has_changed?).and_return true
+        expect(@project.wants_build?).to be_truthy
       end
 
       it "should say 'true' if the 'rebuild_if' block returns 'true'" do
-        File.stub(:read).with("git_path/dcc_config.rb").and_return "rebuild_if {true}"
-        @project.wants_build?.should be_true
+        allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return "rebuild_if {true}"
+        expect(@project.wants_build?).to be_truthy
       end
 
       it "should not crash if no 'rebuild_if' block was given" do
-        File.stub(:read).with("git_path/dcc_config.rb").and_return ""
+        allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return ""
         @project.wants_build?
       end
 
       it "should say 'false' else" do
-        @project.wants_build?.should be_false
+        expect(@project.wants_build?).to be_falsey
       end
 
       it "should update the dependencies prior to getting them" do
-        @project.should_receive(:update_dependencies).ordered
-        @project.should_receive(:dependencies).ordered
+        expect(@project).to receive(:update_dependencies).ordered
+        expect(@project).to receive(:dependencies).ordered
         @project.wants_build?
       end
 
       it "should update the repository prior to getting the current commit" do
-        @git.stub(:remote_changed?).and_return true
-        @git.should_receive(:update).ordered
-        @git.should_receive(:current_commit).ordered
+        allow(@git).to receive(:remote_changed?).and_return true
+        expect(@git).to receive(:update).ordered
+        expect(@git).to receive(:current_commit).ordered
         @project.wants_build?
       end
     end
 
     describe "when providing configured information" do
       before do
-        @git.stub(:current_commit).and_return('current commit')
-        File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+        allow(@git).to receive(:current_commit).and_return('current commit')
+        allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
               send_notifications_to "to@me.de"
               depends_upon.project "dependency"
               before_all.performs_rake_tasks 'before_all'
@@ -328,72 +329,73 @@ describe Project do
       end
 
       it "should read the config" do
-        File.should_receive(:read).with("git_path/dcc_config.rb").and_return("")
+        expect(File).to receive(:read).with("git_path/dcc_config.rb").and_return("")
         @project.buckets_tasks
       end
 
       it "should provide the configured tasks" do
-        @project.buckets_tasks.should == {
+        expect(@project.buckets_tasks).to eq({
               "default:one" => ["1a", "1b", "1c"],
               "default:two" => ["2"],
               "extra:three" => ["3a", "3b"],
               "nix weita:four" => ["4"]
-            }
+            })
       end
 
       it "should provide the configured tasks for a given bucket" do
-        @project.bucket_tasks('default:one').should == ["1a", "1b", "1c"]
-        @project.bucket_tasks('huh?').should == []
+        expect(@project.bucket_tasks('default:one')).to eq(["1a", "1b", "1c"])
+        expect(@project.bucket_tasks('huh?')).to eq([])
       end
 
       it "should provide the bucket group for a given bucket" do
-        @project.bucket_group('default:one').should == 'default'
-        @project.bucket_group('default:two').should == 'default'
-        @project.bucket_group('extra:three').should == 'extra'
-        @project.bucket_group('huh?').should be_nil
+        expect(@project.bucket_group('default:one')).to eq('default')
+        expect(@project.bucket_group('default:two')).to eq('default')
+        expect(@project.bucket_group('extra:three')).to eq('extra')
+        expect(@project.bucket_group('huh?')).to be_nil
       end
 
       describe "when providing the “for_error_log” code for a bucket" do
         it "should return nil when there is no “for_error_log” code" do
-          @project.for_error_log("default:one").should be_nil
+          expect(@project.for_error_log("default:one")).to be_nil
         end
 
         it "should return the “for_error_log” code of the bucket group for the bucket" do
-          @project.for_error_log("extra:three").call.should == "extra's error log"
-          @project.for_error_log("nix weita:four").call.should == "nix weita's error log"
+          expect(@project.for_error_log("extra:three").call).to eq("extra's error log")
+          expect(@project.for_error_log("nix weita:four").call).to eq("nix weita's error log")
         end
       end
 
       describe "when providing the before_all tasks" do
         it "should return an empty array if no before_all tasks are configured" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.before_all_tasks("default:bucket").should == []
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("")
+          expect(@project.before_all_tasks("default:bucket")).to eq([])
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(
               "before_all.performs_rake_tasks")
-          @project.before_all_tasks("default:bucket").should == []
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          expect(@project.before_all_tasks("default:bucket")).to eq([])
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 buckets :default do
                   before_all.performs_rake_tasks
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.before_all_tasks("default:bucket").should == []
+          expect(@project.before_all_tasks("default:bucket")).to eq([])
         end
 
         it "should return the configured tasks" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 before_all.performs_rake_tasks %w(task_one task_two)
                 buckets :default do
                   before_all.performs_rake_tasks %w(task_three task_four)
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.before_all_tasks("default:bucket").should ==
+          expect(@project.before_all_tasks("default:bucket")).to eq(
               %w(task_one task_two task_three task_four)
+          )
         end
 
         it "should not return the configured tasks of another bunch of buckets" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 buckets :default do
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
@@ -403,73 +405,73 @@ describe Project do
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.before_all_tasks("default:bucket").should == []
+          expect(@project.before_all_tasks("default:bucket")).to eq([])
         end
       end
 
       describe "when providing the before_all_code" do
         it "should return the before_all_code" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 before_all do
                   "before_all_code"
                 end
               |)
-          @project.before_all_code.should be_a(Proc)
-          @project.before_all_code.call.should == "before_all_code"
+          expect(@project.before_all_code).to be_a(Proc)
+          expect(@project.before_all_code.call).to eq("before_all_code")
         end
 
         it "should return the before_all_code even if before_all was accessed later on without code" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 before_all do
                   "before_all_code"
                 end
 
                 before_all.performs_rake_tasks("bla")
               |)
-          @project.before_all_code.should be_a(Proc)
-          @project.before_all_code.call.should == "before_all_code"
+          expect(@project.before_all_code).to be_a(Proc)
+          expect(@project.before_all_code.call).to eq("before_all_code")
         end
 
         it "should return nil if no before_all-block was given" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.before_all_code.should be_nil
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("before_all {}")
-          @project.before_all_code.should be_nil
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("")
+          expect(@project.before_all_code).to be_nil
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("before_all {}")
+          expect(@project.before_all_code).to be_nil
         end
       end
 
       describe "when providing the before_each_bucket_group code" do
         it "should return nil if no before_each_bucket_group code is configured" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.before_each_bucket_group_code.should be_nil
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("before_each_bucket_group {}")
-          @project.before_each_bucket_group_code.should be_nil
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("")
+          expect(@project.before_each_bucket_group_code).to be_nil
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("before_each_bucket_group {}")
+          expect(@project.before_each_bucket_group_code).to be_nil
         end
 
         it "should return the configured code" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 before_each_bucket_group {"do some thing"}
               |)
-          @project.before_each_bucket_group_code.should be_a(Proc)
-          @project.before_each_bucket_group_code.call.should == "do some thing"
+          expect(@project.before_each_bucket_group_code).to be_a(Proc)
+          expect(@project.before_each_bucket_group_code.call).to eq("do some thing")
         end
       end
 
       describe "when providing the before_each_bucket tasks for a bucket" do
         it "should return an empty array if no before_each_bucket tasks are configured" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.before_bucket_tasks("default:bucket").should == []
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("")
+          expect(@project.before_bucket_tasks("default:bucket")).to eq([])
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 buckets :default do
                   before_each_bucket.performs_rake_tasks
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.before_bucket_tasks("default:bucket").should == []
+          expect(@project.before_bucket_tasks("default:bucket")).to eq([])
         end
 
         it "should not return the configured tasks of another bunch of buckets" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 buckets :default do
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
@@ -479,35 +481,35 @@ describe Project do
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.before_bucket_tasks("default:bucket").should == []
+          expect(@project.before_bucket_tasks("default:bucket")).to eq([])
         end
 
         it "should return the configured tasks" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 buckets :default do
                   before_each_bucket.performs_rake_tasks %w(task_one task_two)
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.before_bucket_tasks("default:bucket").should == %w(task_one task_two)
+          expect(@project.before_bucket_tasks("default:bucket")).to eq(%w(task_one task_two))
         end
       end
 
       describe "when providing the after_each_bucket tasks for a bucket" do
         it "should return an empty array if no after_each_bucket tasks are configured" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.after_bucket_tasks("default:bucket").should == []
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("")
+          expect(@project.after_bucket_tasks("default:bucket")).to eq([])
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 buckets :default do
                   after_each_bucket.performs_rake_tasks
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.after_bucket_tasks("default:bucket").should == []
+          expect(@project.after_bucket_tasks("default:bucket")).to eq([])
         end
 
         it "should not return the configured tasks of another bunch of buckets" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 buckets :default do
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
@@ -517,85 +519,85 @@ describe Project do
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.after_bucket_tasks("default:bucket").should == []
+          expect(@project.after_bucket_tasks("default:bucket")).to eq([])
         end
 
         it "should return the configured tasks" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 buckets :default do
                   after_each_bucket.performs_rake_tasks %w(task_one task_two)
                   bucket(:bucket).performs_rake_tasks("rake_task")
                 end
               |)
-          @project.after_bucket_tasks("default:bucket").should == %w(task_one task_two)
+          expect(@project.after_bucket_tasks("default:bucket")).to eq(%w(task_one task_two))
         end
       end
 
       describe "when providing the E-Mail addresses" do
         it "should return a single address in an array" do
-          @project.e_mail_receivers('default:one').should == ['to@me.de']
+          expect(@project.e_mail_receivers('default:one')).to eq(['to@me.de'])
         end
 
         it "should return an empty array if no address were specified" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.e_mail_receivers('default:one').should == []
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("send_notifications_to")
-          @project.e_mail_receivers('default:one').should == []
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("")
+          expect(@project.e_mail_receivers('default:one')).to eq([])
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("send_notifications_to")
+          expect(@project.e_mail_receivers('default:one')).to eq([])
         end
 
         it "should return the specified addresses" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 send_notifications_to "to@me.de", "to@me.too"
               |)
-          @project.e_mail_receivers('default:one').should == ['to@me.de', 'to@me.too']
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          expect(@project.e_mail_receivers('default:one')).to eq(['to@me.de', 'to@me.too'])
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 send_notifications_to %w(to@me.de to@me.too)
               |)
-          @project.e_mail_receivers('default:one').should == ['to@me.de', 'to@me.too']
+          expect(@project.e_mail_receivers('default:one')).to eq(['to@me.de', 'to@me.too'])
         end
 
         it "should use global addresses for buckets if no buckets addresses are given" do
-          @project.e_mail_receivers('default:one').should == ['to@me.de']
+          expect(@project.e_mail_receivers('default:one')).to eq(['to@me.de'])
         end
 
         it "should use buckets addresses instead of global ones if given" do
-          @project.e_mail_receivers('extra:three').should == ['to@you.com']
+          expect(@project.e_mail_receivers('extra:three')).to eq(['to@you.com'])
         end
 
         describe "for special github repos" do
           before do
-            File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+            allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
               send_notifications_to(:toaster => %w(to@me.de to@me.too), :infopark => 'kra@pof.ni',
                   :default => 'de@fau.lt')
             |)
-            Net::HTTP.stub(:new).and_return(
+            allow(Net::HTTP).to receive(:new).and_return(
               double('http', :use_ssl= => nil, :get => double('response', :body => '{}'))
             )
           end
 
           it "should use the specified addresses if the repo matches #1" do
-            @project.stub(:url).and_return "git@github.com:toaster/project.git"
-            @project.e_mail_receivers('default:one').should == %w(to@me.de to@me.too)
+            allow(@project).to receive(:url).and_return "git@github.com:toaster/project.git"
+            expect(@project.e_mail_receivers('default:one')).to eq(%w(to@me.de to@me.too))
           end
 
           it "should use the specified addresses if the repo matches #2" do
-            @project.stub(:url).and_return "https://github.com/infopark/project.git"
-            @project.e_mail_receivers('default:one').should == %w(kra@pof.ni)
+            allow(@project).to receive(:url).and_return "https://github.com/infopark/project.git"
+            expect(@project.e_mail_receivers('default:one')).to eq(%w(kra@pof.ni))
           end
 
           it "should use the default addresses if the repo does not match #1" do
-            @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
-            @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
+            allow(@project).to receive(:url).and_return "git@github.com:phorsuedzie/project.git"
+            expect(@project.e_mail_receivers('default:one')).to eq(%w(de@fau.lt))
           end
 
           it "should use the default addresses if the repo does not match #2" do
-            @project.stub(:url).and_return "https://infopark.com/toaster/project.git"
-            @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
+            allow(@project).to receive(:url).and_return "https://infopark.com/toaster/project.git"
+            expect(@project.e_mail_receivers('default:one')).to eq(%w(de@fau.lt))
           end
 
           describe "for special buckets" do
             before do
-              File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+              allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 send_notifications_to(:toaster => %w(to@me.de to@me.too), :infopark => 'kra@pof.ni',
                     :default => 'de@fau.lt')
                 buckets "extra" do
@@ -606,13 +608,13 @@ describe Project do
             end
 
             it "should provide github specific addresses too" do
-              @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
-              @project.e_mail_receivers('extra:three').should == %w(to@you.com)
+              allow(@project).to receive(:url).and_return "git@github.com:phorsuedzie/project.git"
+              expect(@project.e_mail_receivers('extra:three')).to eq(%w(to@you.com))
             end
 
             it "should fall back to global configuration when no specific configuration matched" do
-              @project.stub(:url).and_return "git@github.com:toaster/project.git"
-              @project.e_mail_receivers('extra:three').should == %w(to@me.de to@me.too)
+              allow(@project).to receive(:url).and_return "git@github.com:toaster/project.git"
+              expect(@project.e_mail_receivers('extra:three')).to eq(%w(to@me.de to@me.too))
             end
           end
 
@@ -621,24 +623,24 @@ describe Project do
 
             before do
               http = double('http')
-              http.should_receive(:use_ssl=).with(true).ordered
-              http.should_receive(:get).with('/users/phorsuedzie').ordered.and_return(
+              expect(http).to receive(:use_ssl=).with(true).ordered
+              expect(http).to receive(:get).with('/users/phorsuedzie').ordered.and_return(
                 double('response', :body => %|{"email": #{github_email_address.to_json}}|)
               )
-              Net::HTTP.should_receive(:new).with('api.github.com', 443).and_return http
+              expect(Net::HTTP).to receive(:new).with('api.github.com', 443).and_return http
 
-              @project.stub(:url).and_return "git@github.com:phorsuedzie/project.git"
+              allow(@project).to receive(:url).and_return "git@github.com:phorsuedzie/project.git"
             end
 
             it "should use the github e-mail address prior to the default address" do
-              @project.e_mail_receivers('default:one').should == %w(me@github.com)
+              expect(@project.e_mail_receivers('default:one')).to eq(%w(me@github.com))
             end
 
             context "that is nil" do
               let(:github_email_address) { nil }
 
               it "should use the default address" do
-                @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
+                expect(@project.e_mail_receivers('default:one')).to eq(%w(de@fau.lt))
               end
             end
 
@@ -646,7 +648,7 @@ describe Project do
               let(:github_email_address) { "" }
 
               it "should use the default address" do
-                @project.e_mail_receivers('default:one').should == %w(de@fau.lt)
+                expect(@project.e_mail_receivers('default:one')).to eq(%w(de@fau.lt))
               end
             end
           end
@@ -663,20 +665,20 @@ describe Project do
         end
 
         it "should set no dependencies if no build triggering projects are configured" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("")
-          @project.dependencies.should == []
-          File.stub(:read).with("git_path/dcc_config.rb").and_return("depends_upon")
-          @project.dependencies.should == []
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("")
+          expect(@project.dependencies).to eq([])
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return("depends_upon")
+          expect(@project.dependencies).to eq([])
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon do
                 end
               |)
           @project.update_dependencies
-          @project.dependencies.should == []
+          expect(@project.dependencies).to eq([])
         end
 
         it "should set the configured dependencies" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1"
                 depends_upon.project "url2"
                 depends_upon do
@@ -686,15 +688,15 @@ describe Project do
               |)
           @project.update_dependencies
           urls = @project.dependencies.map {|d| d.url}
-          urls.size.should == 4
-          urls.should be_include('url1')
-          urls.should be_include('url2')
-          urls.should be_include('url3')
-          urls.should be_include('url4')
+          expect(urls.size).to eq(4)
+          expect(urls).to be_include('url1')
+          expect(urls).to be_include('url2')
+          expect(urls).to be_include('url3')
+          expect(urls).to be_include('url4')
         end
 
         it "should set the branch into the dependencies if given" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1"
                 depends_upon do
                   project "url2", :branch => "branch2"
@@ -702,25 +704,25 @@ describe Project do
               |)
           @project.update_dependencies
           branches = @project.dependencies.map {|d| d.branch}
-          branches.size.should == 2
-          branches.should be_include('branch1')
-          branches.should be_include('branch2')
+          expect(branches.size).to eq(2)
+          expect(branches).to be_include('branch1')
+          expect(branches).to be_include('branch2')
         end
 
         it "should use the projects branch as default of the dependencies' branch" do
-          @project.stub(:branch).and_return "current"
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(@project).to receive(:branch).and_return "current"
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1"
                 depends_upon do
                   project "url2"
                 end
               |)
           @project.update_dependencies
-          @project.dependencies.map {|d| d.branch}.should == %w(current current)
+          expect(@project.dependencies.map {|d| d.branch}).to eq(%w(current current))
         end
 
         it "should set the fallback branch into the dependencies if given" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :fallback_branch => "branch1"
                 depends_upon do
                   project "url2", :fallback_branch => "branch2"
@@ -728,108 +730,108 @@ describe Project do
               |)
           @project.update_dependencies
           branches = @project.dependencies.map {|d| d.fallback_branch}
-          branches.size.should == 2
-          branches.should be_include('branch1')
-          branches.should be_include('branch2')
+          expect(branches.size).to eq(2)
+          expect(branches).to be_include('branch1')
+          expect(branches).to be_include('branch2')
         end
 
         it "should update changed dependencies" do
-          @project.stub(:branch).and_return "current"
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(@project).to receive(:branch).and_return "current"
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1"
                 depends_upon.project "url2", :fallback_branch => "branch1"
               |)
           @project.update_dependencies
-          @git.stub(:current_commit).and_return('new commit')
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(@git).to receive(:current_commit).and_return('new commit')
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch2"
                 depends_upon.project "url2", :fallback_branch => "branch2"
               |)
           @project.update_dependencies
           branches = @project.dependencies.map {|d| d.branch}
-          branches.size.should == 2
-          branches.should be_include('branch2')
-          branches.should be_include('current')
+          expect(branches.size).to eq(2)
+          expect(branches).to be_include('branch2')
+          expect(branches).to be_include('current')
           branches = @project.dependencies.map {|d| d.fallback_branch}
-          branches.size.should == 2
-          branches.should be_include('branch2')
-          branches.should be_include(nil)
+          expect(branches.size).to eq(2)
+          expect(branches).to be_include('branch2')
+          expect(branches).to be_include(nil)
         end
 
         it "should delete removed dependencies" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1"
               |)
           @project.update_dependencies
-          @git.stub(:current_commit).and_return('new commit')
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(@git).to receive(:current_commit).and_return('new commit')
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url2", :branch => "branch1"
               |)
           @project.update_dependencies
-          @project.dependencies.map {|d| d.url}.should == %w(url2)
+          expect(@project.dependencies.map {|d| d.url}).to eq(%w(url2))
         end
 
         it "should keep untouched dependencies" do
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1", :fallback_branch => "branch2"
               |)
           @project.update_dependencies
-          @git.stub(:current_commit).and_return('new commit')
-          File.stub(:read).with("git_path/dcc_config.rb").and_return(%Q|
+          allow(@git).to receive(:current_commit).and_return('new commit')
+          allow(File).to receive(:read).with("git_path/dcc_config.rb").and_return(%Q|
                 depends_upon.project "url1", :branch => "branch1", :fallback_branch => "branch2"
               |)
           @project.update_dependencies
-          @project.dependencies.map {|d| d.branch}.should == %w(branch1)
-          @project.dependencies.map {|d| d.fallback_branch}.should == %w(branch2)
-          @project.dependencies.map {|d| d.url}.should == %w(url1)
+          expect(@project.dependencies.map {|d| d.branch}).to eq(%w(branch1))
+          expect(@project.dependencies.map {|d| d.fallback_branch}).to eq(%w(branch2))
+          expect(@project.dependencies.map {|d| d.url}).to eq(%w(url1))
         end
       end
     end
 
     it "should compute the next build number by adding one to the highest for the current commit" do
-      @project.stub(:builds).and_return(builds = double('builds'))
-      builds.stub(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
-          :order => "build_number DESC").and_return(double('build', :build_number => 5))
-      builds.stub(:where).with(commit_hash: 'the current commit').and_return(double.tap do |result|
-        result.stub(:order).with(:build_number).and_return ["foo", "bar", double(build_number: 5)]
+      allow(@project).to receive(:builds).and_return(builds = double('builds'))
+      allow(builds).to receive(:find).with(:first, :conditions => "commit_hash = 'the current commit'",
+          :order => "build_number DESC").and_return(instance_double(Build, 'build_number' => 5))
+      allow(builds).to receive(:where).with(commit_hash: 'the current commit').and_return(double.tap do |result|
+        allow(result).to receive(:order).with("build_number").and_return ["foo", "bar", double(build_number: 5)]
       end)
 
-      @project.next_build_number.should == 6
+      expect(@project.next_build_number).to eq(6)
     end
 
     it "should compute the next build number with 1 for the first build of a commit" do
-      @project.stub(:builds).and_return(builds = double('builds'))
-      builds.stub(:where).with(commit_hash: 'the current commit').and_return double(order: [])
+      allow(@project).to receive(:builds).and_return(builds = double('builds'))
+      allow(builds).to receive(:where).with(commit_hash: 'the current commit').and_return double(order: [])
 
-      @project.next_build_number.should == 1
+      expect(@project.next_build_number).to eq(1)
     end
   end
 
   describe "when updating the state" do
     before do
-      @project.stub(:current_commit).and_return("456")
-      @project.stub(:dependencies).and_return []
-      @project.stub(:last_commit=)
-      @project.stub(:build_requested=)
-      @project.stub(:save)
+      allow(@project).to receive(:current_commit).and_return("456")
+      allow(@project).to receive(:dependencies).and_return []
+      allow(@project).to receive(:last_commit=)
+      allow(@project).to receive(:build_requested=)
+      allow(@project).to receive(:save)
     end
 
     it "should set the last commit to the current commit and save the project" do
-      @project.should_receive(:last_commit=).with("456").ordered
-      @project.should_receive(:save).ordered
+      expect(@project).to receive(:last_commit=).with("456").ordered
+      expect(@project).to receive(:save).ordered
       @project.update_state
     end
 
     it "should unset the build request flag and save the project" do
-      @project.should_receive(:build_requested=).with(false).ordered
-      @project.should_receive(:save).ordered
+      expect(@project).to receive(:build_requested=).with(false).ordered
+      expect(@project).to receive(:save).ordered
       @project.update_state
     end
 
     it "should update the last commit of all dependencies and save them" do
-      @project.stub(:dependencies).and_return [dep1 = double(''), dep2 = double('')]
-      dep1.should_receive(:update_state)
-      dep2.should_receive(:update_state)
+      allow(@project).to receive(:dependencies).and_return [dep1 = double(''), dep2 = double('')]
+      expect(dep1).to receive(:update_state)
+      expect(dep2).to receive(:update_state)
       @project.update_state
     end
   end

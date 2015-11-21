@@ -146,7 +146,8 @@ module CommandLine
 
     cmd = escape_and_concatenate(cmd) unless cmd.is_a? String
 
-    redirected_command = block_given? ? "#{cmd} #{stderr_opt}" : "#{cmd} #{stdout_opt} #{stderr_opt}"
+    redirected_command =
+        block_given? ? "#{cmd} #{stderr_opt}" : "#{cmd} | terminal #{stdout_opt} #{stderr_opt}"
 
     stdout_prompt_command + capture_info_command + stderr_prompt_command + redirected_command
   end

@@ -11,7 +11,7 @@ module DCC
       build.id = 1000
       build.commit = 'very long commit hash'
       build.build_number = 2342
-      build.stub(:project).and_return(double('project',
+      allow(build).to receive(:project).and_return(double('project',
         name: 'My Project',
         bucket_tasks: [],
         id: 33,
@@ -53,16 +53,16 @@ module DCC
             "github_y" => :hipchat_y
           }
         }
-      }).tap { |w| w.stub(:execute) }
+      }).tap { |w| allow(w).to receive(:execute) }
     }
 
     it 'configures the hipchat_room correctly' do
       client = double(HipChat::Client)
       room = double(HipChat::Room)
 
-      HipChat::Client.should_receive(:new).with(
+      expect(HipChat::Client).to receive(:new).with(
           'cooler_hipchat_token', api_version: 'v1').and_return(client)
-      client.should_receive(:[]).with('cooler_hipchat_room').and_return(room)
+      expect(client).to receive(:[]).with('cooler_hipchat_room').and_return(room)
 
       expect(worker.hipchat_room).to equal(room)
     end
@@ -83,29 +83,29 @@ module DCC
 
     describe "when build failed" do
       before do
-        bucket.build.project.stub(:bucket_tasks).with('my_bucket').and_return(['my_bucket'])
-        worker.stub(:perform_rake_task).and_return false
-        Mailer.stub(:failure_message).and_return double(deliver: nil)
-        bucket.stub(:build_error_log)
+        allow(bucket.build.project).to receive(:bucket_tasks).with('my_bucket').and_return(['my_bucket'])
+        allow(worker).to receive(:perform_rake_task).and_return false
+        allow(Mailer).to receive(:failure_message).and_return double(deliver: nil)
+        allow(bucket).to receive(:build_error_log)
       end
 
       it "should send an email if build failed" do
-        Mailer.should_receive(:failure_message).with(bucket).
+        expect(Mailer).to receive(:failure_message).with(bucket).
             and_return(message = double)
-        message.should_receive(:deliver)
+        expect(message).to receive(:deliver)
         worker.perform_task(bucket)
       end
 
       it "should build the error log" do
         # build_error_log braucht sowohl log als auch finished_at
-        bucket.should_receive(:log=).ordered
-        bucket.should_receive(:finished_at=).ordered
-        bucket.should_receive(:build_error_log).ordered
+        expect(bucket).to receive(:log=).ordered
+        expect(bucket).to receive(:finished_at=).ordered
+        expect(bucket).to receive(:build_error_log).ordered
         worker.perform_task(bucket)
       end
 
       it 'sends a hipchat message to a global channel' do
-        worker.hipchat_room.should_receive(:send) do |user, message, options|
+        expect(worker.hipchat_room).to receive(:send) do |user, message, options|
           expect(user).to eq 'DCC'
           expect(message).to eq '[My Project] my_bucket failed - ' +
               'xy://somewhere/project/show_bucket/1234'
@@ -119,12 +119,12 @@ module DCC
 
       context 'when a hipchat user is configured' do
         before do
-          worker.should_receive(:hipchat_user).with(bucket.build.project).and_return(
+          expect(worker).to receive(:hipchat_user).with(bucket.build.project).and_return(
               '<output_of_hipchat_user>')
         end
 
         it 'names the hipchat user in the massage' do
-          worker.hipchat_room.should_receive(:send) do |user, message, options|
+          expect(worker.hipchat_room).to receive(:send) do |user, message, options|
             expect(message).to match /show_bucket\/1234<output_of_hipchat_user>/
           end
 
@@ -135,36 +135,35 @@ module DCC
 
     context 'when build succeeded again' do
       before do
-        bucket.build.project.should_receive(:build_before).with(bucket.build).
+        expect(bucket.build.project).to receive(:build_before).with(bucket.build).
             and_return Build.find(330)
       end
 
       it "sends no email" do
-        Mailer.should_not_receive(:failure_message)
-        Mailer.should_not_receive(:fixed_message)
+        expect(Mailer).not_to receive(:failure_message)
+        expect(Mailer).not_to receive(:fixed_message)
         worker.perform_task(bucket)
       end
 
       it "sends no hipchat message" do
-        worker.hipchat_room.should_not_receive(:send)
+        expect(worker.hipchat_room).not_to receive(:send)
         worker.perform_task(bucket)
       end
     end
 
     context 'when first build ever succeeded' do
       before do
-        bucket.build.project.should_receive(:build_before).with(bucket.build).
-            and_return nil
+        expect(bucket.build.project).to receive(:build_before).with(bucket.build).and_return nil
       end
 
       it "sends no email" do
-        Mailer.should_not_receive(:failure_message)
-        Mailer.should_not_receive(:fixed_message)
+        expect(Mailer).not_to receive(:failure_message)
+        expect(Mailer).not_to receive(:fixed_message)
         worker.perform_task(bucket)
       end
 
       it "sends no hipchat message" do
-        worker.hipchat_room.should_not_receive(:send)
+        expect(worker.hipchat_room).not_to receive(:send)
         worker.perform_task(bucket)
       end
     end
@@ -172,24 +171,24 @@ module DCC
     context 'when build was fixed' do
       before do
         buckets = double
-        buckets.should_receive(:find_by_name).with('my_bucket').and_return(double(status: 40))
+        expect(buckets).to receive(:find_by_name).with('my_bucket').and_return(double(status: 40))
         last_build = double(buckets: buckets)
 
-        bucket.build.project.should_receive(:build_before).with(bucket.build).
+        expect(bucket.build.project).to receive(:build_before).with(bucket.build).
             and_return last_build
 
-        Mailer.stub(:fixed_message).and_return double(deliver: nil)
+        allow(Mailer).to receive(:fixed_message).and_return double(deliver: nil)
       end
 
       it "should send an email if build was fixed" do
         message = double
-        Mailer.should_receive(:fixed_message).with(bucket).and_return(message)
-        message.should_receive(:deliver)
+        expect(Mailer).to receive(:fixed_message).with(bucket).and_return(message)
+        expect(message).to receive(:deliver)
         worker.perform_task(bucket)
       end
 
       it 'sends a hipchat message to a global channel' do
-        worker.hipchat_room.should_receive(:send) do |user, message, options|
+        expect(worker.hipchat_room).to receive(:send) do |user, message, options|
           expect(user).to eq 'DCC'
           expect(message).to eq '[My Project] my_bucket repaired - ' +
               'xy://somewhere/project/show_bucket/1234'

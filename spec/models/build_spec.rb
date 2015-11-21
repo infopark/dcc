@@ -9,43 +9,43 @@ describe Build do
   end
 
   it "should have a project" do
-    @build.project.should_not be_nil
+    expect(@build.project).not_to be_nil
   end
 
   it "should have a commit" do
-    @build.commit.should == "c1"
+    expect(@build.commit).to eq("c1")
   end
 
   it "should have a build_number" do
-    @build.build_number.should == 6
+    expect(@build.build_number).to eq(6)
   end
 
   it "should have a leader_uri" do
-    @build.leader_uri.should == "leader's uri"
+    expect(@build.leader_uri).to eq("leader's uri")
   end
 
   it "may have buckets" do
-    @build.buckets.should be_empty
-    Build.find(3).buckets.should_not be_empty
+    expect(@build.buckets).to be_empty
+    expect(Build.find(3).buckets).not_to be_empty
   end
 
   it "has an identifier consisting of commit and build_number" do
-    @build.identifier.should == "c1.6"
+    expect(@build.identifier).to eq("c1.6")
   end
 
   it "may have a start time" do
-    @build.started_at.should be_nil
-    Build.find(3).started_at.should be_a(Time)
+    expect(@build.started_at).to be_nil
+    expect(Build.find(3).started_at).to be_a(Time)
   end
 
   it "may have an end time" do
-    @build.finished_at.should be_nil
-    Build.find(3).finished_at.should be_a(Time)
+    expect(@build.finished_at).to be_nil
+    expect(Build.find(3).finished_at).to be_a(Time)
   end
 
   describe "#as_json" do
     it "returns the build as json serializable structure" do
-      @build.as_json.with_indifferent_access.should == {
+      expect(@build.as_json.with_indifferent_access).to eq({
         id: 1,
         identifier: "c1.6",
         short_identifier: "c1.6",
@@ -61,7 +61,7 @@ describe Build do
         pending_buckets: [],
         in_work_buckets: [],
         done_buckets: []
-      }.with_indifferent_access
+      }.with_indifferent_access)
     end
   end
 end
