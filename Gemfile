@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'honeybadger'
+gem 'honeybadger', '<2.0.0'
 
 gem 'acts_as_singleton'
 gem 'aws-sdk-v1'
