@@ -101,7 +101,7 @@ GEM
     minitest (5.11.3)
     multi_json (1.13.1)
     multi_xml (0.6.0)
-    mysql2 (0.3.21)
+    mysql2 (0.4.10)
     nokogiri (1.8.4)
       mini_portile2 (~> 2.3.0)
     pry (0.11.3)
@@ -216,7 +216,7 @@ DEPENDENCIES
   infopark_crm_connector
   jquery-rails
   json
-  mysql2 (~> 0.3.14)
+  mysql2 (~> 0.4.0)
   pry
   rails (~> 4)
   rake
