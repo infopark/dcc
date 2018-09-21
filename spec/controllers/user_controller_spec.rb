@@ -25,11 +25,11 @@ describe UserController do
   describe "#login POST" do
     context "when good credentials are given" do
       let(:the_crm_user) do
-        Infopark::Crm::Contact.new(login: "me", password: "and my pass")
+        Crm::Contact.new("login" => "me")
       end
 
       before do
-        allow(Infopark::Crm::Contact).to receive(:authenticate).with("me", "and my pass").and_return the_crm_user
+        allow(Crm::Contact).to receive(:authenticate).with("me", "and my pass").and_return the_crm_user
         post :login, user: {login: "me", password: "and my pass"}, return_to: return_to
       end
 
@@ -37,8 +37,8 @@ describe UserController do
         expect(assigns(:current_user)).to eq the_crm_user
       end
 
-      it "sets the session user to the user's attributes with nil password" do
-        expect(session[:user]).to eq({"login" => "me", "password" => nil})
+      it "sets the session user to the user's attributes" do
+        expect(session[:user]).to eq({"login" => "me"})
       end
 
       it "flashes a notice" do
@@ -50,8 +50,7 @@ describe UserController do
 
     context "when bad credentials are given" do
       before do
-        allow(Infopark::Crm::Contact).to receive(:authenticate).with("me", "and my pass").and_raise(
-            Infopark::Crm::Errors::AuthenticationFailed.new "go away")
+        allow(Crm::Contact).to receive(:authenticate).with("me", "and my pass").and_return(nil)
         post :login, user: {login: "me", password: "and my pass"}
       end
 

@@ -33,14 +33,14 @@ describe TestAuthenticationController do
     context "when authenticated" do
       before do
         session[:user] = "session user"
-        allow(Infopark::Crm::Contact).to receive_messages new: "crm user"
+        allow(Crm::Contact).to receive_messages new: "crm user"
       end
 
       it { is_expected.to be_ok }
       its(:body) { is_expected.to eq "You got it: crm user" }
 
       it "initializes the current user with the session data" do
-        expect(Infopark::Crm::Contact).to receive(:new).with("session user").and_return "the crm user"
+        expect(Crm::Contact).to receive(:new).with("session user").and_return "the crm user"
         get :any_target
         expect(assigns(:current_user)).to eq "the crm user"
       end
@@ -58,7 +58,7 @@ describe TestAuthenticationController do
     it "sets the current and the session user to a dummy user" do
       get :any_target
       expect(assigns(:current_user)).to be_a ApplicationController::DummyUser
-      expect(session[:user]).to eq({login: "dummy"})
+      expect(session[:user]).to eq({"login" => "dummy"})
     end
   end
 end

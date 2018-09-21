@@ -34,15 +34,15 @@ executed.
 
 2. Install MySQL, add `database.yml` and `config/initializers/my_crm_credentials.rb`. Please ask the
 maintainer to obtain production credentials to connect your local development environment with the
-production data. You need the `database host`, `database password`, `crm api key`, `crm url` and
+production data. You need the `database host`, `database password`, `crm api key`, `crm tenant` and
 `crm login`.
 
     brew install mysql
     cp config/database.yml.template config/database.yml
     touch config/intializers/my_crm_credentials.rb
 
-    Infopark::Crm.configure do |config|
-      config.url = <crm url>
+    Crm.configure do |config|
+      config.tenant = <crm tenant>
       config.login = <crm login>
       config.api_key = <crm api key>
     end

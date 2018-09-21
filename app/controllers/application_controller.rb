@@ -28,7 +28,7 @@ class ApplicationController < ActionController::Base
       @current_user = DummyUser.new
       session[:user] ||= @current_user.attributes
     elsif logged_in?
-      @current_user = Infopark::Crm::Contact.new(session[:user].dup || {})
+      @current_user = Crm::Contact.new(session[:user].dup || {})
     else
       redirect_to login_path(:return_to => request.path)
     end
@@ -48,7 +48,7 @@ class ApplicationController < ActionController::Base
     end
 
     def attributes
-      {login: "dummy"}
+      {"login" => "dummy"}
     end
 
     def to_s

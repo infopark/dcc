@@ -15,7 +15,7 @@ gem 'daemon-spawn'
 gem 'dalli'
 gem 'hipchat'
 gem 'http_accept_language'
-gem 'infopark_crm_connector'
+gem 'infopark_webcrm_sdk'
 gem 'jquery-rails'
 gem 'json'
 # https://github.com/rails/rails/issues/21544
