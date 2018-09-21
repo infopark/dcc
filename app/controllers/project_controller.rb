@@ -1,9 +1,9 @@
 # encoding: utf-8
 class ProjectController < ApplicationController
-  prepend_around_filter :with_api_user, only: :show_build, if: -> { session[:user].blank? }
+  prepend_around_action :with_api_user, only: :show_build, if: -> { session[:user].blank? }
 
   def create
-    if ActiveRecord::Type::Boolean.new.type_cast_from_database(params[:project].delete(:personal))
+    if ActiveRecord::Type::Boolean.new.cast(params[:project].delete(:personal))
       params[:project][:owner] = @current_user.login
     end
 
