@@ -3,13 +3,13 @@ require 'spec_helper'
 
 describe ClusterState do
   it "is a singleton" do
-    expect { ClusterState.new }.to raise_error
-    expect { ClusterState.create }.to raise_error
+    expect { ClusterState.new }.to raise_error(NoMethodError)
+    expect { ClusterState.create }.to raise_error(NoMethodError)
     expect(ClusterState.instance).to be_a(ClusterState)
   end
 
   it "has a minion_count" do
-    expect(ClusterState.instance.minion_count).to be_a(Fixnum)
+    expect(ClusterState.instance.minion_count).to be_a(Integer)
   end
 
   it "can change it's minion count" do
