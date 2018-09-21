@@ -20,8 +20,8 @@ gem 'jquery-rails'
 gem 'json'
 # https://github.com/rails/rails/issues/21544
 gem 'mysql2', '~> 0.3.14'
-gem 'rails', '~>4.0.5'
-gem 'sass-rails', '~> 4.0.3'
+gem 'rails', '~>4'
+gem 'sass-rails'
 gem 'sys-proctable'
 gem 'terminal'
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
