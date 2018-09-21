@@ -1,6 +1,6 @@
 class StatsController < ApplicationController
   def show
-    builds = Build.find_all_by_project_id(params[:id], :order => :started_at)
+    builds = Build.where(project_id: params[:id]).order_by(:started_at).to_a
     builds = builds.select { |build| build.finished_at.present? && build.status == Build::DONE }
     builds_by_commit = builds.group_by(&:commit).values
     rows_by_commit = builds_by_commit.map do |builds_for_commit|

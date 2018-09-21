@@ -3,12 +3,13 @@ class ProjectController < ApplicationController
   prepend_around_filter :with_api_user, only: :show_build, if: -> { session[:user].blank? }
 
   def create
-    personal = ActiveRecord::ConnectionAdapters::Column.value_to_boolean(
-        params[:project].delete :personal)
-    params[:project][:owner] = @current_user.login if personal
-    p = Project.new(params.require(:project).permit(:name, :url, :branch, :owner))
-    p.save
-    render :json => p
+    if ActiveRecord::Type::Boolean.new.type_cast_from_database(params[:project].delete(:personal))
+      params[:project][:owner] = @current_user.login
+    end
+
+    project = Project.new(params.require(:project).permit(:name, :url, :branch, :owner))
+    project.save
+    render :json => project
   end
 
   def delete
