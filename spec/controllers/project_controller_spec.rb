@@ -17,11 +17,13 @@ context "when creating a project" do
         "branch" => "the branch"}).and_return project
     expect(project).to receive(:save)
 
-    post 'create', {:project => {:name => 'the name', :url => 'the url', :branch => 'the branch'}}
+    post 'create',
+        params: {:project => {:name => 'the name', :url => 'the url', :branch => 'the branch'}}
   end
 
   it "renders the created project as json" do
-    post 'create', {:project => {:name => 'the name', :url => 'the url', :branch => 'the branch'}}
+    post 'create',
+        params: {:project => {:name => 'the name', :url => 'the url', :branch => 'the branch'}}
 
     expect(JSON.parse(response.body)).to include(
       "name" => "the name",
@@ -39,7 +41,8 @@ context "when creating a project" do
     it "sets the owner to the currently logged in user" do
       expect(Project).to receive(:new).with(hash_including(owner: "max@muster.de")).
           and_return mock_model(Project, save: nil)
-      post 'create', project: {name: 'foo', url: 'bar', branch: 'master', personal: personal_value}
+      post 'create',
+          params: {project: {name: 'foo', url: 'bar', branch: 'master', personal: personal_value}}
     end
   end
 
@@ -57,7 +60,8 @@ context "when creating a project" do
     it "does not set the owner" do
       expect(Project).to receive(:new).with(hash_excluding(:owner)).
           and_return mock_model(Project, save: nil)
-      post 'create', project: {name: 'foo', url: 'bar', branch: 'master', personal: personal_value}
+      post 'create',
+          params: {project: {name: 'foo', url: 'bar', branch: 'master', personal: personal_value}}
     end
   end
 
@@ -80,12 +84,12 @@ end
 context "when deleting a project" do
   it "should remove the specified project" do
     expect(Project).to receive(:destroy).with("666")
-    post 'delete', :id => 666
+    post 'delete', params: {:id => 666}
   end
 
   it "should render an empty json response" do
     allow(Project).to receive(:destroy)
-    post 'delete', :id => 666
+    post 'delete', params: {:id => 666}
     expect(response.body).to eq("{}")
   end
 end
@@ -97,12 +101,12 @@ context "when showing a build" do
 
   it "should fetch the build and assign it for the view" do
     expect(Build).to receive(:find).with("666").and_return "the build"
-    get 'show_build', :id => 666
+    get 'show_build', params: {:id => 666}
     expect(assigns[:build]).to eq("the build")
   end
 
   it "should render the build view" do
-    get 'show_build', :id => 666
+    get 'show_build', params: {:id => 666}
     expect(response).to render_template('project/show_build')
   end
 end
@@ -117,12 +121,12 @@ context "when showing a bucket" do
 
   it "should fetch the bucket and assign it for the view" do
     expect(log_scope).to receive(:find).with("666").and_return "the bucket"
-    get 'show_bucket', :id => 666
+    get 'show_bucket', params: {:id => 666}
     expect(assigns[:bucket]).to eq("the bucket")
   end
 
   it "should render the bucket view" do
-    get 'show_bucket', :id => 666
+    get 'show_bucket', params: {:id => 666}
     expect(response).to render_template('project/show_bucket')
   end
 end
@@ -139,11 +143,11 @@ context "when requesting a project to build" do
   it "should set the build flag and save the project" do
     expect(@project).to receive(:build_requested=).with(true).ordered
     expect(@project).to receive(:save).ordered
-    post 'build', :id => 666
+    post 'build', params: {:id => 666}
   end
 
   it "renders the updated project as json" do
-    post 'build', :id => 666
+    post 'build', params: {:id => 666}
     expect(response.body).to eq('{"updated":"project"}')
   end
 end
@@ -151,7 +155,7 @@ end
 context "when showing a project" do
   before do
     allow(Project).to receive(:find).with("666").and_return double('project', :as_json => {the: 'project'})
-    get "show", :id => 666
+    get "show", params: {:id => 666}
   end
 
   it "renders the project as json" do
@@ -184,16 +188,16 @@ context "when requesting a bucket log" do
   it "explicitly asks for the bucket log" do
     expect(Bucket).to receive(:select).with(:log).ordered.and_return log_scope
     expect(log_scope).to receive(:find).ordered
-    get "log", id: 666
+    get "log", params: {id: 666}
   end
 
   it "uses the requested bucket" do
     expect(log_scope).to receive(:find).with("666").and_return Bucket.new
-    get "log", :id => 666
+    get "log", params: {id: 666}
   end
 
   it "renders the log data as json" do
-    get "log", :id => 666
+    get "log", params: {id: 666}
     expect(response.body).to eq(
         '{"log":"the complete log","logs":"somelogfragments"}'
     )
@@ -207,7 +211,7 @@ context "when using the API" do
     allow(Build).to receive :find
   end
 
-  let(:show_build_response) { get "show_build", id: 666 }
+  let(:show_build_response) { get "show_build", params: {id: 666} }
 
   context "w/o credentials" do
     subject { show_build_response }
@@ -231,12 +235,12 @@ context "when using the API" do
       it { is_expected.to be_ok }
 
       context "non-public action" do
-        subject { get "show_bucket", id: 666 }
+        subject { get "show_bucket", params: {id: 666} }
         it { is_expected.to be_redirect }
       end
 
       describe "session" do
-        before { get "show_build", id: 666 }
+        before { get "show_build", params: {id: 666} }
         subject { session }
         its([:user]) { is_expected.to be_blank }
       end

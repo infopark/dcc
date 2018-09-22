@@ -39,6 +39,7 @@ end
 
 group :test do
   gem 'sqlite3'
+  gem 'rails-controller-testing'
   gem 'rspec-its'
   gem 'rspec-activemodel-mocks'
 end

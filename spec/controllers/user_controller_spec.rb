@@ -30,7 +30,7 @@ describe UserController do
 
       before do
         allow(Crm::Contact).to receive(:authenticate).with("me", "and my pass").and_return the_crm_user
-        post :login, user: {login: "me", password: "and my pass"}, return_to: return_to
+        post :login, params: {user: {login: "me", password: "and my pass"}, return_to: return_to}
       end
 
       it "assigns the current user" do
@@ -51,7 +51,7 @@ describe UserController do
     context "when bad credentials are given" do
       before do
         allow(Crm::Contact).to receive(:authenticate).with("me", "and my pass").and_return(nil)
-        post :login, user: {login: "me", password: "and my pass"}
+        post :login, params: {user: {login: "me", password: "and my pass"}}
       end
 
       it "flashes an error" do
@@ -68,7 +68,7 @@ describe UserController do
     context "when logged in" do
       before do
         session[:user] = {login: "me"}
-        post :logout, return_to: return_to
+        post :logout, params: {return_to: return_to}
       end
 
       it "sets the session user to nil" do
@@ -81,7 +81,7 @@ describe UserController do
     context "when not logged in" do
       before do
         session[:user] = nil
-        post :logout, return_to: return_to
+        post :logout, params: {return_to: return_to}
       end
 
       it "keeps the session user at nil" do

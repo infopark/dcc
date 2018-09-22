@@ -3,7 +3,7 @@ require 'spec_helper'
 
 class TestAuthenticationController < ApplicationController
   def any_target
-    render text: "You got it: #{@current_user}"
+    render plain: "You got it: #{@current_user}"
   end
 end
 

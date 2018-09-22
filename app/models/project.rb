@@ -76,7 +76,7 @@ class Project < ActiveRecord::Base
       @logged_deps.delete(d.url)
     end
     # TODO: flush cache eleganter (löschen via #dependencies → kein explizites Flush mehr)
-    dependencies(true)
+    dependencies.reload
     @logged_deps.each do |url, branches|
       dependencies.create(:url => url, :branch => branches[0], :fallback_branch => branches[1])
     end
